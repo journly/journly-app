@@ -1,6 +1,15 @@
 # Local Setup
 > This doc will explain how to setup Journaly locally.
 
+### Note for Windows Users
+To run Makefiles you will need to have `make` installed.
+
+To install `make`, ensure that `Chocolatey` is also installed and that your systems Path environment variable points to its bin directory. 
+Now run the following command:
+```
+choco install make
+```
+
 ## Set up PostgreSQL
 **Option 1** : Without docker.
 
