@@ -4,7 +4,7 @@
 ### Note for Windows Users
 To run Makefiles you will need to have `make` installed.
 
-To install `make`, ensure that `Chocolatey` is also installed and that your systems Path environment variable points to its bin directory. 
+To install `make`, ensure that [Chocolatey](https://docs.chocolatey.org/en-us/choco/setup/#more-install-options) is also installed and that your systems Path environment variable points to its bin directory. 
 Now run the following command:
 ```
 choco install make
