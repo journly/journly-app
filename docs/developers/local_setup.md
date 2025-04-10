@@ -1,6 +1,14 @@
 # Local Setup
 > This doc will explain how to setup Journaly locally.
 
+To begin local setup, clone the repository from github.
+```
+git clone https://github.com/journaly-app/journaly.git <OPTIONAL DIRECTORY>
+```
+
+### Easiest setup
+For the easiest setup, ensure that Docker is installed onto your system.
+
 ### Note for Windows Users
 To run Makefiles you will need to have `make` installed.
 
