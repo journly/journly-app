@@ -1,30 +1,21 @@
-use std::ops::DerefMut;
-
 use actix_web::{ get, post, web, App, HttpResponse, HttpServer, Responder };
 use confik::{ Configuration, EnvSource };
-use database::{config::ExampleConfig, db, models::{self, User}};
+use database::{config::ExampleConfig, db::{self, connection_builder}};
+use models::user::User;
 use errors::MyError;
 use deadpool_postgres::{Client, Pool};
 use dotenvy::dotenv;
-use tokio_postgres::NoTls;
 
-
+mod models;
 mod errors;
 mod database;
-
-
-
-mod embedded {
-    use refinery::embed_migrations;
-    embed_migrations!("migrations");
-}
 
 #[get("/users")]
 async fn get_users(dp_pool: web::Data<Pool>) -> impl Responder {
 
     let client: Client = dp_pool.get().await.map_err(MyError::PoolError).unwrap();
 
-    let result = db::get_users(&client).await;
+    let result: Result<_, _> = db::get_users(&client).await;
 
     match result {
         Ok(users) => HttpResponse::Ok().json(users),
@@ -33,7 +24,7 @@ async fn get_users(dp_pool: web::Data<Pool>) -> impl Responder {
 }
 
 #[post("/users")]
-async fn add_user(user: web::Json<models::User>, db_pool: web::Data<Pool>) -> impl Responder {
+async fn add_user(user: web::Json<User>, db_pool: web::Data<Pool>) -> impl Responder {
     let user_info: User = user.into_inner();
 
     let result = db_pool.get().await.map_err(MyError::PoolError);
@@ -61,15 +52,7 @@ async fn main() -> std::io::Result<()> {
         .try_build()
         .unwrap();
 
-    let pool = config.pg.create_pool(None, NoTls).expect("Failed to connect to DB");
-
-    let mut conn = pool.get().await.unwrap();
-
-    let client = conn.deref_mut().deref_mut();
-
-    let report = embedded::migrations::runner().run_async(client).await.expect("Migration failed");
-
-    println!("Migration report: {report:?}");
+    let pool = connection_builder(config.pg).await.unwrap();
 
     let server = HttpServer::new(move || {
         App::new()
