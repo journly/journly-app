@@ -1,3 +1,4 @@
+// this code will not run
 use barrel::{types, Migration, backend::Pg};
 
 pub fn migration() -> String {
