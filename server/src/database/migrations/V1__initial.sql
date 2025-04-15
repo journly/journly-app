@@ -78,7 +78,7 @@ CREATE TABLE itinerary_activities (
     start_time TIME,
     end_time TIME,
     expense_id UUID,
-    notes jsonb
+    notes TEXT NOT NULL
 );
 
 CREATE TABLE attachments (
@@ -131,7 +131,8 @@ CREATE TABLE coordinates (
 
 CREATE TABLE markers (
     id UUID PRIMARY KEY,
-    coordinates_id UUID NOT NULL
+    coordinates_id UUID NOT NULL,
+    activity_id UUID NOT NULL
 );
 
 CREATE TABLE expense_payers (
@@ -143,7 +144,7 @@ CREATE TABLE expense_payers (
 CREATE TABLE journals (
     id UUID PRIMARY KEY,
     owner_id UUID NOT NULL,
-    content jsonb,
+    content TEXT NOT NULL,
     last_edit TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -188,6 +189,7 @@ ALTER TABLE maps ADD CONSTRAINT fk_user_maps FOREIGN KEY (user_id) REFERENCES us
 ALTER TABLE maps ADD CONSTRAINT fk_coordinates_maps FOREIGN KEY (coordinates_id) REFERENCES coordinates(id);
 
 ALTER TABLE markers ADD CONSTRAINT fk_coordinates_markers FOREIGN KEY (coordinates_id) REFERENCES coordinates(id);
+ALTER TABLE markers ADD CONSTRAINT fk_activities_markers FOREIGN KEY (activity_id) REFERENCES itinerary_activities(id);
 
 ALTER TABLE expense_payers ADD CONSTRAINT fk_expense_payers FOREIGN KEY (expense_id) REFERENCES expenses(id);
 ALTER TABLE expense_payers ADD CONSTRAINT fk_user_payers FOREIGN KEY (user_id) REFERENCES users(id);

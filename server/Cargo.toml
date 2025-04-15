@@ -6,13 +6,17 @@ edition = "2024"
 [dependencies]
 actix-web = "4"
 barrel = {version = "0.7.0", features=["pg"]}
+chrono = {version="0.4.40", features = ["serde"]}
 confik = "0.13.0"
 deadpool-postgres = {version = "0.14.1", features = ["serde"]}
 derive_more = "2.0.1"
 dotenvy = "0.15.7"
 refinery = {version = "0.8.16", features = ["tokio-postgres"]}
+rust_decimal = { version = "1.37.1", features = ["serde", "db-tokio-postgres"] }
 serde = "1.0.219"
+serde_json = "1.0.140"
+time = {version="0.3.41", features=["serde"]}
 tokio-pg-mapper = "0.2.0"
 tokio-pg-mapper-derive = "0.2.0"
-tokio-postgres = {version = "0.7.13", features = ["with-uuid-1"]}
+tokio-postgres = {version = "0.7.13", features = ["with-uuid-1", "with-chrono-0_4", "with-serde_json-1", "with-time-0_3"]}
 uuid = {version = "1.16.0", features = ["v4", "serde"]}

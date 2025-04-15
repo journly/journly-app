@@ -35,6 +35,22 @@ You can access the environment through CLI by running:
 docker exec -it journaly_postgres psql -U postgres
 ```
 
+Alternatively (visual solution), you can connect to the Postgres server using PgAdmin:
+1. Open PgAdmin
+2. Right-click the **Servers** drop-down tab and click **register** > **server**
+3. Name the server anything (e.g. Journaly Postgres)
+4. In the connections tab, fill in the following inputs with the corresponding values:
+   ```
+   Host name/address: localhost
+   Port: 5431
+   Maintenance database: postgres
+   Username: postgres
+   Password: postgres
+   ```
+5. Any remaining inputs can be left unchanged
+6. Now, hit save and a connection should be established!
+
+**IMPORTANT:** Upon connecting to the Postgres Server, create a new database called `test`, so that the backend server and perform migrations.
 
 ## Set up Redis
 Redis can only be installed in a Linux environment. So just use docker.

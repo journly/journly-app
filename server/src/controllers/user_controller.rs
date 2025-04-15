@@ -1,7 +1,7 @@
 use deadpool_postgres::Client;
 use tokio_pg_mapper::FromTokioPostgresRow;
 
-use crate::{errors::MyError, models::user::User};
+use crate::{errors::MyError, models::User};
 
 pub async fn get_users(client: &Client) -> Result<Vec<User>, MyError> {
     let stmt = include_str!("../database/sql/get_users.sql");
@@ -28,10 +28,10 @@ pub async fn add_user(client: &Client, user_info: User) -> Result<User, MyError>
             &stmt,
             &[
                 &user_info.id,
-                &user_info.email,
-                &user_info.first_name,
-                &user_info.last_name,
                 &user_info.username,
+                &user_info.email,
+                &user_info.password_hash,
+                &user_info.profile_picture_url,
             ],
         )
         .await?
