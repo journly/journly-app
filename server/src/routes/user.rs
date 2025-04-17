@@ -1,7 +1,7 @@
 use actix_web::{get, post, web, HttpResponse, Responder};
 use deadpool_postgres::{Client, Pool};
 
-use crate::{controllers::user_controller, errors::MyError, models::User};
+use crate::{controllers::user_controller, errors::MyError, models::schema::User};
 
 #[get("/users")]
 async fn get_users(dp_pool: web::Data<Pool>) -> impl Responder {

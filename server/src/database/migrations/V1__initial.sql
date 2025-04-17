@@ -19,10 +19,11 @@ DROP TABLE IF EXISTS users;
 
 CREATE TABLE users (
     id UUID PRIMARY KEY,
+    display_name VARCHAR(50),
     username VARCHAR(50) NOT NULL UNIQUE,
-    email VARCHAR(100) NOT NULL UNIQUE,
+    email VARCHAR(100) UNIQUE,
     password_hash TEXT NOT NULL,
-    profile_picture_url VARCHAR(255)
+    profile_picture_id UUID
 );
 
 CREATE TABLE user_trips (
@@ -156,6 +157,7 @@ CREATE TABLE user_journals (
 );
 
 -- Foreign Keys
+ALTER TABLE users ADD CONSTRAINT fk_files_users FOREIGN KEY (profile_picture_id) REFERENCES files(id)
 
 ALTER TABLE user_trips ADD CONSTRAINT fk_user_user_trips FOREIGN KEY (user_id) REFERENCES users(id);
 ALTER TABLE user_trips ADD CONSTRAINT fk_trip_user_trips FOREIGN KEY (trip_id) REFERENCES trips(id);
