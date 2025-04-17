@@ -1,10 +1,10 @@
-use actix_web::http::header::Date;
 use serde::{Deserialize, Serialize};
 use tokio_pg_mapper_derive::PostgresMapper;
 use uuid::Uuid;
 use rust_decimal::Decimal;
 use time::PrimitiveDateTime;
 use chrono::{NaiveDate, DateTime, Utc};
+use typeshare::typeshare;
 
 /// --- Taken from rust-postgres repository ---
 ///  
@@ -60,6 +60,7 @@ use chrono::{NaiveDate, DateTime, Utc};
 /// |                                 | NAME, UNKNOWN, LTREE, LQUERY,       |
 /// |                                 | LTXTQUERY                           |
 
+#[typeshare]
 #[derive(Deserialize, PostgresMapper, Serialize)]
 #[pg_mapper(table = "users")] // singular 'user' is a keyword..
 pub struct User {
@@ -70,6 +71,7 @@ pub struct User {
     pub profile_picture_url: Option<String>
 }
 
+#[typeshare]
 #[derive(Deserialize, PostgresMapper, Serialize)]
 #[pg_mapper(table = "user_trips")]
 pub struct UserTrip {
@@ -77,6 +79,7 @@ pub struct UserTrip {
     pub user_id: Uuid
 }
 
+#[typeshare]
 #[derive(Deserialize, PostgresMapper, Serialize)]
 #[pg_mapper(table = "trips")]
 pub struct Trip {
@@ -87,6 +90,7 @@ pub struct Trip {
     pub dates_id: Uuid
 }
 
+#[typeshare]
 #[derive(Deserialize, PostgresMapper, Serialize)]
 #[pg_mapper(table = "dates")]
 pub struct Dates {
@@ -95,6 +99,7 @@ pub struct Dates {
     pub end_date: NaiveDate
 }
 
+#[typeshare]
 #[derive(Deserialize, PostgresMapper, Serialize)]
 #[pg_mapper(table = "sections")]
 pub struct Section {
@@ -104,6 +109,7 @@ pub struct Section {
     pub order_rank: i16
 }
 
+#[typeshare]
 #[derive(Deserialize, PostgresMapper, Serialize)]
 #[pg_mapper(table = "itineraries")]
 pub struct Itinerary {
@@ -113,6 +119,7 @@ pub struct Itinerary {
     pub map_id: Uuid
 }
 
+#[typeshare]
 #[derive(Deserialize, PostgresMapper, Serialize)]
 #[pg_mapper(table = "widgets")]
 pub struct Widget {
@@ -125,6 +132,7 @@ pub struct Widget {
     pub content: serde_json::Value
 }
 
+#[typeshare]
 #[derive(Deserialize, PostgresMapper, Serialize)]
 #[pg_mapper(table = "itinerary_activities")]
 pub struct ItineraryActivity {
@@ -139,6 +147,7 @@ pub struct ItineraryActivity {
     pub notes: String
 }
 
+#[typeshare]
 #[derive(Deserialize, PostgresMapper, Serialize)]
 #[pg_mapper(table = "attachments")]
 pub struct Attachment {
@@ -147,6 +156,7 @@ pub struct Attachment {
     pub activity_id: Option<Uuid>
 }
 
+#[typeshare]
 #[derive(Deserialize, PostgresMapper, Serialize)]
 #[pg_mapper(table = "budgeting_trackers")]
 pub struct BudgetingTracker {
@@ -156,6 +166,7 @@ pub struct BudgetingTracker {
     pub currency: String
 }
 
+#[typeshare]
 #[derive(Deserialize, PostgresMapper, Serialize)]
 #[pg_mapper(table = "expense")]
 pub struct Expense {
@@ -167,6 +178,7 @@ pub struct Expense {
     pub split_type: String
 }
 
+#[typeshare]
 #[derive(Deserialize, PostgresMapper, Serialize)]
 #[pg_mapper(table = "files")]
 pub struct File {
@@ -179,6 +191,7 @@ pub struct File {
     pub created_at: DateTime<Utc>
 }
 
+#[typeshare]
 #[derive(Deserialize, PostgresMapper, Serialize)]
 #[pg_mapper(table = "maps")]
 pub struct Map {
@@ -189,6 +202,7 @@ pub struct Map {
     pub coordinates_id: Uuid
 }
 
+#[typeshare]
 #[derive(Deserialize, PostgresMapper, Serialize)]
 #[pg_mapper(table = "coordinates")]
 pub struct Coordinate {
@@ -197,6 +211,7 @@ pub struct Coordinate {
     pub latitude: f64
 }
 
+#[typeshare]
 #[derive(Deserialize, PostgresMapper, Serialize)]
 #[pg_mapper(table = "markers")]
 pub struct Marker {
@@ -205,6 +220,7 @@ pub struct Marker {
     pub activity_id: Uuid
 }
 
+#[typeshare]
 #[derive(Deserialize, PostgresMapper, Serialize)]
 #[pg_mapper(table = "expense_payers")]
 pub struct ExpensePayer {
@@ -212,6 +228,7 @@ pub struct ExpensePayer {
     pub user_id: Uuid,
 }
 
+#[typeshare]
 #[derive(Deserialize, PostgresMapper, Serialize)]
 #[pg_mapper(table = "journals")]
 pub struct Journal {
@@ -222,6 +239,7 @@ pub struct Journal {
     pub created_at: DateTime<Utc>
 }
 
+#[typeshare]
 #[derive(Deserialize, PostgresMapper, Serialize)]
 #[pg_mapper(table = "user_journals")]
 pub struct UserJournal {
