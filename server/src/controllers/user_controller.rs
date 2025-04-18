@@ -2,15 +2,15 @@ use deadpool_postgres::Client;
 use tokio_pg_mapper::FromTokioPostgresRow;
 use uuid::Uuid;
 use argon2::{ password_hash::{ rand_core::OsRng, PasswordHasher, SaltString }, Argon2 };
-use crate::{errors::MyError, models::{schema::User, users::{AddUser, NewUserDetails}}, routes::user};
+use crate::{errors::MyError, models::{schema::User, users::{AddUser, NewUserDetails}}};
 
-pub async fn get_users(client: &Client) -> Result<Vec<User>, MyError> {
+pub async fn get_users(db_client: &Client) -> Result<Vec<User>, MyError> {
     let stmt = include_str!("./sql/user_controllers/get_users.sql");
     let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
-    let stmt = client.prepare(&stmt).await.unwrap();
+    let stmt = db_client.prepare(&stmt).await.unwrap();
 
     Ok(
-        client
+        db_client
         .query(&stmt, &[])
         .await?
         .iter()
@@ -19,10 +19,10 @@ pub async fn get_users(client: &Client) -> Result<Vec<User>, MyError> {
     )
 }
 
-pub async fn add_user(client: &Client, new_user: AddUser) -> Result<User, MyError> {
+pub async fn add_user(db_client: &Client, new_user: AddUser) -> Result<User, MyError> {
     let stmt = include_str!("./sql/user_controllers/add_user.sql");
     let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
-    let stmt = client.prepare(&stmt).await.unwrap();
+    let stmt = db_client.prepare(&stmt).await.unwrap();
 
     let salt = SaltString::generate(&mut OsRng);
 
@@ -35,7 +35,7 @@ pub async fn add_user(client: &Client, new_user: AddUser) -> Result<User, MyErro
     
     let user_id = Uuid::new_v4();
 
-    client
+    db_client
         .query(
             &stmt,
             &[
@@ -53,14 +53,14 @@ pub async fn add_user(client: &Client, new_user: AddUser) -> Result<User, MyErro
         .ok_or(MyError::NotFound) // more applicable for SELECTs
 }
 
-pub async fn get_user(client: &Client, user_id: Uuid) -> Result<User, MyError> {
+pub async fn get_user(db_client: &Client, user_id: Uuid) -> Result<User, MyError> {
     let stmt = include_str!("./sql/user_controllers/get_user.sql");
     let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
     let stmt = stmt.replace("$user_id", &format!("'{}'", user_id.to_string()));
     println!("{}", stmt);
-    let stmt = client.prepare(&stmt).await.unwrap();
+    let stmt = db_client.prepare(&stmt).await.unwrap();
 
-    client
+    db_client
         .query(&stmt, &[])
         .await?
         .iter()
@@ -70,7 +70,7 @@ pub async fn get_user(client: &Client, user_id: Uuid) -> Result<User, MyError> {
         .ok_or(MyError::NotFound) 
 }
 
-pub async fn update_user_details(client: &Client, new_user_details: NewUserDetails, user_id: Uuid) -> Result<User, MyError> {
+pub async fn update_user_details(db_client: &Client, new_user_details: NewUserDetails, user_id: Uuid) -> Result<User, MyError> {
     let mut updates: Vec<String> = Vec::new(); 
 
     if let Some(display_name) = new_user_details.display_name {
@@ -92,10 +92,10 @@ pub async fn update_user_details(client: &Client, new_user_details: NewUserDetai
     let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
     let stmt = stmt.replace("$user_id", &format!("'{}'", user_id.to_string()));
     let stmt = stmt.replace("$new_info", &updates.join(", "));
-    let stmt = client.prepare(&stmt).await.unwrap();
+    let stmt = db_client.prepare(&stmt).await.unwrap();
 
 
-    client
+    db_client
         .query(&stmt, &[])
         .await?
         .iter()
@@ -105,13 +105,13 @@ pub async fn update_user_details(client: &Client, new_user_details: NewUserDetai
         .ok_or(MyError::NotFound)
 }
 
-pub async fn delete_user(client: &Client, user_id: Uuid) -> Result<User, MyError> {
+pub async fn delete_user(db_client: &Client, user_id: Uuid) -> Result<User, MyError> {
     let stmt = include_str!("./sql/user_controllers/delete_user.sql");
     let stmt = stmt.replace("$user_id", &format!("'{}'", user_id.to_string()));
     let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
-    let stmt = client.prepare(&stmt).await.unwrap();
+    let stmt = db_client.prepare(&stmt).await.unwrap();
 
-    client.
+    db_client.
         query(&stmt, &[])
         .await?
         .iter()

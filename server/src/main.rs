@@ -2,6 +2,7 @@ use actix_web::{ web, App, HttpServer };
 use confik::{ Configuration, EnvSource };
 use database::{config::ExampleConfig, db::connection_builder};
 
+use deadpool_postgres::{Manager, Pool};
 use dotenvy::dotenv;
 use routes::user;
 
@@ -10,6 +11,11 @@ mod errors;
 mod database;
 mod routes;
 mod controllers;
+
+
+struct Client {
+    db: Pool
+}
 
 
 #[actix_web::main]

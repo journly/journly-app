@@ -1,8 +1,10 @@
+use actix_multipart::{form::{json::Json, tempfile::TempFile, MultipartForm}, Multipart};
 use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
 use deadpool_postgres::{Client, Pool};
+use serde::Deserialize;
 use uuid::Uuid;
 
-use crate::{controllers::user_controller, errors::MyError, models::{schema::User, users::{AddUser, NewUserDetails}}};
+use crate::{controllers::user_controller, errors::MyError, models::users::{AddUser, NewUserDetails}};
 
 #[get("")]
 async fn get_users(dp_pool: web::Data<Pool>) -> impl Responder {
@@ -92,4 +94,34 @@ async fn delete_user(path: web::Path<Uuid>, dp_pool: web::Data<Pool>) -> impl Re
         },
         Err(_) => HttpResponse::InternalServerError().into()
     }
+}
+
+#[get("/{user_id}/profile_picture")]
+async fn get_profile_picture(path: web::Path<Uuid>, dp_pool: web::Data<Pool>) -> impl Responder {
+    let user_id = path.into_inner();
+
+    let result 
+}
+
+#[derive(Debug, Deserialize)]
+struct Metadata {
+    name: String
+}
+
+#[derive(Debug, MultipartForm)]
+struct UploadForm {
+    #[multipart(limit = "10MB")]
+    file: TempFile,
+    json: Json<Metadata>
+}
+
+#[post("/{user_id}/profile_picture")]
+async fn set_profile_picture(
+    path: web::Path<Uuid>, 
+    MultipartForm(form): MultipartForm<UploadForm>, 
+    dp_pool: web::Data<Pool>) -> impl Responder 
+{
+    let user_id = path.into_inner();
+
+    Ok() 
 }
