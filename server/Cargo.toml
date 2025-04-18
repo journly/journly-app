@@ -22,3 +22,4 @@ tokio-postgres = {version = "0.7.13", features = ["with-uuid-1", "with-chrono-0_
 uuid = {version = "1.16.0", features = ["v4", "serde"]}
 typeshare = "1.0.0"
 argon2 = {version = "0.5.3", features=["default", "std"]}
+actix-multipart = "0.7.2"

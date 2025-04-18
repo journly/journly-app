@@ -3,7 +3,7 @@ use confik::{ Configuration, EnvSource };
 use database::{config::ExampleConfig, db::connection_builder};
 
 use dotenvy::dotenv;
-use routes::user::{add_user, get_users};
+use routes::user;
 
 mod models;
 mod errors;
@@ -26,8 +26,14 @@ async fn main() -> std::io::Result<()> {
     let server = HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(pool.clone()))
-            .service(get_users)
-            .service(add_user)
+            .service(
+                web::scope("/users")
+                .service(user::get_user)
+                .service(user::get_users)
+                .service(user::add_user)
+                .service(user::update_user)
+                .service(user::delete_user)
+            )
     })
         .bind((config.server_addr.clone(), config.dev_port.clone()))?
         .run();

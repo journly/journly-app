@@ -4,13 +4,15 @@
 
 ## User Endpoints
 
-| Method   | Endpoint     | Description                      |
-| -------- | ------------ | -------------------------------- |
-| `GET`    | `/users`     | Get all users (maybe admin-only) |
-| `POST`   | `/users`     | Register a new user              |
-| `GET`    | `/users/:id` | Get a specific user              |
-| `PUT`    | `/users/:id` | Update user profile              |
-| `DELETE` | `/users/:id` | Delete/deactivate a user         |
+| Method   | Endpoint                     | Description                       |
+| -------- | ---------------------------- | --------------------------------- |
+| `GET`    | `/users`                     | Get all users (maybe admin-only)  |
+| `POST`   | `/users`                     | Register a new user               |
+| `GET`    | `/users/:id`                 | Get a specific user               |
+| `PUT`    | `/users/:id`                 | Update user profile               |
+| `DELETE` | `/users/:id`                 | Delete/deactivate a user          |
+| `PUT`    | `/users/:id/profile_picture` | Adds/updates user profile picture |
+| `DELETE` | `/users/:id/profile_picture` | Removes user profile picture      |
 
 ## Auth Endpoints
 

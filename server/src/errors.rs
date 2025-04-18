@@ -4,14 +4,14 @@ use derive_more::{Display, Error, From};
 use tokio_pg_mapper::Error as PGMError;
 use tokio_postgres::error::Error as PGError;
 
-
+#[allow(dead_code)]
 #[derive(Debug, Display, Error, From)]
 pub enum MyError {
     NotFound,
+    InternalError,
     PGError(PGError),
     PGMError(PGMError),
-    PoolError(PoolError),
-    InternalError
+    PoolError(PoolError)
 }
 
 impl ResponseError for MyError {
@@ -20,7 +20,7 @@ impl ResponseError for MyError {
             MyError::NotFound => HttpResponse::NotFound().finish(),
             MyError::PoolError(ref err) => {
                 HttpResponse::InternalServerError().body(err.to_string())
-            }
+            },
             _ => HttpResponse::InternalServerError().finish(),
         }
     }

@@ -1,3 +1,3 @@
-INSERT INTO public.users(id, email, first_name, last_name, username)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO public.users(id, display_name, username, password_hash)
+VALUES ($1, $2, $3, $4)
 RETURNING $table_fields;

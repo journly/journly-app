@@ -1,1 +1,1 @@
-SELECT $table_fields WHERE id = $user_id FROM public.users;
+SELECT $table_fields FROM public.users;

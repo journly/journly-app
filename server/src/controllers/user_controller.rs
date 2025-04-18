@@ -2,7 +2,7 @@ use deadpool_postgres::Client;
 use tokio_pg_mapper::FromTokioPostgresRow;
 use uuid::Uuid;
 use argon2::{ password_hash::{ rand_core::OsRng, PasswordHasher, SaltString }, Argon2 };
-use crate::{errors::MyError, models::{schema::User, users::NewUserDetails}};
+use crate::{errors::MyError, models::{schema::User, users::{AddUser, NewUserDetails}}, routes::user};
 
 pub async fn get_users(client: &Client) -> Result<Vec<User>, MyError> {
     let stmt = include_str!("./sql/user_controllers/get_users.sql");
@@ -19,22 +19,30 @@ pub async fn get_users(client: &Client) -> Result<Vec<User>, MyError> {
     )
 }
 
-pub async fn add_user(client: &Client, mut user_info: User) -> Result<User, MyError> {
+pub async fn add_user(client: &Client, new_user: AddUser) -> Result<User, MyError> {
     let stmt = include_str!("./sql/user_controllers/add_user.sql");
     let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
     let stmt = client.prepare(&stmt).await.unwrap();
+
+    let salt = SaltString::generate(&mut OsRng);
+
+    let argon2 = Argon2::default();
+
+    let password_hash = match argon2.hash_password(new_user.password.as_bytes(), &salt) {
+        Ok(hash) => hash.to_string(),
+        Err(_) => return Err(MyError::InternalError)
+    };
     
-    user_info.id = Uuid::new_v4();
+    let user_id = Uuid::new_v4();
+
     client
         .query(
             &stmt,
             &[
-                &user_info.id,
-                &user_info.display_name,
-                &user_info.username,
-                &user_info.email,
-                &user_info.password_hash,
-                &user_info.profile_picture_id,
+                &user_id,
+                &new_user.display_name,
+                &new_user.username,
+                &password_hash,
             ],
         )
         .await?
@@ -48,7 +56,8 @@ pub async fn add_user(client: &Client, mut user_info: User) -> Result<User, MyEr
 pub async fn get_user(client: &Client, user_id: Uuid) -> Result<User, MyError> {
     let stmt = include_str!("./sql/user_controllers/get_user.sql");
     let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
-    let stmt = stmt.replace("$user_id", &user_id.to_string());
+    let stmt = stmt.replace("$user_id", &format!("'{}'", user_id.to_string()));
+    println!("{}", stmt);
     let stmt = client.prepare(&stmt).await.unwrap();
 
     client
@@ -65,7 +74,7 @@ pub async fn update_user_details(client: &Client, new_user_details: NewUserDetai
     let mut updates: Vec<String> = Vec::new(); 
 
     if let Some(display_name) = new_user_details.display_name {
-        updates.push(format!("display_name = {}", display_name).to_string());
+        updates.push(format!("display_name = '{}'", display_name).to_string());
     }
 
     if let Some(password) = new_user_details.password {
@@ -74,14 +83,14 @@ pub async fn update_user_details(client: &Client, new_user_details: NewUserDetai
         let argon2 = Argon2::default();
 
         match argon2.hash_password(password.as_bytes(), &salt) {
-            Ok(hash) => updates.push(format!("password_hash = {}", hash.to_string())),
+            Ok(hash) => updates.push(format!("password_hash = '{}'", hash.to_string())),
             Err(_) => return Err(MyError::InternalError)
         }
     }
     
     let stmt = include_str!("./sql/user_controllers/update_user.sql");
     let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
-    let stmt = stmt.replace("$user_id", &user_id.to_string());
+    let stmt = stmt.replace("$user_id", &format!("'{}'", user_id.to_string()));
     let stmt = stmt.replace("$new_info", &updates.join(", "));
     let stmt = client.prepare(&stmt).await.unwrap();
 
@@ -97,8 +106,8 @@ pub async fn update_user_details(client: &Client, new_user_details: NewUserDetai
 }
 
 pub async fn delete_user(client: &Client, user_id: Uuid) -> Result<User, MyError> {
-    let stmt = include_str!("./sql/user_controllers/update_user.sql");
-    let stmt = stmt.replace("$user_id", &user_id.to_string());
+    let stmt = include_str!("./sql/user_controllers/delete_user.sql");
+    let stmt = stmt.replace("$user_id", &format!("'{}'", user_id.to_string()));
     let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
     let stmt = client.prepare(&stmt).await.unwrap();
 
@@ -111,3 +120,7 @@ pub async fn delete_user(client: &Client, user_id: Uuid) -> Result<User, MyError
         .pop()
         .ok_or(MyError::NotFound)
 }
+
+// pub async update_user_profile_picture(client: &Client, user_id: Uuid) {
+    
+// }
