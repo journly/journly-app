@@ -13,6 +13,9 @@
 | `DELETE` | `/users/:id`                 | Delete/deactivate a user          |
 | `PUT`    | `/users/:id/profile-picture` | Adds/updates user profile picture |
 | `DELETE` | `/users/:id/profile-picture` | Removes user profile picture      |
+| `GET`    | `/users/:id/trips`           | Gets all user trips               |
+| `GET`    | `/users/:id/trip-invites`    | Gets all user trip invites        |
+
 
 ## Session Endpoints
 
@@ -37,9 +40,8 @@
   
 | Method   | Endpoint                     | Description                                         |
 | -------- | ---------------------------- | --------------------------------------------------- |
-| `GET`    | `/trips`                     | Get all trips                                       |`
+| `GET`    | `/trips`                     | Get all trips                                       |
 | `POST`   | `/trips`                     | Create new trip                                     |
-| `GET`    | `/trips?user={id}`           | Get all trips for a specific user                   |
 | `GET`    | `/trips/:id`                 | Get a specific trip with all its sections + widgets |
 | `PUT`    | `/trips/:id`                 | Update trip                                         |
 | `DELETE` | `/trips/:id`                 | Delete specific trip                                |
