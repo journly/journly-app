@@ -1,22 +1,12 @@
 use actix_web::{ web, App, HttpServer };
 use confik::{ Configuration, EnvSource };
 use database::{config::ExampleConfig, db::connection_builder};
-
-use deadpool_postgres::{Manager, Pool};
 use dotenvy::dotenv;
-use routes::user;
 
 mod models;
 mod errors;
 mod database;
-mod routes;
 mod controllers;
-
-
-struct Client {
-    db: Pool
-}
-
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -32,14 +22,9 @@ async fn main() -> std::io::Result<()> {
     let server = HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(pool.clone()))
-            .service(
-                web::scope("/users")
-                .service(user::get_user)
-                .service(user::get_users)
-                .service(user::add_user)
-                .service(user::update_user)
-                .service(user::delete_user)
-            )
+            .configure(controllers::init_user_controller)
+            .configure(controllers::init_trip_controller)
+            
     })
         .bind((config.server_addr.clone(), config.dev_port.clone()))?
         .run();
