@@ -1,1 +1,0 @@
-SELECT $table_fields FROM public.users WHERE users.id = $user_id;

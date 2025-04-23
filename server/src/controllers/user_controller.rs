@@ -22,14 +22,18 @@ async fn get_users(dp_pool: web::Data<Pool>) -> impl Responder {
 
     match result {
         Ok(client) => {
-            let stmt = include_str!("./sql/user_controller/get_users.sql");
+            let stmt = 
+            r#"
+            SELECT $table_fields FROM public.users;
+            "#;
+
             let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
             let stmt = client.prepare(&stmt).await.unwrap();
         
             let user = client
                 .query(&stmt, &[])
                 .await
-                .unwrap_or(Vec::new())
+                .unwrap_or_else(|_| Vec::new())
                 .iter()
                 .map(|row| User::from_row_ref(row).unwrap())
                 .collect::<Vec<User>>();
@@ -48,7 +52,12 @@ async fn add_user(new_user: web::Json<AddUser>, db_pool: web::Data<Pool>) -> imp
 
     match result {
         Ok(client) => {
-            let stmt = include_str!("./sql/user_controller/add_user.sql");
+            let stmt = 
+            r#"
+            INSERT INTO public.users(id, display_name, username, password_hash)
+            VALUES ($1, $2, $3, $4)
+            RETURNING $table_fields;
+            "#;
             let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
             let stmt = client.prepare(&stmt).await.unwrap();
         
@@ -74,7 +83,7 @@ async fn add_user(new_user: web::Json<AddUser>, db_pool: web::Data<Pool>) -> imp
                     ],
                 )
                 .await
-                .unwrap_or(Vec::new())
+                .unwrap_or_else(|_| Vec::new())
                 .iter()
                 .map(|row| User::from_row_ref(row).unwrap())
                 .collect::<Vec<User>>()
@@ -98,7 +107,10 @@ async fn get_user(path: web::Path<Uuid>, db_pool: web::Data<Pool>) -> impl Respo
 
     match result {
         Ok(client) => {
-            let stmt = include_str!("./sql/user_controller/get_user.sql");
+            let stmt = 
+            r#"
+            SELECT $table_fields FROM public.users WHERE users.id = $user_id;
+            "#;
             let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
             let stmt = stmt.replace("$user_id", &format!("'{}'", user_id.to_string()));
             println!("{}", stmt);
@@ -107,7 +119,7 @@ async fn get_user(path: web::Path<Uuid>, db_pool: web::Data<Pool>) -> impl Respo
             let result = client
                 .query(&stmt, &[])
                 .await
-                .unwrap_or(Vec::new())
+                .unwrap_or_else(|_| Vec::new())
                 .iter()
                 .map(|row| User::from_row_ref(row).unwrap())
                 .collect::<Vec<User>>()
@@ -149,7 +161,12 @@ async fn update_user(path: web::Path<Uuid>, data: web::Json<NewUserDetails>, db_
                 }
             }
             
-            let stmt = include_str!("./sql/user_controller/update_user.sql");
+            let stmt = 
+            r#"
+            UPDATE public.users 
+            SET $new_info WHERE id = $user_id
+            RETURNING $table_fields;
+            "#;
             let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
             let stmt = stmt.replace("$user_id", &format!("'{}'", user_id.to_string()));
             let stmt = stmt.replace("$new_info", &updates.join(", "));
@@ -159,7 +176,7 @@ async fn update_user(path: web::Path<Uuid>, data: web::Json<NewUserDetails>, db_
             let result = client
                 .query(&stmt, &[])
                 .await
-                .unwrap_or(Vec::new())
+                .unwrap_or_else(|_| Vec::new())
                 .iter()
                 .map(|row| User::from_row_ref(row).unwrap())
                 .collect::<Vec<User>>()
@@ -183,7 +200,11 @@ async fn delete_user(path: web::Path<Uuid>, dp_pool: web::Data<Pool>) -> impl Re
 
     match result {
         Ok(client) => {
-            let stmt = include_str!("./sql/user_controller/delete_user.sql");
+            let stmt = 
+            r#"
+            DELETE FROM public.users WHERE id = $user_id
+            RETURNING $table_fields;
+            "#;
             let stmt = stmt.replace("$user_id", &format!("'{}'", user_id.to_string()));
             let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
             let stmt = client.prepare(&stmt).await.unwrap();
@@ -191,7 +212,7 @@ async fn delete_user(path: web::Path<Uuid>, dp_pool: web::Data<Pool>) -> impl Re
             let result = client.
                 query(&stmt, &[])
                 .await
-                .unwrap_or(Vec::new())
+                .unwrap_or_else(|_| Vec::new())
                 .iter()
                 .map(|row| User::from_row_ref(row).unwrap())
                 .collect::<Vec<User>>()
