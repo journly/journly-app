@@ -1,5 +1,5 @@
 pub mod schema;
 
-pub mod users;
+pub mod api;
 
-pub mod trips;
+pub mod data_access_objects;

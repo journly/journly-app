@@ -1,26 +1,48 @@
-use std::ops::DerefMut;
+use crate::models::data_access_objects::{JoinTable, Table};
+use crate::models::schema;
 use deadpool_postgres::{Config, Pool};
-use dotenvy::dotenv;
+use schema::{Trip, User};
+use std::{ops::DerefMut, sync::Arc};
 use tokio_postgres::NoTls;
-use crate::errors::MyError;
 
 mod embedded {
     use refinery::embed_migrations;
-    embed_migrations!("./src/database/migrations");
+    embed_migrations!("./src/migrations");
 }
 
-pub async fn connection_builder(pg: Config) -> Result<Pool, MyError> {
-    dotenv().ok();
+pub struct Database {
+    pub users: Arc<Table<User>>,
+    pub trips: Arc<Table<Trip>>,
+    pub users_trips: Arc<JoinTable<User, Trip>>,
+}
 
-    let pool = pg.create_pool(None, NoTls).expect("Failed to connect to DB");
+impl Database {
+    pub async fn new(pg_config: Config, redis_addr: String) -> Self {
+        let pg_pool = pg_config
+            .create_pool(None, NoTls)
+            .expect("Failed to connect to DB");
 
-    let mut conn = pool.get().await.unwrap();
+        Self::run_migrations(pg_pool.clone());
 
-    let client = conn.deref_mut().deref_mut();
+        let redis_client = redis::Client::open(redis_addr).unwrap();
 
-    let report = embedded::migrations::runner().run_async(client).await.expect("Migration failed");
+        let redis_pool = r2d2::Pool::builder().build(redis_client).unwrap();
 
-    println!("Migration report: {report:?}");
+        Self {
+            users: Arc::from(Table::new(pg_pool.clone(), redis_pool.clone())),
+            trips: Arc::from(Table::new(pg_pool.clone(), redis_pool.clone())),
+            users_trips: Arc::from(JoinTable::new(pg_pool.clone(), redis_pool.clone())),
+        }
+    }
 
-    Ok(pool)
+    async fn run_migrations(pg_pool: Pool) {
+        let mut conn = pg_pool.get().await.unwrap();
+
+        let client = conn.deref_mut().deref_mut();
+
+        match embedded::migrations::runner().run_async(client).await {
+            Ok(report) => println!("Migration report: {report:?}"),
+            Err(_) => println!("Migration failed."),
+        }
+    }
 }

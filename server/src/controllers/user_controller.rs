@@ -1,11 +1,17 @@
-use actix_multipart::{form::{json::Json, tempfile::TempFile, MultipartForm}, Multipart};
 use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
-use argon2::{ password_hash::{ rand_core::OsRng, PasswordHasher, SaltString }, Argon2 };
-use deadpool_postgres::Pool;
-use tokio_pg_mapper::FromTokioPostgresRow;
+use argon2::{
+    password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
+    Argon2,
+};
 use uuid::Uuid;
 
-use crate::{errors::MyError, models::{schema::User, users::{AddUser, NewUserDetails}}};
+use crate::{
+    models::{
+        api::users::{AddUser, UpdateUser},
+        schema::User,
+    },
+    util::AppData,
+};
 
 pub fn init(cfg: &mut web::ServiceConfig) {
     cfg.service(get_user);
@@ -16,224 +22,106 @@ pub fn init(cfg: &mut web::ServiceConfig) {
 }
 
 #[get("/users")]
-async fn get_users(dp_pool: web::Data<Pool>) -> impl Responder {
-
-    let result = dp_pool.get().await.map_err(MyError::PoolError);
+async fn get_users(app_data: web::Data<AppData>) -> impl Responder {
+    let result = app_data.db.users.get_users().await;
 
     match result {
-        Ok(client) => {
-            let stmt = 
-            r#"
-            SELECT $table_fields FROM public.users;
-            "#;
-
-            let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
-            let stmt = client.prepare(&stmt).await.unwrap();
-        
-            let user = client
-                .query(&stmt, &[])
-                .await
-                .unwrap_or_else(|_| Vec::new())
-                .iter()
-                .map(|row| User::from_row_ref(row).unwrap())
-                .collect::<Vec<User>>();
-        
-            HttpResponse::Ok().json(user)
-        }
-        Err(_) => HttpResponse::InternalServerError().into()
+        Ok(users) => HttpResponse::Ok().json(users),
+        Err(_) => HttpResponse::InternalServerError().finish(),
     }
 }
 
 #[post("/users")]
-async fn add_user(new_user: web::Json<AddUser>, db_pool: web::Data<Pool>) -> impl Responder {
+async fn add_user(new_user: web::Json<AddUser>, app_data: web::Data<AppData>) -> impl Responder {
     let new_user = new_user.into_inner();
 
-    let result = db_pool.get().await.map_err(MyError::PoolError);
+    let salt = SaltString::generate(&mut OsRng);
+
+    let argon2 = Argon2::default();
+
+    let password_hash: String;
+    if let Ok(hash) = argon2.hash_password(new_user.password.as_bytes(), &salt) {
+        password_hash = hash.to_string();
+    } else {
+        return HttpResponse::InternalServerError().finish();
+    }
+
+    let id = Uuid::new_v4();
+
+    let new_user_object = User {
+        id,
+        username: new_user.username,
+        display_name: new_user.display_name,
+        email: new_user.email,
+        password_hash,
+        profile_picture_id: None,
+    };
+
+    let result = app_data.db.users.add_user(new_user_object).await;
 
     match result {
-        Ok(client) => {
-            let stmt = 
-            r#"
-            INSERT INTO public.users(id, display_name, username, password_hash)
-            VALUES ($1, $2, $3, $4)
-            RETURNING $table_fields;
-            "#;
-            let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
-            let stmt = client.prepare(&stmt).await.unwrap();
-        
-            let salt = SaltString::generate(&mut OsRng);
-        
-            let argon2 = Argon2::default();
-        
-            let password_hash = match argon2.hash_password(new_user.password.as_bytes(), &salt) {
-                Ok(hash) => hash.to_string(),
-                Err(_) => panic!("Failed to hash password.")
-            };
-            
-            let user_id = Uuid::new_v4();
-        
-            let result = client
-                .query(
-                    &stmt,
-                    &[
-                        &user_id,
-                        &new_user.display_name,
-                        &new_user.username,
-                        &password_hash,
-                    ],
-                )
-                .await
-                .unwrap_or_else(|_| Vec::new())
-                .iter()
-                .map(|row| User::from_row_ref(row).unwrap())
-                .collect::<Vec<User>>()
-                .pop()
-                .ok_or(MyError::NotFound); // more applicable for SELECTs
-
-            match result {
-                Ok(new_user) => HttpResponse::Ok().json(new_user),
-                Err(_) => HttpResponse::InternalServerError().into()
-            }
-        },
-        Err(_) => HttpResponse::InternalServerError().into()
+        Ok(user) => HttpResponse::Ok().json(user),
+        Err(_) => HttpResponse::InternalServerError().into(),
     }
 }
 
 #[get("/users/{user_id}")]
-async fn get_user(path: web::Path<Uuid>, db_pool: web::Data<Pool>) -> impl Responder {
+async fn get_user(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> impl Responder {
     let user_id = path.into_inner();
-    
-    let result = db_pool.get().await.map_err(MyError::PoolError);
+
+    let result = app_data.db.users.get_user_by_id(user_id).await;
 
     match result {
-        Ok(client) => {
-            let stmt = 
-            r#"
-            SELECT $table_fields FROM public.users WHERE users.id = $user_id;
-            "#;
-            let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
-            let stmt = stmt.replace("$user_id", &format!("'{}'", user_id.to_string()));
-            println!("{}", stmt);
-            let stmt = client.prepare(&stmt).await.unwrap();
-
-            let result = client
-                .query(&stmt, &[])
-                .await
-                .unwrap_or_else(|_| Vec::new())
-                .iter()
-                .map(|row| User::from_row_ref(row).unwrap())
-                .collect::<Vec<User>>()
-                .pop()
-                .ok_or(MyError::NotFound); 
-
-            match result {
-                Ok(user) => HttpResponse::Ok().json(user),
-                Err(_) => HttpResponse::InternalServerError().body("User not found.")
-            }
-        },
-        Err(_) => HttpResponse::InternalServerError().into()
+        Ok(user) => HttpResponse::Ok().json(user),
+        Err(_) => HttpResponse::InternalServerError().into(),
     }
 }
 
 #[put("/users/{user_id}")]
-async fn update_user(path: web::Path<Uuid>, data: web::Json<NewUserDetails>, db_pool: web::Data<Pool>) -> impl Responder {
+async fn update_user(
+    path: web::Path<Uuid>,
+    data: web::Json<UpdateUser>,
+    app_data: web::Data<AppData>,
+) -> impl Responder {
     let user_id = path.into_inner();
-    let new_user_details = data.into_inner();
+    let mut update = data.into_inner();
 
-    let result = db_pool.get().await.map_err(MyError::PoolError);
+    if let Some(password) = update.password {
+        let salt = SaltString::generate(&mut OsRng);
+
+        let argon2 = Argon2::default();
+
+        match argon2.hash_password(password.as_bytes(), &salt) {
+            Ok(hash) => update.password = Some(hash.to_string()),
+            Err(_) => panic!("Failed to hash password."),
+        }
+    }
+
+    let result = app_data.db.users.update_user_by_id(user_id, update).await;
 
     match result {
-        Ok(client) => {
-            let mut updates: Vec<String> = Vec::new(); 
-
-            if let Some(display_name) = new_user_details.display_name {
-                updates.push(format!("display_name = '{}'", display_name).to_string());
-            }
-
-            if let Some(password) = new_user_details.password {
-                let salt = SaltString::generate(&mut OsRng);
-
-                let argon2 = Argon2::default();
-
-                match argon2.hash_password(password.as_bytes(), &salt) {
-                    Ok(hash) => updates.push(format!("password_hash = '{}'", hash.to_string())),
-                    Err(_) => panic!("Failed to hash password.")
-                }
-            }
-            
-            let stmt = 
-            r#"
-            UPDATE public.users 
-            SET $new_info WHERE id = $user_id
-            RETURNING $table_fields;
-            "#;
-            let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
-            let stmt = stmt.replace("$user_id", &format!("'{}'", user_id.to_string()));
-            let stmt = stmt.replace("$new_info", &updates.join(", "));
-            let stmt = client.prepare(&stmt).await.unwrap();
-
-
-            let result = client
-                .query(&stmt, &[])
-                .await
-                .unwrap_or_else(|_| Vec::new())
-                .iter()
-                .map(|row| User::from_row_ref(row).unwrap())
-                .collect::<Vec<User>>()
-                .pop()
-                .ok_or(MyError::NotFound);
-
-            match result {
-                Ok(user) => HttpResponse::Ok().json(user),
-                Err(_) => HttpResponse::InternalServerError().body("User not found.")
-            }
-        },
-        Err(_) => HttpResponse::InternalServerError().into()
+        Ok(user) => HttpResponse::Ok().json(user),
+        Err(_) => HttpResponse::InternalServerError().into(),
     }
 }
 
 #[delete("/users/{user_id}")]
-async fn delete_user(path: web::Path<Uuid>, dp_pool: web::Data<Pool>) -> impl Responder {
+async fn delete_user(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> impl Responder {
     let user_id = path.into_inner();
 
-    let result = dp_pool.get().await.map_err(MyError::PoolError);
+    let result = app_data.db.users.delete_user_by_id(user_id).await;
 
     match result {
-        Ok(client) => {
-            let stmt = 
-            r#"
-            DELETE FROM public.users WHERE id = $user_id
-            RETURNING $table_fields;
-            "#;
-            let stmt = stmt.replace("$user_id", &format!("'{}'", user_id.to_string()));
-            let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
-            let stmt = client.prepare(&stmt).await.unwrap();
-
-            let result = client.
-                query(&stmt, &[])
-                .await
-                .unwrap_or_else(|_| Vec::new())
-                .iter()
-                .map(|row| User::from_row_ref(row).unwrap())
-                .collect::<Vec<User>>()
-                .pop()
-                .ok_or(MyError::NotFound);
-
-            match result {
-                Ok(user) => HttpResponse::Ok().json(user),
-                Err(_) => HttpResponse::InternalServerError().body("User not found.")
-            }
-        },
-        Err(_) => HttpResponse::InternalServerError().into()
+        Ok(_) => HttpResponse::Ok(),
+        Err(_) => HttpResponse::InternalServerError().into(),
     }
 }
-
 
 // #[get("/{user_id}/profile_picture")]
 // async fn get_profile_picture(path: web::Path<Uuid>, dp_pool: web::Data<Pool>) -> impl Responder {
 //     let user_id = path.into_inner();
 
-//     let result 
+//     let result
 // }
 
 // #[derive(Debug, Deserialize)]
@@ -250,11 +138,11 @@ async fn delete_user(path: web::Path<Uuid>, dp_pool: web::Data<Pool>) -> impl Re
 
 // #[post("/{user_id}/profile_picture")]
 // async fn set_profile_picture(
-//     path: web::Path<Uuid>, 
-//     MultipartForm(form): MultipartForm<UploadForm>, 
-//     dp_pool: web::Data<Pool>) -> impl Responder 
+//     path: web::Path<Uuid>,
+//     MultipartForm(form): MultipartForm<UploadForm>,
+//     dp_pool: web::Data<Pool>) -> impl Responder
 // {
 //     let user_id = path.into_inner();
 
-//     Ok() 
+//     Ok()
 // }

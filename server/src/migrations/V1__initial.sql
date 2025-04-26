@@ -17,7 +17,7 @@ DROP TABLE IF EXISTS trips;
 DROP TABLE IF EXISTS user_trips;
 DROP TABLE IF EXISTS users;
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY,
     display_name VARCHAR(50),
     username VARCHAR(50) NOT NULL UNIQUE,
@@ -26,13 +26,13 @@ CREATE TABLE users (
     profile_picture_id UUID 
 );
 
-CREATE TABLE user_trips (
+CREATE TABLE IF NOT EXISTS user_trips (
     trip_id UUID NOT NULL,
     user_id UUID NOT NULL,
     PRIMARY KEY (trip_id, user_id)
 );
 
-CREATE TABLE trips (
+CREATE TABLE IF NOT EXISTS trips (
     id UUID PRIMARY KEY,
     owner_id UUID NOT NULL,
     title VARCHAR(100) NOT NULL,
@@ -40,27 +40,27 @@ CREATE TABLE trips (
     dates_id UUID NOT NULL
 );
 
-CREATE TABLE dates (
+CREATE TABLE IF NOT EXISTS dates (
     id UUID PRIMARY KEY,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL
 );  
 
-CREATE TABLE sections (
+CREATE TABLE IF NOT EXISTS sections (
     id UUID PRIMARY KEY,
     trip_id UUID NOT NULL,
     title VARCHAR(100) NOT NULL,
     order_rank SMALLINT NOT NULL
 );
 
-CREATE TABLE itineraries (
+CREATE TABLE IF NOT EXISTS itineraries (
     id UUID PRIMARY KEY,
     widget_id UUID NOT NULL,
     dates_id UUID NOT NULL,
     map_id UUID NOT NULL
 );
 
-CREATE TABLE widgets (
+CREATE TABLE IF NOT EXISTS widgets (
     id UUID PRIMARY KEY,
     section_id UUID NOT NULL,
     widget_type VARCHAR(50) NOT NULL,
@@ -70,7 +70,7 @@ CREATE TABLE widgets (
     content jsonb NOT NULL
 );
 
-CREATE TABLE itinerary_activities (
+CREATE TABLE IF NOT EXISTS itinerary_activities (
     id UUID PRIMARY KEY,
     itinerary_id UUID NOT NULL,
     activity_type VARCHAR(50) NOT NULL,
@@ -82,14 +82,14 @@ CREATE TABLE itinerary_activities (
     notes TEXT NOT NULL
 );
 
-CREATE TABLE attachments (
+CREATE TABLE IF NOT EXISTS attachments (
     trip_id UUID NOT NULL,
     file_id UUID NOT NULL,
     activity_id UUID,
     PRIMARY KEY (trip_id, file_id)
 );
 
-CREATE TABLE budgeting_trackers (
+CREATE TABLE IF NOT EXISTS budgeting_trackers (
     id UUID PRIMARY KEY,
     widget_id UUID NOT NULL,
     title VARCHAR(255) NOT NULL,
@@ -97,7 +97,7 @@ CREATE TABLE budgeting_trackers (
     currency VARCHAR(3) NOT NULL
 );
 
-CREATE TABLE expenses (
+CREATE TABLE IF NOT EXISTS expenses (
     id UUID PRIMARY KEY,
     budgeting_tracker_id UUID NOT NULL,
     title VARCHAR(100) NOT NULL,
@@ -106,7 +106,7 @@ CREATE TABLE expenses (
     split_type VARCHAR(50) NOT NULL
 );
 
-CREATE TABLE files (
+CREATE TABLE IF NOT EXISTS files (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL,
     file_name VARCHAR(255) NOT NULL,
@@ -116,7 +116,7 @@ CREATE TABLE files (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE maps (
+CREATE TABLE IF NOT EXISTS maps (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL,
     map_type VARCHAR(255) NOT NULL,
@@ -124,25 +124,25 @@ CREATE TABLE maps (
     coordinates_id UUID NOT NULL
 );
 
-CREATE TABLE coordinates (
+CREATE TABLE IF NOT EXISTS coordinates (
     id UUID PRIMARY KEY,
     longitude DOUBLE PRECISION NOT NULL,
     latitude DOUBLE PRECISION NOT NULL
 );
 
-CREATE TABLE markers (
+CREATE TABLE IF NOT EXISTS markers (
     id UUID PRIMARY KEY,
     coordinates_id UUID NOT NULL,
     activity_id UUID NOT NULL
 );
 
-CREATE TABLE expense_payers (
+CREATE TABLE IF NOT EXISTS expense_payers (
     expense_id UUID NOT NULL,
     user_id UUID NOT NULL,
     PRIMARY KEY (expense_id, user_id)
 );
 
-CREATE TABLE journals (
+CREATE TABLE IF NOT EXISTS journals (
     id UUID PRIMARY KEY,
     owner_id UUID NOT NULL,
     content TEXT NOT NULL,
@@ -150,7 +150,7 @@ CREATE TABLE journals (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE user_journals (
+CREATE TABLE IF NOT EXISTS user_journals (
     user_id UUID NOT NULL,
     journal_id UUID NOT NULL,
     PRIMARY KEY (user_id, journal_id)
@@ -198,3 +198,4 @@ ALTER TABLE expense_payers ADD CONSTRAINT fk_user_payers FOREIGN KEY (user_id) R
 
 ALTER TABLE user_journals ADD CONSTRAINT fk_user_user_journals FOREIGN KEY (user_id) REFERENCES users(id);
 ALTER TABLE user_journals ADD CONSTRAINT fk_journal_user_journals FOREIGN KEY (journal_id) REFERENCES journals(id);
+

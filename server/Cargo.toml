@@ -23,3 +23,7 @@ uuid = {version = "1.16.0", features = ["v4", "serde"]}
 typeshare = "1.0.0"
 argon2 = {version = "0.5.3", features=["default", "std"]}
 actix-multipart = "0.7.2"
+redis = { version = "0.30.0", features = ["tokio-comp", "connection-manager", "r2d2"]  }
+futures = "0.3.0"
+r2d2 = "0.8.10"
+redis-macros = "0.5.2"

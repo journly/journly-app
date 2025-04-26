@@ -1,10 +1,11 @@
-use serde::{Deserialize, Serialize};
-use tokio_pg_mapper_derive::PostgresMapper;
-use uuid::Uuid;
+use chrono::{DateTime, NaiveDate, Utc};
 use rust_decimal::Decimal;
+use serde::{Deserialize, Serialize};
 use time::PrimitiveDateTime;
-use chrono::{NaiveDate, DateTime, Utc};
+use tokio_pg_mapper_derive::PostgresMapper;
 use typeshare::typeshare;
+use uuid::Uuid;
+use redis_macros::{FromRedisValue, ToRedisArgs};
 
 /// --- Taken from rust-postgres repository ---
 ///  
@@ -61,7 +62,7 @@ use typeshare::typeshare;
 /// |                                 | LTXTQUERY                           |
 
 #[typeshare]
-#[derive(Deserialize, PostgresMapper, Serialize)]
+#[derive(Deserialize, PostgresMapper, Serialize, FromRedisValue, ToRedisArgs)]
 #[pg_mapper(table = "users")] // singular 'user' is a keyword..
 pub struct User {
     pub id: Uuid,
@@ -69,59 +70,59 @@ pub struct User {
     pub username: String,
     pub email: Option<String>,
     pub password_hash: String,
-    pub profile_picture_id: Option<Uuid>
+    pub profile_picture_id: Option<Uuid>,
 }
 
 #[typeshare]
-#[derive(Deserialize, PostgresMapper, Serialize)]
+#[derive(Deserialize, PostgresMapper, Serialize, FromRedisValue, ToRedisArgs)]
 #[pg_mapper(table = "user_trips")]
 pub struct UserTrip {
     pub trip_id: Uuid,
-    pub user_id: Uuid
+    pub user_id: Uuid,
 }
 
 #[typeshare]
-#[derive(Deserialize, PostgresMapper, Serialize)]
+#[derive(Deserialize, PostgresMapper, Serialize, FromRedisValue, ToRedisArgs)]
 #[pg_mapper(table = "trips")]
 pub struct Trip {
     pub id: Uuid,
     pub owner_id: Uuid,
     pub title: String,
     pub trip_image: String,
-    pub dates_id: Uuid
+    pub dates_id: Uuid,
 }
 
 #[typeshare]
-#[derive(Deserialize, PostgresMapper, Serialize)]
+#[derive(Deserialize, PostgresMapper, Serialize, FromRedisValue, ToRedisArgs)]
 #[pg_mapper(table = "dates")]
 pub struct Dates {
     pub id: Uuid,
     pub start_date: NaiveDate,
-    pub end_date: NaiveDate
+    pub end_date: NaiveDate,
 }
 
 #[typeshare]
-#[derive(Deserialize, PostgresMapper, Serialize)]
+#[derive(Deserialize, PostgresMapper, Serialize, FromRedisValue, ToRedisArgs)]
 #[pg_mapper(table = "sections")]
 pub struct Section {
     pub id: Uuid,
     pub trip_id: Uuid,
     pub title: String,
-    pub order_rank: i16
+    pub order_rank: i16,
 }
 
 #[typeshare]
-#[derive(Deserialize, PostgresMapper, Serialize)]
+#[derive(Deserialize, PostgresMapper, Serialize, FromRedisValue, ToRedisArgs)]
 #[pg_mapper(table = "itineraries")]
 pub struct Itinerary {
     pub id: Uuid,
     pub widget_id: Uuid,
     pub dates_id: Uuid,
-    pub map_id: Uuid
+    pub map_id: Uuid,
 }
 
 #[typeshare]
-#[derive(Deserialize, PostgresMapper, Serialize)]
+#[derive(Deserialize, PostgresMapper, Serialize, FromRedisValue, ToRedisArgs)]
 #[pg_mapper(table = "widgets")]
 pub struct Widget {
     pub id: Uuid,
@@ -130,11 +131,11 @@ pub struct Widget {
     pub order_rank: i16,
     pub width: i16,
     pub height: i16,
-    pub content: serde_json::Value
+    pub content: serde_json::Value,
 }
 
 #[typeshare]
-#[derive(Deserialize, PostgresMapper, Serialize)]
+#[derive(Deserialize, PostgresMapper, Serialize, FromRedisValue, ToRedisArgs)]
 #[pg_mapper(table = "itinerary_activities")]
 pub struct ItineraryActivity {
     pub id: Uuid,
@@ -145,30 +146,30 @@ pub struct ItineraryActivity {
     pub start_time: Option<PrimitiveDateTime>,
     pub end_time: Option<PrimitiveDateTime>,
     pub expense_id: Option<Uuid>,
-    pub notes: String
+    pub notes: String,
 }
 
 #[typeshare]
-#[derive(Deserialize, PostgresMapper, Serialize)]
+#[derive(Deserialize, PostgresMapper, Serialize, FromRedisValue, ToRedisArgs)]
 #[pg_mapper(table = "attachments")]
 pub struct Attachment {
     pub trip_id: Uuid,
     pub file_id: Uuid,
-    pub activity_id: Option<Uuid>
+    pub activity_id: Option<Uuid>,
 }
 
 #[typeshare]
-#[derive(Deserialize, PostgresMapper, Serialize)]
+#[derive(Deserialize, PostgresMapper, Serialize, FromRedisValue, ToRedisArgs)]
 #[pg_mapper(table = "budgeting_trackers")]
 pub struct BudgetingTracker {
     pub id: Uuid,
     pub widget_id: Uuid,
     pub total_budget: Decimal,
-    pub currency: String
+    pub currency: String,
 }
 
 #[typeshare]
-#[derive(Deserialize, PostgresMapper, Serialize)]
+#[derive(Deserialize, PostgresMapper, Serialize, FromRedisValue, ToRedisArgs)]
 #[pg_mapper(table = "expense")]
 pub struct Expense {
     pub id: Uuid,
@@ -176,11 +177,11 @@ pub struct Expense {
     pub title: String,
     pub cost: Decimal,
     pub expense_type: String,
-    pub split_type: String
+    pub split_type: String,
 }
 
 #[typeshare]
-#[derive(Deserialize, PostgresMapper, Serialize)]
+#[derive(Deserialize, PostgresMapper, Serialize, FromRedisValue, ToRedisArgs)]
 #[pg_mapper(table = "files")]
 pub struct File {
     pub id: Uuid,
@@ -189,40 +190,40 @@ pub struct File {
     pub file_url: String,
     pub file_hash: String,
     pub content_type: String,
-    pub created_at: DateTime<Utc>
+    pub created_at: DateTime<Utc>,
 }
 
 #[typeshare]
-#[derive(Deserialize, PostgresMapper, Serialize)]
+#[derive(Deserialize, PostgresMapper, Serialize, FromRedisValue, ToRedisArgs)]
 #[pg_mapper(table = "maps")]
 pub struct Map {
     pub id: Uuid,
     pub user_id: Uuid,
     pub map_type: String,
     pub title: String,
-    pub coordinates_id: Uuid
+    pub coordinates_id: Uuid,
 }
 
 #[typeshare]
-#[derive(Deserialize, PostgresMapper, Serialize)]
+#[derive(Deserialize, PostgresMapper, Serialize, FromRedisValue, ToRedisArgs)]
 #[pg_mapper(table = "coordinates")]
 pub struct Coordinate {
     pub id: Uuid,
     pub longitude: f64,
-    pub latitude: f64
+    pub latitude: f64,
 }
 
 #[typeshare]
-#[derive(Deserialize, PostgresMapper, Serialize)]
+#[derive(Deserialize, PostgresMapper, Serialize, FromRedisValue, ToRedisArgs)]
 #[pg_mapper(table = "markers")]
 pub struct Marker {
     pub id: Uuid,
     pub coordinates_id: Uuid,
-    pub activity_id: Uuid
+    pub activity_id: Uuid,
 }
 
 #[typeshare]
-#[derive(Deserialize, PostgresMapper, Serialize)]
+#[derive(Deserialize, PostgresMapper, Serialize, FromRedisValue, ToRedisArgs)]
 #[pg_mapper(table = "expense_payers")]
 pub struct ExpensePayer {
     pub id: Uuid,
@@ -230,21 +231,20 @@ pub struct ExpensePayer {
 }
 
 #[typeshare]
-#[derive(Deserialize, PostgresMapper, Serialize)]
+#[derive(Deserialize, PostgresMapper, Serialize, FromRedisValue, ToRedisArgs)]
 #[pg_mapper(table = "journals")]
 pub struct Journal {
     pub id: Uuid,
     pub owner_id: Uuid,
     pub content: String,
     pub last_edit: DateTime<Utc>,
-    pub created_at: DateTime<Utc>
+    pub created_at: DateTime<Utc>,
 }
 
 #[typeshare]
-#[derive(Deserialize, PostgresMapper, Serialize)]
+#[derive(Deserialize, PostgresMapper, Serialize, FromRedisValue, ToRedisArgs)]
 #[pg_mapper(table = "user_journals")]
 pub struct UserJournal {
     pub user_id: Uuid,
-    pub journal_id: Uuid
+    pub journal_id: Uuid,
 }
-
