@@ -1,5 +1,5 @@
 use crate::models::data_access_objects::{JoinTable, Table};
-use crate::models::schema;
+use crate::models::schema::{self, Dates};
 use deadpool_postgres::{Config, Pool};
 use schema::{Trip, User};
 use std::{ops::DerefMut, sync::Arc};
@@ -14,6 +14,7 @@ pub struct Database {
     pub users: Arc<Table<User>>,
     pub trips: Arc<Table<Trip>>,
     pub users_trips: Arc<JoinTable<User, Trip>>,
+    pub dates: Arc<Table<Dates>>,
 }
 
 impl Database {
@@ -32,6 +33,7 @@ impl Database {
             users: Arc::from(Table::new(pg_pool.clone(), redis_pool.clone())),
             trips: Arc::from(Table::new(pg_pool.clone(), redis_pool.clone())),
             users_trips: Arc::from(JoinTable::new(pg_pool.clone(), redis_pool.clone())),
+            dates: Arc::from(Table::new(pg_pool.clone(), redis_pool.clone())),
         }
     }
 

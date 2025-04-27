@@ -1,5 +1,6 @@
 use crate::errors::MyError;
 use crate::models::api::users::UpdateUser;
+use crate::models::api::ToSql;
 use crate::models::schema::User;
 use redis::Commands;
 use tokio_pg_mapper::FromTokioPostgresRow;
@@ -50,7 +51,7 @@ impl Table<User> {
             SELECT $table_fields FROM public.users WHERE users.id = $user_id;
             "#;
         let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
-        let stmt = stmt.replace("$user_id", &format!("'{}'", user_id));
+        let stmt = stmt.replace("$user_id", &user_id.to_string());
 
         let stmt = db.prepare(&stmt).await.unwrap();
 
@@ -140,7 +141,7 @@ impl Table<User> {
             RETURNING $table_fields;
             "#;
         let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
-        let stmt = stmt.replace("$user_id", &format!("'{}'", user_id));
+        let stmt = stmt.replace("$user_id", &user_id.to_string());
         let stmt = stmt.replace("$new_info", &update.to_sql_values());
         let stmt = db.prepare(&stmt).await.unwrap();
 
@@ -180,7 +181,7 @@ impl Table<User> {
             DELETE FROM public.users WHERE id = $user_id
             RETURNING $table_fields;
             "#;
-        let stmt = stmt.replace("$user_id", &format!("'{}'", user_id));
+        let stmt = stmt.replace("$user_id", &user_id.to_string());
         let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
         let stmt = db.prepare(&stmt).await.unwrap();
 

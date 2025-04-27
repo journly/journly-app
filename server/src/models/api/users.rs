@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
+use super::ToSql;
+
 #[typeshare]
 #[derive(Deserialize, Serialize)]
 pub struct NewUserDetails {
@@ -16,9 +18,9 @@ pub struct UpdateUser {
     pub email: Option<String>,
 }
 
-impl UpdateUser {
-    pub fn to_sql_values(&self) -> String {
-        let mut new_values: Vec<String> = Vec::new();
+impl ToSql for UpdateUser {
+    fn to_sql_values(&self) -> String {
+        let mut new_values = Vec::new();
 
         if let Some(display_name) = &self.display_name {
             new_values.push(format!("display_name = '{}'", display_name));

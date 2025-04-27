@@ -1,11 +1,11 @@
 use chrono::{DateTime, NaiveDate, Utc};
+use redis_macros::{FromRedisValue, ToRedisArgs};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use time::PrimitiveDateTime;
 use tokio_pg_mapper_derive::PostgresMapper;
 use typeshare::typeshare;
 use uuid::Uuid;
-use redis_macros::{FromRedisValue, ToRedisArgs};
 
 /// --- Taken from rust-postgres repository ---
 ///  
@@ -63,7 +63,7 @@ use redis_macros::{FromRedisValue, ToRedisArgs};
 
 #[typeshare]
 #[derive(Deserialize, PostgresMapper, Serialize, FromRedisValue, ToRedisArgs)]
-#[pg_mapper(table = "users")] // singular 'user' is a keyword..
+#[pg_mapper(table = "users")]
 pub struct User {
     pub id: Uuid,
     pub display_name: Option<String>,
@@ -88,7 +88,7 @@ pub struct Trip {
     pub id: Uuid,
     pub owner_id: Uuid,
     pub title: String,
-    pub trip_image: String,
+    pub trip_image: Option<String>,
     pub dates_id: Uuid,
 }
 
@@ -97,8 +97,8 @@ pub struct Trip {
 #[pg_mapper(table = "dates")]
 pub struct Dates {
     pub id: Uuid,
-    pub start_date: NaiveDate,
-    pub end_date: NaiveDate,
+    pub start_date: Option<NaiveDate>,
+    pub end_date: Option<NaiveDate>,
 }
 
 #[typeshare]

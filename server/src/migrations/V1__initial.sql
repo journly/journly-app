@@ -36,14 +36,14 @@ CREATE TABLE IF NOT EXISTS trips (
     id UUID PRIMARY KEY,
     owner_id UUID NOT NULL,
     title VARCHAR(100) NOT NULL,
-    trip_image VARCHAR(255) NOT NULL,
+    trip_image VARCHAR(255),
     dates_id UUID NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS dates (
     id UUID PRIMARY KEY,
-    start_date DATE NOT NULL,
-    end_date DATE NOT NULL
+    start_date DATE,
+    end_date DATE
 );  
 
 CREATE TABLE IF NOT EXISTS sections (
