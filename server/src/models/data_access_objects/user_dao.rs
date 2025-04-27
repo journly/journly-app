@@ -38,16 +38,13 @@ impl Table<User> {
 
         let cache_key = format!("user:{}", user_id);
 
-        match cache.get(&cache_key) {
-            Ok(value) => {
-                let user: User = value;
+        if let Ok(value) = cache.get(&cache_key) {
+            let user: User = value;
 
-                let _: () = cache.expire(cache_key, EXPIRE_TIME_SECONDS).unwrap();
+            let _: () = cache.expire(cache_key, EXPIRE_TIME_SECONDS).unwrap();
 
-                return Ok(user);
-            }
-            _ => println!("cache miss!"),
-        };
+            return Ok(user);
+        }
 
         let stmt = r#"
             SELECT $table_fields FROM public.users WHERE users.id = $user_id;
@@ -164,7 +161,7 @@ impl Table<User> {
 
                 Ok(user)
             }
-            _ => Err(MyError::PGError)
+            _ => Err(MyError::PGError),
         }
     }
 
