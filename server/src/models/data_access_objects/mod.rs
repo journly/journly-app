@@ -3,6 +3,8 @@ use std::marker::PhantomData;
 
 pub mod user_dao;
 
+pub mod trip_dao;
+
 pub struct Table<T> {
     pub pg_pool: deadpool_postgres::Pool,
     pub redis_pool: r2d2::Pool<Client>,

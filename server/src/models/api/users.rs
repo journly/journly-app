@@ -17,22 +17,22 @@ pub struct UpdateUser {
 }
 
 impl UpdateUser {
-    pub fn to_sql_values(self) -> String {
+    pub fn to_sql_values(&self) -> String {
         let mut new_values: Vec<String> = Vec::new();
 
-        if let Some(display_name) = self.display_name {
-            new_values.push(format!("display_name = {}", display_name));
+        if let Some(display_name) = &self.display_name {
+            new_values.push(format!("display_name = '{}'", display_name));
         }
 
-        if let Some(password) = self.password {
-            new_values.push(format!("password_hash = {}", password));
+        if let Some(password) = &self.password {
+            new_values.push(format!("password_hash = '{}'", password));
         }
 
-        if let Some(email) = self.email {
-            new_values.push(format!("email = {}", email));
+        if let Some(email) = &self.email {
+            new_values.push(format!("email = '{}'", email));
         }
 
-        return new_values.join(", ");
+        new_values.join(", ")
     }
 }
 

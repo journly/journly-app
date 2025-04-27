@@ -22,7 +22,7 @@ impl Database {
             .create_pool(None, NoTls)
             .expect("Failed to connect to DB");
 
-        Self::run_migrations(pg_pool.clone());
+        Self::run_migrations(pg_pool.clone()).await;
 
         let redis_client = redis::Client::open(redis_addr).unwrap();
 
