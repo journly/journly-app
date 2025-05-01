@@ -1,0 +1,5 @@
+CREATE TABLE coordinates (
+  id UUID PRIMARY KEY,
+  longitude DOUBLE PRECISION NOT NULL,
+  latitude DOUBLE PRECISION NOT NULL
+);

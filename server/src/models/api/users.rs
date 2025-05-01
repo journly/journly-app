@@ -40,7 +40,7 @@ impl ToSql for UpdateUser {
 
 #[typeshare]
 #[derive(Deserialize, Serialize)]
-pub struct AddUser {
+pub struct CreateUser {
     pub username: String,
     pub password: String,
     pub display_name: Option<String>,

@@ -7,7 +7,7 @@ use uuid::Uuid;
 
 use crate::{
     models::{
-        api::users::{AddUser, UpdateUser},
+        api::users::{CreateUser, UpdateUser},
         schema::User,
     },
     util::AppData,
@@ -16,7 +16,7 @@ use crate::{
 pub fn init(cfg: &mut web::ServiceConfig) {
     cfg.service(get_user);
     cfg.service(get_users);
-    cfg.service(add_user);
+    cfg.service(create_user);
     cfg.service(update_user);
     cfg.service(delete_user);
 }
@@ -32,7 +32,10 @@ async fn get_users(app_data: web::Data<AppData>) -> impl Responder {
 }
 
 #[post("/users")]
-async fn add_user(new_user: web::Json<AddUser>, app_data: web::Data<AppData>) -> impl Responder {
+async fn create_user(
+    new_user: web::Json<CreateUser>,
+    app_data: web::Data<AppData>,
+) -> impl Responder {
     let new_user = new_user.into_inner();
 
     let salt = SaltString::generate(&mut OsRng);
@@ -46,10 +49,10 @@ async fn add_user(new_user: web::Json<AddUser>, app_data: web::Data<AppData>) ->
         return HttpResponse::InternalServerError().finish();
     }
 
-    let id = Uuid::new_v4();
+    let user_id = Uuid::new_v4();
 
     let new_user_object = User {
-        id,
+        user_id,
         username: new_user.username,
         display_name: new_user.display_name,
         email: new_user.email,

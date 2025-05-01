@@ -88,7 +88,7 @@ pub struct Trip {
     pub id: Uuid,
     pub owner_id: Uuid,
     pub title: String,
-    pub trip_image: Option<String>,
+    pub image_url: Option<String>,
     pub dates_id: Uuid,
 }
 
@@ -172,7 +172,7 @@ pub struct BudgetingTracker {
 #[derive(Deserialize, PostgresMapper, Serialize, FromRedisValue, ToRedisArgs)]
 #[pg_mapper(table = "expense")]
 pub struct Expense {
-    pub id: Uuid,
+    pub expense_id: Uuid,
     pub budgeting_tracker_id: Uuid,
     pub title: String,
     pub cost: Decimal,
@@ -184,7 +184,7 @@ pub struct Expense {
 #[derive(Deserialize, PostgresMapper, Serialize, FromRedisValue, ToRedisArgs)]
 #[pg_mapper(table = "files")]
 pub struct File {
-    pub id: Uuid,
+    pub file_id: Uuid,
     pub user_id: Uuid,
     pub file_name: String,
     pub file_url: String,
@@ -197,7 +197,7 @@ pub struct File {
 #[derive(Deserialize, PostgresMapper, Serialize, FromRedisValue, ToRedisArgs)]
 #[pg_mapper(table = "maps")]
 pub struct Map {
-    pub id: Uuid,
+    pub map_id: Uuid,
     pub user_id: Uuid,
     pub map_type: String,
     pub title: String,
@@ -208,7 +208,7 @@ pub struct Map {
 #[derive(Deserialize, PostgresMapper, Serialize, FromRedisValue, ToRedisArgs)]
 #[pg_mapper(table = "coordinates")]
 pub struct Coordinate {
-    pub id: Uuid,
+    pub coordinate_id: Uuid,
     pub longitude: f64,
     pub latitude: f64,
 }
@@ -217,7 +217,7 @@ pub struct Coordinate {
 #[derive(Deserialize, PostgresMapper, Serialize, FromRedisValue, ToRedisArgs)]
 #[pg_mapper(table = "markers")]
 pub struct Marker {
-    pub id: Uuid,
+    pub marker_id: Uuid,
     pub coordinates_id: Uuid,
     pub activity_id: Uuid,
 }
@@ -226,7 +226,7 @@ pub struct Marker {
 #[derive(Deserialize, PostgresMapper, Serialize, FromRedisValue, ToRedisArgs)]
 #[pg_mapper(table = "expense_payers")]
 pub struct ExpensePayer {
-    pub id: Uuid,
+    pub expense_payer_id: Uuid,
     pub user_id: Uuid,
 }
 
@@ -234,7 +234,7 @@ pub struct ExpensePayer {
 #[derive(Deserialize, PostgresMapper, Serialize, FromRedisValue, ToRedisArgs)]
 #[pg_mapper(table = "journals")]
 pub struct Journal {
-    pub id: Uuid,
+    pub journal_id: Uuid,
     pub owner_id: Uuid,
     pub content: String,
     pub last_edit: DateTime<Utc>,

@@ -1,7 +1,6 @@
-use crate::models::data_access_objects::{JoinTable, Table};
-use crate::models::schema::{self, Dates};
+use crate::models::dao::Data;
 use deadpool_postgres::{Config, Pool};
-use schema::{Trip, User};
+use crate::models::schema::{Trip, User};
 use std::{ops::DerefMut, sync::Arc};
 use tokio_postgres::NoTls;
 
@@ -11,10 +10,8 @@ mod embedded {
 }
 
 pub struct Database {
-    pub users: Arc<Table<User>>,
-    pub trips: Arc<Table<Trip>>,
-    pub users_trips: Arc<JoinTable<User, Trip>>,
-    pub dates: Arc<Table<Dates>>,
+    pub users: Arc<Data<User>>,
+    pub trips: Arc<Data<Trip>>,
 }
 
 impl Database {
@@ -30,10 +27,8 @@ impl Database {
         let redis_pool = r2d2::Pool::builder().build(redis_client).unwrap();
 
         Self {
-            users: Arc::from(Table::new(pg_pool.clone(), redis_pool.clone())),
-            trips: Arc::from(Table::new(pg_pool.clone(), redis_pool.clone())),
-            users_trips: Arc::from(JoinTable::new(pg_pool.clone(), redis_pool.clone())),
-            dates: Arc::from(Table::new(pg_pool.clone(), redis_pool.clone())),
+            users: Arc::from(Data::new(pg_pool.clone(), redis_pool.clone())),
+            trips: Arc::from(Data::new(pg_pool.clone(), redis_pool.clone())),
         }
     }
 

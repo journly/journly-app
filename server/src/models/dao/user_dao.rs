@@ -6,11 +6,11 @@ use redis::Commands;
 use tokio_pg_mapper::FromTokioPostgresRow;
 use uuid::Uuid;
 
-use super::Table;
+use super::Data;
 
 const EXPIRE_TIME_SECONDS: i64 = 10000;
 
-impl Table<User> {
+impl Data<User> {
     pub async fn get_users(&self) -> Result<Vec<User>, MyError> {
         let db = self.pg_pool.get().await.map_err(MyError::PGPoolError)?;
 
@@ -83,7 +83,7 @@ impl Table<User> {
 
         let stmt = r#"
             INSERT INTO public.users(id, display_name, username, password_hash)
-            VALUES ($1, $2, $3, $4)
+            VALUES (gen_random_uuid(), $1, $2, $3)
             RETURNING $table_fields;
             "#;
         let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
@@ -91,9 +91,8 @@ impl Table<User> {
 
         let result = db
             .query(
-                &stmt,
+                &stmt,  
                 &[
-                    &new_user.id,
                     &new_user.display_name,
                     &new_user.username,
                     &new_user.password_hash,

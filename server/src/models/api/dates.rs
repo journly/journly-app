@@ -1,14 +1,16 @@
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
+use uuid::Uuid;
 
 use super::ToSql;
 
 #[typeshare]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, Copy)]
 pub struct UpdateDates {
-    start_date: Option<NaiveDate>,
-    end_date: Option<NaiveDate>,
+    pub id: Uuid,
+    pub start_date: Option<NaiveDate>,
+    pub end_date: Option<NaiveDate>,
 }
 
 impl ToSql for UpdateDates {

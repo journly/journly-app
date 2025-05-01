@@ -1,0 +1,6 @@
+CREATE TABLE sections (
+  id UUID PRIMARY KEY,
+  trip_id UUID NOT NULL REFERENCES trips,
+  title VARCHAR(100) NOT NULL,
+  order_rank SMALLINT NOT NULL
+);

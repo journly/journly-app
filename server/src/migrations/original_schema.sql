@@ -23,11 +23,11 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(100) UNIQUE,
     password_hash TEXT NOT NULL,
-    profile_picture_id UUID 
+    profile_picture_url VARCAR(255) 
 );
 
 CREATE TABLE IF NOT EXISTS user_trips (
-    trip_id UUID NOT NULL,
+    id UUID NOT NULL,
     user_id UUID NOT NULL,
     PRIMARY KEY (trip_id, user_id)
 );
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS trips (
     id UUID PRIMARY KEY,
     owner_id UUID NOT NULL,
     title VARCHAR(100) NOT NULL,
-    trip_image VARCHAR(255),
+    image_url VARCHAR(255),
     dates_id UUID NOT NULL
 );
 
@@ -64,10 +64,10 @@ CREATE TABLE IF NOT EXISTS widgets (
     id UUID PRIMARY KEY,
     section_id UUID NOT NULL,
     widget_type VARCHAR(50) NOT NULL,
-    order_rank SMALLINT NOT NULL,
-    width SMALLINT NOT NULL,
-    height SMALLINT NOT NULL,
-    content jsonb NOT NULL
+    section_order_rank SMALLINT NOT NULL,
+    widget_width SMALLINT NOT NULL,
+    widget_height SMALLINT NOT NULL,
+    widget_content jsonb NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS itinerary_activities (
@@ -113,7 +113,7 @@ CREATE TABLE IF NOT EXISTS files (
     file_url VARCHAR(255) NOT NULL UNIQUE,
     file_hash TEXT NOT NULL UNIQUE,
     content_type VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS maps (
@@ -133,7 +133,7 @@ CREATE TABLE IF NOT EXISTS coordinates (
 CREATE TABLE IF NOT EXISTS markers (
     id UUID PRIMARY KEY,
     coordinates_id UUID NOT NULL,
-    activity_id UUID NOT NULL
+    itinerary_activity_id UUID NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS expense_payers (
@@ -146,8 +146,8 @@ CREATE TABLE IF NOT EXISTS journals (
     id UUID PRIMARY KEY,
     owner_id UUID NOT NULL,
     content TEXT NOT NULL,
-    last_edit TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    last_edit TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS user_journals (
@@ -177,9 +177,9 @@ ALTER TABLE itinerary_activities ADD CONSTRAINT fk_itinerary_activities FOREIGN 
 ALTER TABLE itinerary_activities ADD CONSTRAINT fk_expense_activities FOREIGN KEY (expense_id) REFERENCES expenses(id);
 ALTER TABLE itinerary_activities ADD CONSTRAINT fk_coordinates_activities FOREIGN KEY (coordinates_id) REFERENCES coordinates(id);
 
-ALTER TABLE attachments ADD CONSTRAINT fk_trip_attachments FOREIGN KEY (trip_id) REFERENCES trips(id);
-ALTER TABLE attachments ADD CONSTRAINT fk_file_attachments FOREIGN KEY (file_id) REFERENCES files(id);
-ALTER TABLE attachments ADD CONSTRAINT fk_activity_attachments FOREIGN KEY (activity_id) REFERENCES itinerary_activities(id);
+ALTER TABLE attachments ADD CONSTRAINT fk_trip_attachments FOREIGN KEY (trip_id) REFERENCES trips(trip_id);
+ALTER TABLE attachments ADD CONSTRAINT fk_file_attachments FOREIGN KEY (file_id) REFERENCES files(file_id);
+ALTER TABLE attachments ADD CONSTRAINT fk_activity_attachments FOREIGN KEY (itinerary_activity_id) REFERENCES itinerary_activities(id);
 
 ALTER TABLE budgeting_trackers ADD CONSTRAINT fk_widget_budgeting FOREIGN KEY (widget_id) REFERENCES widgets(id);
 
@@ -191,7 +191,7 @@ ALTER TABLE maps ADD CONSTRAINT fk_user_maps FOREIGN KEY (user_id) REFERENCES us
 ALTER TABLE maps ADD CONSTRAINT fk_coordinates_maps FOREIGN KEY (coordinates_id) REFERENCES coordinates(id);
 
 ALTER TABLE markers ADD CONSTRAINT fk_coordinates_markers FOREIGN KEY (coordinates_id) REFERENCES coordinates(id);
-ALTER TABLE markers ADD CONSTRAINT fk_activities_markers FOREIGN KEY (activity_id) REFERENCES itinerary_activities(id);
+ALTER TABLE markers ADD CONSTRAINT fk_activities_markers FOREIGN KEY (itinerary_activity_id) REFERENCES itinerary_activities(id);
 
 ALTER TABLE expense_payers ADD CONSTRAINT fk_expense_payers FOREIGN KEY (expense_id) REFERENCES expenses(id);
 ALTER TABLE expense_payers ADD CONSTRAINT fk_user_payers FOREIGN KEY (user_id) REFERENCES users(id);
