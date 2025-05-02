@@ -7,7 +7,6 @@ pub struct ExampleConfig {
     pub dev_port: u16,
     #[confik(from = DbConfig)]
     pub pg: deadpool_postgres::Config,
-    pub redis_addr: String,
 }
 
 #[derive(Debug, Deserialize)]

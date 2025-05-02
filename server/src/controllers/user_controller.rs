@@ -49,18 +49,7 @@ async fn create_user(
         return HttpResponse::InternalServerError().finish();
     }
 
-    let user_id = Uuid::new_v4();
-
-    let new_user_object = User {
-        user_id,
-        username: new_user.username,
-        display_name: new_user.display_name,
-        email: new_user.email,
-        password_hash,
-        profile_picture_id: None,
-    };
-
-    let result = app_data.db.users.add_user(new_user_object).await;
+    let result = app_data.db.users.add_user(new_user.username, password_hash).await;
 
     match result {
         Ok(user) => HttpResponse::Ok().json(user),

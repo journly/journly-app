@@ -57,26 +57,21 @@ impl Data<User> {
         }
     }
 
-    pub async fn add_user(&self, new_user: User) -> Result<User, MyError> {
+    pub async fn add_user(&self, username: String, password_hash: String) -> Result<User, MyError> {
         let db = self.pg_pool.get().await.map_err(MyError::PGPoolError)?;
 
         let stmt = r#"
-            INSERT INTO users(id, display_name, username, password_hash)
-            VALUES (gen_random_uuid(), $1, $2, $3)
+            INSERT INTO users(id, username, password_hash)
+            VALUES (gen_random_uuid(), $username, $password_hash)
             RETURNING $table_fields;
             "#;
         let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
+        let stmt = stmt.replace("$username", &username);
+        let stmt = stmt.replace("$password_hash", &password_hash);
         let stmt = db.prepare(&stmt).await.unwrap();
 
         let result = db
-            .query(
-                &stmt,
-                &[
-                    &new_user.display_name,
-                    &new_user.username,
-                    &new_user.password_hash,
-                ],
-            )
+            .query(&stmt, &[])
             .await
             .unwrap_or_else(|_| Vec::new())
             .iter()

@@ -1,19 +1,19 @@
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
+use tokio_pg_mapper_derive::PostgresMapper;
 use typeshare::typeshare;
-use uuid::Uuid;
 
 use super::ToSql;
 
 #[typeshare]
-#[derive(Deserialize, Serialize, Clone, Copy)]
-pub struct UpdateDates {
-    pub id: Uuid,
+#[derive(Deserialize, Serialize, Clone, Copy, PostgresMapper)]
+#[pg_mapper(table = "dates_")]
+pub struct Dates {
     pub start_date: Option<NaiveDate>,
     pub end_date: Option<NaiveDate>,
 }
 
-impl ToSql for UpdateDates {
+impl ToSql for Dates {
     fn to_sql_values(&self) -> String {
         let mut values = Vec::new();
 

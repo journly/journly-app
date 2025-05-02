@@ -9,7 +9,7 @@ use super::Data;
 use crate::{
     errors::MyError,
     models::{
-        api::{trips::UpdateTrip, ToSql},
+        api::{dates::Dates, ToSql},
         schema::Trip,
     },
 };
@@ -17,12 +17,12 @@ use crate::{
 #[derive(Serialize, Deserialize, PostgresMapper, FromRedisValue, ToRedisArgs)]
 #[pg_mapper(table = "trip_details")]
 pub struct TripDetails {
-    id: Uuid,
-    owner_id: Uuid,
-    title: String,
-    trip_image: Option<String>,
-    start_date: Option<NaiveDate>,
-    end_date: Option<NaiveDate>,
+    pub id: Uuid,
+    pub owner_id: Uuid,
+    pub title: String,
+    pub trip_image: Option<String>,
+    pub start_date: Option<NaiveDate>,
+    pub end_date: Option<NaiveDate>,
 }
 
 const EXPIRE_TIME_SECONDS: i64 = 10000;
@@ -143,16 +143,117 @@ impl Data<Trip> {
             _ => Err(MyError::PGError),
         }
     }
-    //
-    // pub async fn update_trip_owner(
-    //     &self,
-    //     trip_id: Uuid,
-    //     new_owner_id: Uuid,
-    // ) -> Result<Uuid, MyError> {
-    //     let db = self.pg_pool.get().await
-    // }
 
-    pub async fn delete_trip_by_id(&self, trip_id: Uuid) -> Result<(), MyError> {
+    pub async fn update_trip_owner(
+        &self,
+        trip_id: Uuid,
+        new_owner_id: Uuid,
+    ) -> Result<Uuid, MyError> {
+        let db = self.pg_pool.get().await.map_err(MyError::PGPoolError)?;
+
+        let stmt = r#"
+            UPDATE trips
+            SET trips.owner_id = $new_owner_id
+            WHERE trips.id = $trip_id
+            RETURNING $table_fields;
+            "#;
+        let stmt = stmt.replace("$new_owner_id", &new_owner_id.to_string());
+        let stmt = stmt.replace("$trip_id", &trip_id.to_string());
+        let stmt = stmt.replace("$table_fields", &Trip::sql_table_fields());
+        let stmt = db.prepare(&stmt).await.unwrap();
+
+        let result = db
+            .query(&stmt, &[])
+            .await
+            .unwrap_or_else(|_| Vec::new())
+            .iter()
+            .map(|row| Trip::from_row_ref(row).unwrap())
+            .collect::<Vec<Trip>>()
+            .pop();
+
+        match result {
+            Some(trip) => Ok(trip.owner_id),
+            _ => Err(MyError::PGError),
+        }
+    }
+
+    pub async fn update_trip_dates(
+        &self,
+        trip_id: Uuid,
+        new_dates: Dates,
+    ) -> Result<Dates, MyError> {
+        let db = self.pg_pool.get().await.map_err(MyError::PGPoolError)?;
+
+        let stmt = r#"
+            UPDATE dates
+            SET $new_values
+            WHERE dates.id in (
+                SELECT dates_id 
+                FROM trips
+                WHERE trips.id = $trip_id
+            )
+            RETURNING $table_fields; 
+            "#;
+
+        let stmt = stmt.replace("$new_values", &new_dates.to_sql_values());
+        let stmt = stmt.replace("$trip_id", &trip_id.to_string());
+        let stmt = stmt.replace("$table_fields", &Dates::sql_table_fields());
+        let stmt = db.prepare(&stmt).await.unwrap();
+
+        let result = db
+            .query(&stmt, &[])
+            .await
+            .unwrap_or_else(|_| Vec::new())
+            .iter()
+            .map(|row| Dates::from_row_ref(row).unwrap())
+            .collect::<Vec<Dates>>()
+            .pop();
+
+        match result {
+            Some(new_dates) => Ok(new_dates),
+            _ => Err(MyError::PGError),
+        }
+    }
+
+    pub async fn update_trip_image_url(
+        &self,
+        trip_id: Uuid,
+        new_image_url: Option<String>,
+    ) -> Result<Option<String>, MyError> {
+        let db = self.pg_pool.get().await.map_err(MyError::PGPoolError)?;
+
+        let stmt = r#"
+           UPDATE trips
+           SET trips.image_url = $new_image_url
+           WHERE trips.id = $trip_id
+           RETURNING $table_fields;
+            "#;
+
+        match new_image_url {
+            Some(image_url) => stmt.replace("$new_image_url", &image_url),
+            _ => stmt.replace("$new_image_url", "NULL"),
+        };
+
+        let stmt = stmt.replace("$trip_id", &trip_id.to_string());
+        let stmt = stmt.replace("$table_fields", &Trip::sql_table_fields());
+        let stmt = db.prepare(&stmt).await.unwrap();
+
+        let result = db
+            .query(&stmt, &[])
+            .await
+            .unwrap_or_else(|_| Vec::new())
+            .iter()
+            .map(|row| Trip::from_row_ref(row).unwrap())
+            .collect::<Vec<Trip>>()
+            .pop();
+
+        match result {
+            Some(trip) => Ok(trip.image_url),
+            _ => Err(MyError::PGError),
+        }
+    }
+
+    pub async fn delete_trip(&self, trip_id: Uuid) -> Result<(), MyError> {
         let db = self.pg_pool.get().await.map_err(MyError::PGPoolError)?;
 
         let stmt = r#"

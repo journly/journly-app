@@ -43,10 +43,4 @@ impl ToSql for UpdateUser {
 pub struct CreateUser {
     pub username: String,
     pub password: String,
-    pub display_name: Option<String>,
-    pub email: Option<String>,
-}
-
-pub struct Image {
-    pub filename: String,
 }

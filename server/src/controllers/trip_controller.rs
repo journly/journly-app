@@ -2,7 +2,12 @@ use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
 use uuid::Uuid;
 
 use crate::{
-    models::api::trips::{CreateTrip, UpdateTrip},
+    models::{
+        api::{
+            dates::Dates,
+            trips::{CreateTrip, TripOwner},
+        },
+    },
     util::AppData,
 };
 
@@ -36,45 +41,99 @@ pub async fn create_trip(
 }
 
 #[get("/trips/{trip_id}")]
-pub async fn get_trip(path: web::Path<Uuid>, app_date: web::Data<AppData>) -> impl Responder {
+pub async fn get_trip(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> impl Responder {
     let trip_id = path.into_inner();
 
-    let result = app_date.db.trips.get_trip_by_id(trip_id).await;
+    let result = app_data.db.trips.get_trip(trip_id).await;
 
     match result {
         Ok(trip) => HttpResponse::Ok().json(trip),
         _ => HttpResponse::InternalServerError().body("Trip could not be found."),
     }
 }
-//
-// #[put("/trips/{trip_id}")]
-// pub async fn update_trip(
-//     path: web::Path<Uuid>,
-//     updates: web::Json<UpdateTrip>,
-//     app_date: web::Data<AppData>,
-// ) -> impl Responder {
-//     let trip_id = path.into_inner();
-//     let updates = updates.into_inner();
-//
-//     if let Some(new_dates) = updates.dates {
-//         let new_dates_result = app_date.db.dates.update_date_by_id(new_dates.id, new_dates);
-//
-//         match new_dates_result {
-//             Ok(_) => {}
-//         }
-//     }
-//
-//     let result = app_date.db.trips.update_trip_by_id(trip_id, updates).await;
-//
-//     match result {
-//         Ok(trip) => HttpResponse::Ok().json(trip),
-//         _ => HttpResponse::InternalServerError().finish(),
-//     }
-// }
-//
-// #[delete("/trips/{trip_id}")]
-// pub async fn delete_trip(path: web::Path<Uuid>, app_date: web::Data<AppData>) -> impl Responder {
-//     let trip_id = path.into_inner();
-//
-//     let result = app_date.db.trips.update_trip_by_id(trip_id, updates)
-// }
+
+#[delete("/trips/{trip_id}")]
+pub async fn delete_trip(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> impl Responder {
+    let trip_id = path.into_inner();
+
+    let result = app_data.db.trips.delete_trip(trip_id).await;
+
+    match result {
+        Ok(_) => HttpResponse::Ok().body("Trip was successfully deleted."),
+        _ => HttpResponse::InternalServerError().into(),
+    }
+}
+
+#[get("/trips/{trip_id}/dates")]
+pub async fn get_trip_dates(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> impl Responder {
+    let trip_id = path.into_inner();
+
+    let result = app_data.db.trips.get_trip(trip_id).await;
+
+    match result {
+        Ok(trip) => HttpResponse::Ok().json(Dates {
+            start_date: trip.start_date,
+            end_date: trip.end_date,
+        }),
+        _ => HttpResponse::InternalServerError().into(),
+    }
+}
+
+#[put("/trips/{trip_id}/dates")]
+pub async fn update_trip_dates(
+    path: web::Path<Uuid>,
+    update: web::Json<Dates>,
+    app_data: web::Data<AppData>,
+) -> impl Responder {
+    let trip_id = path.into_inner();
+
+    let new_dates = update.into_inner();
+
+    let result = app_data
+        .db
+        .trips
+        .update_trip_dates(trip_id, new_dates)
+        .await;
+
+    match result {
+        Ok(dates) => HttpResponse::Ok().json(dates),
+        _ => HttpResponse::InternalServerError().into(),
+    }
+}
+
+#[get("/trips/{trip_id}/owner")]
+pub async fn get_trip_owner_id(
+    path: web::Path<Uuid>,
+    app_data: web::Data<AppData>,
+) -> impl Responder {
+    let trip_id = path.into_inner();
+
+    let result = app_data.db.trips.get_trip(trip_id).await;
+
+    match result {
+        Ok(trip) => HttpResponse::Ok().json(trip.owner_id),
+        _ => HttpResponse::InternalServerError().into(),
+    }
+}
+
+#[put("/trips/{trip_id}/owner")]
+pub async fn update_trip_owner_id(
+    path: web::Path<Uuid>,
+    update: web::Json<TripOwner>,
+    app_data: web::Data<AppData>,
+) -> impl Responder {
+    let trip_id = path.into_inner();
+
+    let new_owner_id = update.owner_id;
+
+    let result = app_data
+        .db
+        .trips
+        .update_trip_owner(trip_id, new_owner_id)
+        .await;
+
+    match result {
+        Ok(owner_id) => HttpResponse::Ok().json(owner_id),
+        _ => HttpResponse::InternalServerError().into(),
+    }
+}

@@ -70,7 +70,7 @@ pub struct User {
     pub username: String,
     pub email: Option<String>,
     pub password_hash: String,
-    pub profile_picture_id: Option<Uuid>,
+    pub profile_picture_url: Option<String>,
 }
 
 #[typeshare]

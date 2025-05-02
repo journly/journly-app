@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 use uuid::Uuid;
 
-use super::{dates::UpdateDates, ToSql};
+use super::{dates::Dates, ToSql};
 
 #[typeshare]
 #[derive(Deserialize, Serialize)]
@@ -12,10 +12,16 @@ pub struct CreateTrip {
 
 #[typeshare]
 #[derive(Deserialize, Serialize)]
+pub struct TripOwner {
+    pub owner_id: Uuid,
+}
+
+#[typeshare]
+#[derive(Deserialize, Serialize)]
 pub struct UpdateTrip {
     pub title: Option<String>,
     pub owner_id: Option<Uuid>,
-    pub dates: Option<UpdateDates>,
+    pub dates: Option<Dates>,
 }
 
 impl ToSql for UpdateTrip {
@@ -34,10 +40,3 @@ impl ToSql for UpdateTrip {
     }
 }
 
-// #[typeshare]
-// #[derive(Deserialize, Serialize)]
-// pub struct TripPageData {
-//     pub title: String,
-//     pub owner_id: String,
-//     pub 
-// }
