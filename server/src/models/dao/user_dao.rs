@@ -2,7 +2,6 @@ use crate::errors::MyError;
 use crate::models::api::users::UpdateUser;
 use crate::models::api::ToSql;
 use crate::models::schema::User;
-use redis::Commands;
 use tokio_pg_mapper::FromTokioPostgresRow;
 use uuid::Uuid;
 
@@ -15,7 +14,7 @@ impl Data<User> {
         let db = self.pg_pool.get().await.map_err(MyError::PGPoolError)?;
 
         let stmt = r#"
-            SELECT $table_fields FROM public.users;
+            SELECT $table_fields FROM users;
             "#;
 
         let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
@@ -35,20 +34,8 @@ impl Data<User> {
     pub async fn get_user_by_id(&self, user_id: Uuid) -> Result<User, MyError> {
         let db = self.pg_pool.get().await.map_err(MyError::PGPoolError)?;
 
-        let mut cache = self.redis_pool.get().map_err(MyError::RedisPoolError)?;
-
-        let cache_key = format!("user:{}", user_id);
-
-        if let Ok(value) = cache.get(&cache_key) {
-            let user: User = value;
-
-            let _: () = cache.expire(cache_key, EXPIRE_TIME_SECONDS).unwrap();
-
-            return Ok(user);
-        }
-
         let stmt = r#"
-            SELECT $table_fields FROM public.users WHERE users.id = $user_id;
+            SELECT $table_fields FROM users WHERE users.id = $user_id;
             "#;
         let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
         let stmt = stmt.replace("$user_id", &user_id.to_string());
@@ -65,13 +52,7 @@ impl Data<User> {
             .pop();
 
         match result {
-            Some(user) => {
-                let _: () = cache.set(&cache_key, &user).unwrap();
-
-                let _: () = cache.expire(cache_key, EXPIRE_TIME_SECONDS).unwrap();
-
-                Ok(user)
-            }
+            Some(user) => Ok(user),
             _ => Err(MyError::NotFound),
         }
     }
@@ -79,10 +60,8 @@ impl Data<User> {
     pub async fn add_user(&self, new_user: User) -> Result<User, MyError> {
         let db = self.pg_pool.get().await.map_err(MyError::PGPoolError)?;
 
-        let mut cache = self.redis_pool.get().map_err(MyError::RedisPoolError)?;
-
         let stmt = r#"
-            INSERT INTO public.users(id, display_name, username, password_hash)
+            INSERT INTO users(id, display_name, username, password_hash)
             VALUES (gen_random_uuid(), $1, $2, $3)
             RETURNING $table_fields;
             "#;
@@ -91,7 +70,7 @@ impl Data<User> {
 
         let result = db
             .query(
-                &stmt,  
+                &stmt,
                 &[
                     &new_user.display_name,
                     &new_user.username,
@@ -106,15 +85,7 @@ impl Data<User> {
             .pop();
 
         match result {
-            Some(user) => {
-                let cache_key = format!("user:{}", new_user.id);
-
-                let _: () = cache.set(&cache_key, &user).unwrap();
-
-                let _: () = cache.expire(cache_key, EXPIRE_TIME_SECONDS).unwrap();
-
-                Ok(user)
-            }
+            Some(user) => Ok(user),
             _ => Err(MyError::PGError),
         }
     }
@@ -125,17 +96,9 @@ impl Data<User> {
         update: UpdateUser,
     ) -> Result<User, MyError> {
         let db = self.pg_pool.get().await.map_err(MyError::PGPoolError)?;
-        let mut cache = self.redis_pool.get().map_err(MyError::RedisPoolError)?;
-
-        let cache_key = format!("user:{}", user_id);
-
-        if let Ok(value) = cache.get(&cache_key) {
-            let _: User = value; // get rid of compiler warning
-            let _: () = cache.del(&cache_key).unwrap();
-        }
 
         let stmt = r#"
-            UPDATE public.users 
+            UPDATE users 
             SET $new_info WHERE id = $user_id
             RETURNING $table_fields;
             "#;
@@ -154,13 +117,7 @@ impl Data<User> {
             .pop();
 
         match result {
-            Some(user) => {
-                let _: () = cache.set(&cache_key, &user).unwrap();
-
-                let _: () = cache.expire(cache_key, EXPIRE_TIME_SECONDS).unwrap();
-
-                Ok(user)
-            }
+            Some(user) => Ok(user),
             _ => Err(MyError::PGError),
         }
     }
@@ -168,16 +125,8 @@ impl Data<User> {
     pub async fn delete_user_by_id(&self, user_id: Uuid) -> Result<(), MyError> {
         let db = self.pg_pool.get().await.map_err(MyError::PGPoolError)?;
 
-        let mut cache = self.redis_pool.get().map_err(MyError::RedisPoolError)?;
-
-        let cache_key = format!("user:{}", user_id);
-
-        if let Ok(value) = cache.get(&cache_key) {
-            let _: User = value; // to get rid of compiler warning
-            let _: () = cache.del(&cache_key).unwrap();
-        }
         let stmt = r#"
-            DELETE FROM public.users WHERE id = $user_id
+            DELETE FROM users WHERE id = $user_id
             RETURNING $table_fields;
             "#;
         let stmt = stmt.replace("$user_id", &user_id.to_string());

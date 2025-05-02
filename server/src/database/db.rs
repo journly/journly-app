@@ -1,6 +1,6 @@
 use crate::models::dao::Data;
-use deadpool_postgres::{Config, Pool};
 use crate::models::schema::{Trip, User};
+use deadpool_postgres::{Config, Pool};
 use std::{ops::DerefMut, sync::Arc};
 use tokio_postgres::NoTls;
 
@@ -15,20 +15,16 @@ pub struct Database {
 }
 
 impl Database {
-    pub async fn new(pg_config: Config, redis_addr: String) -> Self {
+    pub async fn new(pg_config: Config) -> Self {
         let pg_pool = pg_config
             .create_pool(None, NoTls)
             .expect("Failed to connect to DB");
 
         Self::run_migrations(pg_pool.clone()).await;
 
-        let redis_client = redis::Client::open(redis_addr).unwrap();
-
-        let redis_pool = r2d2::Pool::builder().build(redis_client).unwrap();
-
         Self {
-            users: Arc::from(Data::new(pg_pool.clone(), redis_pool.clone())),
-            trips: Arc::from(Data::new(pg_pool.clone(), redis_pool.clone())),
+            users: Arc::from(Data::new(pg_pool.clone())),
+            trips: Arc::from(Data::new(pg_pool.clone())),
         }
     }
 

@@ -23,7 +23,7 @@ async fn main() -> std::io::Result<()> {
         .try_build()
         .unwrap();
 
-    let db = Database::new(config.pg, config.redis_addr).await;
+    let db = Database::new(config.pg).await;
 
     let app_state = web::Data::new(AppData {
         db: Arc::new(db),
