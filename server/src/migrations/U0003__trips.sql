@@ -6,7 +6,7 @@ CREATE TABLE trips (
   owner_id UUID NOT NULL REFERENCES users,
   title TEXT NOT NULL DEFAULT 'Untitled trip',
   image_url TEXT,
-  dates_id UUID REFERENCES dates NOT NULL,
+  dates_id UUID REFERENCES dates NOT NULL
 );
 
 CREATE TABLE user_trips (
@@ -15,10 +15,14 @@ CREATE TABLE user_trips (
   PRIMARY KEY (trip_id, user_id)
 );
 
+DROP VIEW IF EXISTS trip_details;
+
 CREATE OR REPLACE VIEW trip_details AS
 SELECT
 	trips.id as id,
+  owner_id,
 	title,
+  image_url,
 	start_date,
 	end_date
 FROM 

@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS markers;
+
 CREATE TABLE markers (
   id UUID PRIMARY KEY,
   coordinates_id UUID NOT NULL REFERENCES coordinates,

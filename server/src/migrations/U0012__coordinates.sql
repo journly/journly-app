@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS coordinates;
+
 CREATE TABLE coordinates (
   id UUID PRIMARY KEY,
   longitude DOUBLE PRECISION NOT NULL,

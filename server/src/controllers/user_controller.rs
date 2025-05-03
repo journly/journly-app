@@ -6,10 +6,8 @@ use argon2::{
 use uuid::Uuid;
 
 use crate::{
-    models::{
-        api::users::{CreateUser, UpdateUser},
-        schema::User,
-    },
+    controllers::log_request,
+    models::api::users::{CreateUser, UpdateUser},
     util::AppData,
 };
 
@@ -23,6 +21,8 @@ pub fn init(cfg: &mut web::ServiceConfig) {
 
 #[get("/users")]
 async fn get_users(app_data: web::Data<AppData>) -> impl Responder {
+    log_request(&format!("GET /users"), &app_data.connections);
+
     let result = app_data.db.users.get_users().await;
 
     match result {
@@ -36,6 +36,8 @@ async fn create_user(
     new_user: web::Json<CreateUser>,
     app_data: web::Data<AppData>,
 ) -> impl Responder {
+    log_request(&format!("POST /users"), &app_data.connections);
+
     let new_user = new_user.into_inner();
 
     let salt = SaltString::generate(&mut OsRng);
@@ -49,7 +51,11 @@ async fn create_user(
         return HttpResponse::InternalServerError().finish();
     }
 
-    let result = app_data.db.users.add_user(new_user.username, password_hash).await;
+    let result = app_data
+        .db
+        .users
+        .add_user(new_user.username, password_hash)
+        .await;
 
     match result {
         Ok(user) => HttpResponse::Ok().json(user),
@@ -60,6 +66,8 @@ async fn create_user(
 #[get("/users/{user_id}")]
 async fn get_user(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> impl Responder {
     let user_id = path.into_inner();
+
+    log_request(&format!("GET /users/{user_id}"), &app_data.connections);
 
     let result = app_data.db.users.get_user_by_id(user_id).await;
 
@@ -76,6 +84,9 @@ async fn update_user(
     app_data: web::Data<AppData>,
 ) -> impl Responder {
     let user_id = path.into_inner();
+
+    log_request(&format!("PUT /users/{user_id}"), &app_data.connections);
+
     let mut update = data.into_inner();
 
     if let Some(password) = update.password {
@@ -100,6 +111,8 @@ async fn update_user(
 #[delete("/users/{user_id}")]
 async fn delete_user(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> impl Responder {
     let user_id = path.into_inner();
+
+    log_request(&format!("/users/{user_id}"), &app_data.connections);
 
     let result = app_data.db.users.delete_user_by_id(user_id).await;
 

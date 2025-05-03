@@ -1,8 +1,8 @@
 use chrono::NaiveDate;
-use redis_macros::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use tokio_pg_mapper::FromTokioPostgresRow;
 use tokio_pg_mapper_derive::PostgresMapper;
+use tokio_postgres::Row;
 use uuid::Uuid;
 
 use super::Data;
@@ -14,24 +14,40 @@ use crate::{
     },
 };
 
-#[derive(Serialize, Deserialize, PostgresMapper, FromRedisValue, ToRedisArgs)]
-#[pg_mapper(table = "trip_details")]
+#[derive(Serialize, Deserialize)]
 pub struct TripDetails {
     pub id: Uuid,
     pub owner_id: Uuid,
     pub title: String,
-    pub trip_image: Option<String>,
+    pub image_url: Option<String>,
     pub start_date: Option<NaiveDate>,
     pub end_date: Option<NaiveDate>,
 }
 
-const EXPIRE_TIME_SECONDS: i64 = 10000;
+impl TripDetails {
+    pub fn sql_table_fields(&self) -> String {
+        return format!(" trips.id, owner_id, title, image_url, start_date, end_date ");
+    }
+
+    pub fn from_row_ref(row: &Row) -> Result<TripDetails, ()> {
+        
+        if let Err(e) = row.try_get("id") {
+            Err(())
+        };
+
+        if let Err(e) = row.try_get("owner_id") {
+            Err(())
+        };
+
+        Err(())
+    }
+}
 
 impl Data<Trip> {
     pub async fn get_all_trips(&self) -> Result<Vec<TripDetails>, MyError> {
         let db = self.pg_pool.get().await.map_err(MyError::PGPoolError)?;
 
-        let stmt = r#"
+        let stmt = r#"SELECT
             SELECT $table_fields FROM trip_details;
             "#;
         let stmt = stmt.replace("$table_fields", &TripDetails::sql_table_fields());
@@ -53,7 +69,7 @@ impl Data<Trip> {
 
         let stmt = r#"
             SELECT $table_fields FROM trip_details
-            WHERE trip_details.id = $trip_id;
+            WHERE trip_details.id = '$trip_id';
             "#;
         let stmt = stmt.replace("$table_fields", &TripDetails::sql_table_fields());
         let stmt = stmt.replace("$trip_id", &trip_id.to_string());
@@ -82,9 +98,9 @@ impl Data<Trip> {
                 INSERT INTO dates(id)
                 VALUES (gen_random_uuid())
                 RETURNING *
-            ) new_trip AS (
+            ), new_trip AS (
                 INSERT INTO trips(id, owner_id, dates_id)
-                SELECT gen_random_uuid(), $user_id, id FROM new_dates
+                SELECT gen_random_uuid(), '$user_id', id FROM new_dates
                 RETURNING *
             )
             SELECT $table_fields 
@@ -92,7 +108,7 @@ impl Data<Trip> {
             INNER JOIN new_dates
             ON new_trip.dates_id = new_dates.id;
             "#;
-        let stmt = stmt.replace("$table_fields", &Trip::sql_table_fields());
+        let stmt = stmt.replace("$table_fields", &TripDetails::sql_table_fields());
         let stmt = stmt.replace("$user_id", &creator_user_id.to_string());
         let stmt = db.prepare(&stmt).await.unwrap();
 
@@ -120,8 +136,8 @@ impl Data<Trip> {
 
         let stmt = r#"
             UPDATE trips
-            SET title = $new_title
-            WHERE trips.id = $trip_id
+            SET title = '$new_title'
+            WHERE trips.id = '$trip_id'
             RETURNING $table_fields;
             "#;
         let stmt = stmt.replace("$new_title", &new_title);
@@ -153,8 +169,8 @@ impl Data<Trip> {
 
         let stmt = r#"
             UPDATE trips
-            SET trips.owner_id = $new_owner_id
-            WHERE trips.id = $trip_id
+            SET trips.owner_id = '$new_owner_id'
+            WHERE trips.id = '$trip_id'
             RETURNING $table_fields;
             "#;
         let stmt = stmt.replace("$new_owner_id", &new_owner_id.to_string());
@@ -190,7 +206,7 @@ impl Data<Trip> {
             WHERE dates.id in (
                 SELECT dates_id 
                 FROM trips
-                WHERE trips.id = $trip_id
+                WHERE trips.id = '$trip_id'
             )
             RETURNING $table_fields; 
             "#;
@@ -224,8 +240,8 @@ impl Data<Trip> {
 
         let stmt = r#"
            UPDATE trips
-           SET trips.image_url = $new_image_url
-           WHERE trips.id = $trip_id
+           SET trips.image_url = '$new_image_url'
+           WHERE trips.id = '$trip_id'
            RETURNING $table_fields;
             "#;
 
@@ -258,7 +274,7 @@ impl Data<Trip> {
 
         let stmt = r#"
             DELETE FROM trips
-            WHERE trips.id = $trip_id
+            WHERE trips.id = '$trip_id'
             RETURNING $table_fields;
             "#;
         let stmt = stmt.replace("$trip_id", &trip_id.to_string());

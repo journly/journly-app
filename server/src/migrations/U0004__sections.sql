@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS sections;
+
 CREATE TABLE sections (
   id UUID PRIMARY KEY,
   trip_id UUID NOT NULL REFERENCES trips,

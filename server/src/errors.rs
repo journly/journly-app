@@ -1,7 +1,6 @@
 use actix_web::{HttpResponse, ResponseError};
 use deadpool_postgres::PoolError;
 use derive_more::{Display, Error, From};
-use r2d2::Error as RedisPoolError;
 use tokio_pg_mapper::Error as PGMError;
 
 #[allow(dead_code)]
@@ -12,7 +11,6 @@ pub enum MyError {
     PGError,
     PGMError(PGMError),
     PGPoolError(PoolError),
-    RedisPoolError(RedisPoolError),
 }
 
 impl ResponseError for MyError {

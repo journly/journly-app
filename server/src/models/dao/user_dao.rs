@@ -7,8 +7,6 @@ use uuid::Uuid;
 
 use super::Data;
 
-const EXPIRE_TIME_SECONDS: i64 = 10000;
-
 impl Data<User> {
     pub async fn get_users(&self) -> Result<Vec<User>, MyError> {
         let db = self.pg_pool.get().await.map_err(MyError::PGPoolError)?;
@@ -62,7 +60,7 @@ impl Data<User> {
 
         let stmt = r#"
             INSERT INTO users(id, username, password_hash)
-            VALUES (gen_random_uuid(), $username, $password_hash)
+            VALUES (gen_random_uuid(), '$username', '$password_hash')
             RETURNING $table_fields;
             "#;
         let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
@@ -94,7 +92,7 @@ impl Data<User> {
 
         let stmt = r#"
             UPDATE users 
-            SET $new_info WHERE id = $user_id
+            SET $new_info WHERE id = '$user_id'
             RETURNING $table_fields;
             "#;
         let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
@@ -121,7 +119,7 @@ impl Data<User> {
         let db = self.pg_pool.get().await.map_err(MyError::PGPoolError)?;
 
         let stmt = r#"
-            DELETE FROM users WHERE id = $user_id
+            DELETE FROM users WHERE id = '$user_id'
             RETURNING $table_fields;
             "#;
         let stmt = stmt.replace("$user_id", &user_id.to_string());

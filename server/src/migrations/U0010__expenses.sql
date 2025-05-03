@@ -1,3 +1,6 @@
+DROP TABLE IF EXISTS expenses;
+DROP TABLE IF EXISTS expense_payers;
+
 CREATE TABLE expenses (
   id UUID PRIMARY KEY,
   budgeting_tracker_id UUID NOT NULL REFERENCES budgeting_trackers,
@@ -7,10 +10,11 @@ CREATE TABLE expenses (
   split_type TEXT NOT NULL
 );
 
-ALTER TABLE itinerary_activities ADD CONSTRAINT fk_ia_e FOREIGN KEY (expense_id) REFERENCES expenses(id);
+ALTER TABLE itinerary_activities ADD column expense_id UUID NOT NULL;
+ALTER TABLE itinerary_activities ADD CONSTRAINT fk_a_e FOREIGN KEY (expense_id) REFERENCES expenses(id);
 
 CREATE TABLE expense_payers (
-  expense_id UUID NOT NULL ON DELETE CASCADE,
+  expense_id UUID NOT NULL REFERENCES expenses ON DELETE CASCADE,
   user_id UUID NOT NULL,
   PRIMARY KEY (expense_id, user_id)
 );

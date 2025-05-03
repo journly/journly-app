@@ -18,6 +18,12 @@ pub struct TripOwner {
 
 #[typeshare]
 #[derive(Deserialize, Serialize)]
+pub struct TripTitle {
+    pub title: String,
+}
+
+#[typeshare]
+#[derive(Deserialize, Serialize)]
 pub struct UpdateTrip {
     pub title: Option<String>,
     pub owner_id: Option<Uuid>,

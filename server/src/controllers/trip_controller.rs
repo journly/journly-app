@@ -2,23 +2,34 @@ use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
 use uuid::Uuid;
 
 use crate::{
-    models::{
-        api::{
-            dates::Dates,
-            trips::{CreateTrip, TripOwner},
-        },
+    controllers::log_request,
+    models::api::{
+        dates::Dates,
+        trips::{CreateTrip, TripOwner, TripTitle},
     },
     util::AppData,
 };
 
 pub fn init(cfg: &mut web::ServiceConfig) {
     cfg.service(get_trips);
+    cfg.service(create_trip);
+    cfg.service(get_trip);
+    cfg.service(delete_trip);
+    cfg.service(get_trip_dates);
+    cfg.service(update_trip_dates);
+    cfg.service(get_trip_title);
+    cfg.service(update_trip_title);
+    cfg.service(get_trip_dates);
+    cfg.service(update_trip_dates);
+    cfg.service(get_trip_owner_id);
+    cfg.service(update_trip_owner_id);
 }
 
 #[get("/trips")]
 pub async fn get_trips(app_data: web::Data<AppData>) -> impl Responder {
-    let result = app_data.db.trips.get_all_trips().await;
+    log_request("GET /trips", &app_data.connections);
 
+    let result = app_data.db.trips.get_all_trips().await;
     match result {
         Ok(trips) => HttpResponse::Ok().json(trips),
         _ => HttpResponse::InternalServerError().finish(),
@@ -28,11 +39,13 @@ pub async fn get_trips(app_data: web::Data<AppData>) -> impl Responder {
 #[post("/trips")]
 pub async fn create_trip(
     owner_id: web::Json<CreateTrip>,
-    app_date: web::Data<AppData>,
+    app_data: web::Data<AppData>,
 ) -> impl Responder {
+    log_request("POST /trips", &app_data.connections);
+
     let owner_id = owner_id.into_inner().owner_id;
 
-    let trip_result = app_date.db.trips.add_trip(owner_id).await;
+    let trip_result = app_data.db.trips.add_trip(owner_id).await;
 
     match trip_result {
         Ok(trip) => HttpResponse::Ok().json(trip),
@@ -44,6 +57,8 @@ pub async fn create_trip(
 pub async fn get_trip(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> impl Responder {
     let trip_id = path.into_inner();
 
+    log_request(&format!("GET /trips/{trip_id}"), &app_data.connections);
+
     let result = app_data.db.trips.get_trip(trip_id).await;
 
     match result {
@@ -54,6 +69,8 @@ pub async fn get_trip(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> im
 
 #[delete("/trips/{trip_id}")]
 pub async fn delete_trip(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> impl Responder {
+    log_request("DELETE /trips/{trip_id}", &app_data.connections);
+
     let trip_id = path.into_inner();
 
     let result = app_data.db.trips.delete_trip(trip_id).await;
@@ -67,6 +84,8 @@ pub async fn delete_trip(path: web::Path<Uuid>, app_data: web::Data<AppData>) ->
 #[get("/trips/{trip_id}/dates")]
 pub async fn get_trip_dates(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> impl Responder {
     let trip_id = path.into_inner();
+
+    log_request(&format!("GET /trips/{trip_id}"), &app_data.connections);
 
     let result = app_data.db.trips.get_trip(trip_id).await;
 
@@ -86,6 +105,8 @@ pub async fn update_trip_dates(
     app_data: web::Data<AppData>,
 ) -> impl Responder {
     let trip_id = path.into_inner();
+
+    log_request(&format!("PUT /trips/{trip_id}"), &app_data.connections);
 
     let new_dates = update.into_inner();
 
@@ -108,6 +129,11 @@ pub async fn get_trip_owner_id(
 ) -> impl Responder {
     let trip_id = path.into_inner();
 
+    log_request(
+        &format!("GET /trips/{trip_id}/owner"),
+        &app_data.connections,
+    );
+
     let result = app_data.db.trips.get_trip(trip_id).await;
 
     match result {
@@ -124,6 +150,11 @@ pub async fn update_trip_owner_id(
 ) -> impl Responder {
     let trip_id = path.into_inner();
 
+    log_request(
+        &format!("PUT /trips/{trip_id}/owner"),
+        &app_data.connections,
+    );
+
     let new_owner_id = update.owner_id;
 
     let result = app_data
@@ -134,6 +165,50 @@ pub async fn update_trip_owner_id(
 
     match result {
         Ok(owner_id) => HttpResponse::Ok().json(owner_id),
+        _ => HttpResponse::InternalServerError().into(),
+    }
+}
+
+#[get("/trips/{trip_id}/title")]
+pub async fn get_trip_title(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> impl Responder {
+    let trip_id = path.into_inner();
+
+    log_request(
+        &format!("GET /trips/{trip_id}/title"),
+        &app_data.connections,
+    );
+
+    let result = app_data.db.trips.get_trip(trip_id).await;
+
+    match result {
+        Ok(trip) => HttpResponse::Ok().json(trip.title),
+        _ => HttpResponse::InternalServerError().into(),
+    }
+}
+
+#[put("/trips/{trip_id}/title")]
+pub async fn update_trip_title(
+    path: web::Path<Uuid>,
+    update: web::Json<TripTitle>,
+    app_data: web::Data<AppData>,
+) -> impl Responder {
+    let trip_id = path.into_inner();
+
+    log_request(
+        &format!("PUT /trips/{trip_id}/title"),
+        &app_data.connections,
+    );
+
+    let new_title = update.into_inner().title;
+
+    let result = app_data
+        .db
+        .trips
+        .update_trip_title(trip_id, new_title)
+        .await;
+
+    match result {
+        Ok(title) => HttpResponse::Ok().json(title),
         _ => HttpResponse::InternalServerError().into(),
     }
 }

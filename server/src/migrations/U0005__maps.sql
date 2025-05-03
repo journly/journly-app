@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS maps;
+
 CREATE TABLE maps (
   id UUID PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES users,

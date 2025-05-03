@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS widgets;
+
 CREATE TABLE widgets (
   id UUID PRIMARY KEY,
   section_id UUID NOT NULL REFERENCES sections,

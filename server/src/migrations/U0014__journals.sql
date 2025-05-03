@@ -1,3 +1,6 @@
+DROP TABLE IF EXISTS journals;
+DROP TABLE IF EXISTS user_journals;
+
 CREATE TABLE journals (
   id UUID PRIMARY KEY,
   owner_id UUID NOT NULL REFERENCES users,

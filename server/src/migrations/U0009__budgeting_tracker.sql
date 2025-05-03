@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS budgeting_trackers;
+
 CREATE TABLE budgeting_trackers (
   id UUID PRIMARY KEY,
   widget_id UUID NOT NULL REFERENCES widgets,
