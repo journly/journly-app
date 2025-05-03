@@ -43,8 +43,13 @@
 | `GET`    | `/trips`                     | Get all trips                                       |
 | `POST`   | `/trips`                     | Create new trip                                     |
 | `GET`    | `/trips/:id`                 | Get a specific trip with all its sections + widgets |
-| `PUT`    | `/trips/:id`                 | Update trip                                         |
 | `DELETE` | `/trips/:id`                 | Delete specific trip                                |
+| `GET`    | `/trips/:id/dates`           | Get trip dates                                      |
+| `PUT`    | `/trips/:id/dates`           | Update trip dates                                   |
+| `GET`    | `/trips/:id/title`           | Get trip title                                      |
+| `PUT`    | `/trips/:id/title`           | Update trip title                                   |
+| `GET`    | `/trips/:id/owner`           | Get trip owner id                                   |
+| `PUT`    | `/trips/:id/owner`           | Update trip owner id                                |
 | `GET`    | `/trips/:id/sections`        | Get all sections in a trip                          |
 | `PUT`    | `/trips/:id/sections`        | Update sections                                     |
 | `DELETE` | `/trips/:id/sections/:id`    | Delete specific section                             |
