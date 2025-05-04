@@ -8,3 +8,13 @@ CREATE TABLE users (
   password_hash TEXT NOT NULL,
   profile_picture_url TEXT
 );
+
+
+INSERT INTO users(id, username, password_hash) 
+VALUES (gen_random_uuid(), 'johnharthone', 'password');
+
+INSERT INTO users(id, username, password_hash) 
+VALUES (gen_random_uuid(), 'tomfoolery', 'password');
+
+INSERT INTO users(id, username, password_hash)
+VALUES (gen_random_uuid(), 'monkeyman', 'password');

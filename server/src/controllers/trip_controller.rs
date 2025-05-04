@@ -41,7 +41,7 @@ pub async fn create_trip(
     owner_id: web::Json<CreateTrip>,
     app_data: web::Data<AppData>,
 ) -> impl Responder {
-    log_request("POST /trips", &app_data.connections);
+    log_request("POST /trips", &app_data.connections);  
 
     let owner_id = owner_id.into_inner().owner_id;
 
@@ -69,9 +69,9 @@ pub async fn get_trip(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> im
 
 #[delete("/trips/{trip_id}")]
 pub async fn delete_trip(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> impl Responder {
-    log_request("DELETE /trips/{trip_id}", &app_data.connections);
-
     let trip_id = path.into_inner();
+
+    log_request(&format!("DELETE /trips/{trip_id}"), &app_data.connections);
 
     let result = app_data.db.trips.delete_trip(trip_id).await;
 

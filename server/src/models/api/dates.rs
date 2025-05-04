@@ -7,7 +7,7 @@ use super::ToSql;
 
 #[typeshare]
 #[derive(Deserialize, Serialize, Clone, Copy, PostgresMapper)]
-#[pg_mapper(table = "dates_")]
+#[pg_mapper(table = "dates")]
 pub struct Dates {
     pub start_date: Option<NaiveDate>,
     pub end_date: Option<NaiveDate>,
@@ -22,7 +22,7 @@ impl ToSql for Dates {
         }
 
         if let Some(end_date) = &self.end_date {
-            values.push(format!("end_date = '{}", end_date));
+            values.push(format!("end_date = '{}'", end_date));
         }
 
         values.join(", ")

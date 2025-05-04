@@ -11,6 +11,7 @@ pub enum MyError {
     PGError,
     PGMError(PGMError),
     PGPoolError(PoolError),
+    ParseError,
 }
 
 impl ResponseError for MyError {

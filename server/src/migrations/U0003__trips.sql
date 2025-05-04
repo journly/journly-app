@@ -6,7 +6,7 @@ CREATE TABLE trips (
   owner_id UUID NOT NULL REFERENCES users,
   title TEXT NOT NULL DEFAULT 'Untitled trip',
   image_url TEXT,
-  dates_id UUID REFERENCES dates NOT NULL
+  dates_id UUID NOT NULL REFERENCES dates ON DELETE CASCADE
 );
 
 CREATE TABLE user_trips (
@@ -27,3 +27,25 @@ SELECT
 	end_date
 FROM 
 	trips INNER JOIN dates ON trips.dates_id = dates.id;
+
+
+DROP TRIGGER IF EXISTS on_trip_deletion ON trips;
+
+CREATE OR REPLACE FUNCTION delete_date()
+  RETURNS TRIGGER
+  LANGUAGE PLPGSQL
+  AS 
+$$
+BEGIN
+  DELETE FROM dates
+  WHERE dates.id = OLD.dates_id;
+
+  RETURN OLD;
+END;
+$$;
+
+CREATE TRIGGER on_trip_deletion
+  AFTER DELETE 
+  ON trips
+  FOR EACH ROW
+  EXECUTE PROCEDURE delete_date();

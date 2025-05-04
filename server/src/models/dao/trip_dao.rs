@@ -14,7 +14,8 @@ use crate::{
     },
 };
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, PostgresMapper)]
+#[pg_mapper(table = "trip_details")]
 pub struct TripDetails {
     pub id: Uuid,
     pub owner_id: Uuid,
@@ -24,30 +25,11 @@ pub struct TripDetails {
     pub end_date: Option<NaiveDate>,
 }
 
-impl TripDetails {
-    pub fn sql_table_fields(&self) -> String {
-        return format!(" trips.id, owner_id, title, image_url, start_date, end_date ");
-    }
-
-    pub fn from_row_ref(row: &Row) -> Result<TripDetails, ()> {
-        
-        if let Err(e) = row.try_get("id") {
-            Err(())
-        };
-
-        if let Err(e) = row.try_get("owner_id") {
-            Err(())
-        };
-
-        Err(())
-    }
-}
-
 impl Data<Trip> {
     pub async fn get_all_trips(&self) -> Result<Vec<TripDetails>, MyError> {
         let db = self.pg_pool.get().await.map_err(MyError::PGPoolError)?;
 
-        let stmt = r#"SELECT
+        let stmt = r#"
             SELECT $table_fields FROM trip_details;
             "#;
         let stmt = stmt.replace("$table_fields", &TripDetails::sql_table_fields());
@@ -103,12 +85,11 @@ impl Data<Trip> {
                 SELECT gen_random_uuid(), '$user_id', id FROM new_dates
                 RETURNING *
             )
-            SELECT $table_fields 
+            SELECT new_trip.id as id, owner_id, title, image_url, start_date, end_date
             FROM new_trip 
             INNER JOIN new_dates
             ON new_trip.dates_id = new_dates.id;
             "#;
-        let stmt = stmt.replace("$table_fields", &TripDetails::sql_table_fields());
         let stmt = stmt.replace("$user_id", &creator_user_id.to_string());
         let stmt = db.prepare(&stmt).await.unwrap();
 
