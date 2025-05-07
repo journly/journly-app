@@ -1,78 +1,88 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
-import { Platform } from 'react-native';
-
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
+import { Stack, Tabs } from 'expo-router';
+import { Dimensions, StyleSheet,View } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
+import { useThemeColor } from '@/hooks/useThemeColor';
+import VerticalTabBar from '@/components/VerticalTabBar';
+
+const defaultOptions = {
+  headerShown: false,
+  tabBarVisible: false,
+  tabBarButton: () => null,
+  tabbarbuttonvisible: false,
+}
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
 
   return (
-    <Tabs
+    <>
+      <Tabs
+      tabBar={(props) => <VerticalTabBar {...props} />}
       screenOptions={{
-        tabBarActiveTintColor: 'black',
+        headerShown: false,
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'home-sharp' : 'home-outline'} color={color} size={24} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="map"
-        options={{
-          title: 'Map',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'map' : "map-outline"} color={color} size={24}/>
-          ),
-        }}
-      />  
-      <Tabs.Screen
-        name="journals"
-        options={{
-          title: 'Journals',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'information-circle' : 'information-circle-outline'} color={color} size={24}/>
-          ),
-        }}
-      /> 
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'information-circle' : 'information-circle-outline'} color={color} size={24}/>
-          ),
-        }}
-      /> 
-      <Tabs.Screen
-        name="itinerary"
-        options={{          
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="dashboard"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="budgeting"
-        options={{
-          href: null,
-        }}
-      /> 
-    </Tabs>
-    
+        <Tabs.Screen
+          name="(home)"
+          options={{
+            title: 'Home',
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons name={focused ? 'home-sharp' : 'home-outline'} color={color} size={24} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="map"
+          options={{
+            title: 'Map',
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons name={focused ? 'map' : "map-outline"} color={color} size={24}/>
+            ),
+          }}
+        />  
+        <Tabs.Screen
+          name="journals"
+          options={{
+            title: 'Journals',
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons name={focused ? 'information-circle' : 'information-circle-outline'} color={color} size={24}/>
+            ),
+          }}
+        /> 
+        <Tabs.Screen
+          name="explore"
+          options={{
+            title: 'Explore',
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons name={focused ? 'search' : 'search-outline'} color={color} size={24}/>
+            ),
+          }}
+        /> 
+        <Tabs.Screen
+          name="itinerary"
+          options={defaultOptions}
+        />
+        <Tabs.Screen
+          name="dashboard"
+          options={defaultOptions}
+        />
+        <Tabs.Screen
+          name="budgeting"
+          options={defaultOptions}
+        />  
+        <Tabs.Screen
+          name="trip/[id]/index"
+          options={defaultOptions}
+        /> 
+        <Tabs.Screen
+          name="trip/[id]/itinerary"
+          options={defaultOptions}
+        /> 
+        <Tabs.Screen
+          name="trip/[id]/budgeting"
+          options={defaultOptions}
+        /> 
+      </Tabs>   
+      </> 
   );
 }
