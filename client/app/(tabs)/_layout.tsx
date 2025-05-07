@@ -1,5 +1,5 @@
 import { Stack, Tabs } from 'expo-router';
-import { Dimensions, StyleSheet,View } from 'react-native';
+import { Dimensions, StyleSheet,View, Text } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColor } from '@/hooks/useThemeColor';
@@ -16,7 +16,15 @@ export default function TabLayout() {
 
   return (
     <>
-      <Tabs
+    <View style={{flexDirection: 'row', alignItems: 'center', padding: 10}}>
+      <Ionicons name="book-outline" size={30} color="BLACK" style={{ marginRight: 10 }} />
+      <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Journaly</Text>
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', flex: 1 }}>
+        <Ionicons name="notifications-outline" size={24} color="BLACK" style={{ marginLeft: 10 }} />
+        <Ionicons name="person-outline" size={24} color="BLACK" style={{ marginLeft: 10 }} />
+      </View>
+    </View>
+    <Tabs
       tabBar={(props) => <VerticalTabBar {...props} />}
       screenOptions={{
         headerShown: false,
