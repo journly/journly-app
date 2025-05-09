@@ -39,7 +39,7 @@ impl Database {
 
         match embedded::migrations::runner().run_async(client).await {
             Ok(_) => (),
-            Err(_) => println!("Migration failed."),
+            Err(_) => eprintln!("Migration failed."),
         }
     }
 }

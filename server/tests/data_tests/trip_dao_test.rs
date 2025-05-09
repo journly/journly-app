@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use crate::init_db_context;
+use crate::data_tests::init_db_context;
 use uuid::Uuid;
 
 #[actix_rt::test]
