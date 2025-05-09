@@ -1,10 +1,10 @@
+use journaly_server::init_app_state;
 use journaly_server::{config::get_configuration, run};
-use journaly_server::{init_app_state, };
 use std::net::TcpListener;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let config = get_configuration().expect("Failed to read configuration");
+    let config = get_configuration("config.toml").expect("Failed to read configuration");
 
     let app_state = init_app_state(&config).await;
 

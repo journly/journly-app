@@ -5,5 +5,5 @@ server_addr="127.0.0.1"
 dev_port=8080
 
 # DB Config
-db_config = { host="localhost", user="postgres", password="postgres", dbname="test", port=5431, pool = { max_size = 16} }
+db_config = { host="localhost", user="postgres", password="postgres", dbname="journaly", port=5431, pool = { max_size = 16} }
 

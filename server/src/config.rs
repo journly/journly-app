@@ -23,8 +23,8 @@ impl confik::Configuration for DbConfig {
     type Builder = Option<Self>;
 }
 
-pub fn get_configuration() -> Result<JournalyConfig, confik::Error> {
+pub fn get_configuration(filename: &str) -> Result<JournalyConfig, confik::Error> {
     JournalyConfig::builder()
-        .override_with(FileSource::new("config.toml"))
+        .override_with(FileSource::new(filename))
         .try_build()
 }
