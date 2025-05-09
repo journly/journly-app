@@ -4,7 +4,7 @@ use journaly_server::config::JournalyConfig;
 #[test]
 pub fn build_config() {
     let config = JournalyConfig::builder()
-        .override_with(FileSource::new("dev.toml"))
+        .override_with(FileSource::new("test_config.toml"))
         .try_build()
         .expect("Failed to build config");
 

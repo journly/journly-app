@@ -1,15 +1,8 @@
-use confik::{Configuration, EnvSource};
-use dotenvy::dotenv;
-use journaly_server::{config::JournalyConfig, database::db::Database};
+use journaly_server::{config::get_configuration, database::db::Database};
 
 #[actix_rt::test]
 async fn db_context_created() {
-    dotenv().ok();
+    let config = get_configuration("test_config.toml").expect("Failed to build config.");
 
-    let config = JournalyConfig::builder()
-        .override_with(EnvSource::new())
-        .try_build()
-        .expect("Failed to build config.");
-
-    Database::new(config.pg).await;
+    Database::new(&config.db_config).await;
 }

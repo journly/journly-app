@@ -49,3 +49,11 @@ CREATE TRIGGER on_trip_deletion
   ON trips
   FOR EACH ROW
   EXECUTE PROCEDURE delete_date();
+
+
+-- test records
+INSERT INTO dates(id, start_date, end_date)
+VALUES ('c4dbdb37-08e7-4ca8-bab1-3a339af004f9', '2025-12-12', '2025-12-21');
+
+INSERT INTO trips(id, owner_id, title, dates_id)
+VALUES ('c8381024-3f79-4a10-b5fe-06dc24e74bdc', '612e21ed-869b-4130-bb72-fc7549f93609', 'Example Trip','c4dbdb37-08e7-4ca8-bab1-3a339af004f9');

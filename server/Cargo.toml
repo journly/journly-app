@@ -25,3 +25,4 @@ argon2 = {version = "0.5.3", features=["default", "std"]}
 actix-multipart = "0.7.2"
 futures = "0.3.0"
 actix-rt = "2.10.0"
+reqwest = "0.12.15"

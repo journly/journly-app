@@ -38,7 +38,7 @@ impl Database {
         let client = conn.deref_mut().deref_mut();
 
         match embedded::migrations::runner().run_async(client).await {
-            Ok(report) => println!("Migration report: {report:?}"),
+            Ok(_) => (),
             Err(_) => println!("Migration failed."),
         }
     }

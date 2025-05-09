@@ -14,7 +14,13 @@ async fn get_all_trips_works() {
 
 #[actix_rt::test]
 async fn get_single_trip_works() {
-    let app = DaoTest::new().await;
+    let db = init_db_context().await;
+
+    let trip_id = Uuid::from_str("c8381024-3f79-4a10-b5fe-06dc24e74bdc").unwrap();
+
+    let result = db.trips.get_trip(trip_id);
+
+    assert!(result.await.is_ok());
 }
 
 #[actix_rt::test]
@@ -28,7 +34,3 @@ async fn add_trip_works() {
     assert!(result.await.is_ok());
 }
 
-#[actix_rt::test]
-async fn date_is_created_when_trip_is_added() {
-    let app = DaoTest::new().await;
-}

@@ -1,13 +1,12 @@
-use actix_web::{test, App};
-use journaly_server::controllers::check_health;
+use crate::spawn_app;
 
 #[actix_web::test]
 async fn health_check_returns_ok() {
-    let app = test::init_service(App::new().service(check_health)).await;
-    let req = test::TestRequest::get()
-        .to_request();
+    let address = spawn_app().await;
 
-    let response = test::call_service(&app, req).await;
+    let res = reqwest::get(format!("{}/health", address))
+        .await
+        .expect("Request could not be resolved");
 
-    assert!(response.status().is_success());
+    assert!(res.status().is_success());
 }
