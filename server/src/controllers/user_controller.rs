@@ -1,3 +1,4 @@
+use crate::AppData;
 use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
@@ -8,7 +9,6 @@ use uuid::Uuid;
 use crate::{
     controllers::log_request,
     models::api::users::{CreateUser, UpdateUser},
-    util::AppData,
 };
 
 pub fn init(cfg: &mut web::ServiceConfig) {
@@ -21,7 +21,7 @@ pub fn init(cfg: &mut web::ServiceConfig) {
 
 #[get("/users")]
 async fn get_users(app_data: web::Data<AppData>) -> impl Responder {
-    log_request(&format!("GET /users"), &app_data.connections);
+    log_request("GET /users", &app_data.connections);
 
     let result = app_data.db.users.get_users().await;
 
@@ -36,7 +36,7 @@ async fn create_user(
     new_user: web::Json<CreateUser>,
     app_data: web::Data<AppData>,
 ) -> impl Responder {
-    log_request(&format!("POST /users"), &app_data.connections);
+    log_request("POST /users", &app_data.connections);
 
     let new_user = new_user.into_inner();
 
@@ -118,7 +118,7 @@ async fn delete_user(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> imp
 
     match result {
         Ok(_) => HttpResponse::Ok(),
-        Err(_) => HttpResponse::InternalServerError().into(),
+        Err(_) => HttpResponse::InternalServerError(),
     }
 }
 

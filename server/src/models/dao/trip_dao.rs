@@ -2,7 +2,6 @@ use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use tokio_pg_mapper::FromTokioPostgresRow;
 use tokio_pg_mapper_derive::PostgresMapper;
-use tokio_postgres::Row;
 use uuid::Uuid;
 
 use super::Data;

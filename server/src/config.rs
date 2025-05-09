@@ -1,12 +1,12 @@
-use confik::Configuration;
+use confik::{Configuration, FileSource};
 use serde::Deserialize;
 
 #[derive(Debug, Default, Configuration)]
-pub struct ExampleConfig {
+pub struct JournalyConfig {
     pub server_addr: String,
     pub dev_port: u16,
     #[confik(from = DbConfig)]
-    pub pg: deadpool_postgres::Config,
+    pub db_config: deadpool_postgres::Config,
 }
 
 #[derive(Debug, Deserialize)]
@@ -21,4 +21,10 @@ impl From<DbConfig> for deadpool_postgres::Config {
 
 impl confik::Configuration for DbConfig {
     type Builder = Option<Self>;
+}
+
+pub fn get_configuration() -> Result<JournalyConfig, confik::Error> {
+    JournalyConfig::builder()
+        .override_with(FileSource::new("config.toml"))
+        .try_build()
 }

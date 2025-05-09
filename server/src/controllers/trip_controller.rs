@@ -7,8 +7,8 @@ use crate::{
         dates::Dates,
         trips::{CreateTrip, TripOwner, TripTitle},
     },
-    util::AppData,
 };
+use crate::AppData;
 
 pub fn init(cfg: &mut web::ServiceConfig) {
     cfg.service(get_trips);
@@ -41,7 +41,7 @@ pub async fn create_trip(
     owner_id: web::Json<CreateTrip>,
     app_data: web::Data<AppData>,
 ) -> impl Responder {
-    log_request("POST /trips", &app_data.connections);  
+    log_request("POST /trips", &app_data.connections);
 
     let owner_id = owner_id.into_inner().owner_id;
 
