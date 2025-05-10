@@ -1,5 +1,7 @@
-use crate::models::dao::Data;
-use crate::models::schema::{Trip, User};
+use crate::models::{
+    api::{trips::Trip, users::User},
+    dao::Data,
+};
 use deadpool_postgres::{Config, CreatePoolError, Pool};
 use std::{ops::DerefMut, sync::Arc};
 use tokio_postgres::NoTls;

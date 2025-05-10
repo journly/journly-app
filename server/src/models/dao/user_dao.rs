@@ -1,5 +1,5 @@
 use crate::errors::MyError;
-use crate::models::schema::User;
+use crate::models::api::users::User;
 use tokio_pg_mapper::FromTokioPostgresRow;
 use uuid::Uuid;
 

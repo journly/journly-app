@@ -1,29 +1,13 @@
-use chrono::NaiveDate;
-use serde::{Deserialize, Serialize};
 use tokio_pg_mapper::FromTokioPostgresRow;
-use tokio_pg_mapper_derive::PostgresMapper;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::Data;
 use crate::{
     errors::MyError,
     models::{
-        api::{dates::Dates, ToSql},
-        schema::Trip,
+        api::{dates::Dates, trips::{Trip, TripDetails}, ToSql},
     },
 };
-
-#[derive(Serialize, Deserialize, PostgresMapper, ToSchema)]
-#[pg_mapper(table = "trip_details")]
-pub struct TripDetails {
-    pub id: Uuid,
-    pub owner_id: Uuid,
-    pub title: String,
-    pub image_url: Option<String>,
-    pub start_date: Option<NaiveDate>,
-    pub end_date: Option<NaiveDate>,
-}
 
 impl Data<Trip> {
     pub async fn get_all_trips(&self) -> Result<Vec<TripDetails>, MyError> {
@@ -139,7 +123,7 @@ impl Data<Trip> {
             Some(trip) => Ok(trip.title),
             _ => Err(MyError::PGError),
         }
-    }
+    }           
 
     pub async fn update_trip_owner(
         &self,
