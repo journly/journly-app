@@ -73,8 +73,8 @@ async fn update_trip_dates_works() {
 
     let trip_id = Uuid::from_str(TEST_TRIP_ID).unwrap();
 
-    let start_date = NaiveDate::parse_from_str("2025-05-05", "%Y-%m-%d").unwrap();
-    let end_date = NaiveDate::parse_from_str("2025-05-20", "%Y-%m-%d").unwrap();
+    let start_date = NaiveDate::from_ymd_opt(2025, 5, 5).unwrap();
+    let end_date = NaiveDate::from_ymd_opt(2025, 5, 20).unwrap();
 
     let new_dates = Dates {
         start_date: Some(start_date),

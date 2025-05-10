@@ -15,6 +15,14 @@ pub fn log_request(endpoint: &str, connection: &Mutex<u32>) {
     println!("Connection {}, requested: '{}'", *num, endpoint);
 }
 
+const HEALTH: &str = "health";
+
+#[utoipa::path(
+    tag = HEALTH,
+    responses(
+        (status = 200, description = "Server is online")
+    )
+)]
 #[get("/health")]
 pub async fn check_health() -> impl Responder {
     HttpResponse::Ok()

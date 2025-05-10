@@ -26,3 +26,6 @@ actix-multipart = "0.7.2"
 futures = "0.3.0"
 actix-rt = "2.10.0"
 reqwest = "0.12.15"
+utoipa = {version = "5.3.1", features = ["actix_extras", "uuid", "chrono"]}
+utoipa-swagger-ui = {version = "9.0.1", features= ["actix-web"]}
+utoipa-actix-web = "0.1.2"

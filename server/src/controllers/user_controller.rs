@@ -1,24 +1,32 @@
-use crate::AppData;
+use crate::{models::schema::User, AppData};
 use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2,
 };
+use utoipa_actix_web::service_config::ServiceConfig;
 use uuid::Uuid;
 
 use crate::{
     controllers::log_request,
-    models::api::users::{CreateUser, UpdateUser},
+    models::api::users::{CreateUser, },
 };
 
-pub fn init(cfg: &mut web::ServiceConfig) {
+pub fn init(cfg: &mut ServiceConfig) {
     cfg.service(get_user);
     cfg.service(get_users);
     cfg.service(create_user);
-    cfg.service(update_user);
     cfg.service(delete_user);
 }
 
+const USERS: &str = "users";
+
+#[utoipa::path(
+    tag = USERS,
+    responses(
+        (status = 200, description = "Users were found", body = [User])
+    )
+)]
 #[get("/users")]
 async fn get_users(app_data: web::Data<AppData>) -> impl Responder {
     log_request("GET /users", &app_data.connections);
@@ -31,6 +39,12 @@ async fn get_users(app_data: web::Data<AppData>) -> impl Responder {
     }
 }
 
+#[utoipa::path(
+    tag = USERS,
+    responses(
+        (status = 200, description = "User was created", body = User)
+    )
+)]
 #[post("/users")]
 async fn create_user(
     new_user: web::Json<CreateUser>,
@@ -63,13 +77,19 @@ async fn create_user(
     }
 }
 
+#[utoipa::path(
+    tag = USERS,
+    responses(
+        (status = 200, description = "User was found", body = User)
+    )
+)]
 #[get("/users/{user_id}")]
 async fn get_user(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> impl Responder {
     let user_id = path.into_inner();
 
     log_request(&format!("GET /users/{user_id}"), &app_data.connections);
 
-    let result = app_data.db.users.get_user_by_id(user_id).await;
+    let result = app_data.db.users.get_user(user_id).await;
 
     match result {
         Ok(user) => HttpResponse::Ok().json(user),
@@ -77,44 +97,19 @@ async fn get_user(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> impl R
     }
 }
 
-#[put("/users/{user_id}")]
-async fn update_user(
-    path: web::Path<Uuid>,
-    data: web::Json<UpdateUser>,
-    app_data: web::Data<AppData>,
-) -> impl Responder {
-    let user_id = path.into_inner();
-
-    log_request(&format!("PUT /users/{user_id}"), &app_data.connections);
-
-    let mut update = data.into_inner();
-
-    if let Some(password) = update.password {
-        let salt = SaltString::generate(&mut OsRng);
-
-        let argon2 = Argon2::default();
-
-        match argon2.hash_password(password.as_bytes(), &salt) {
-            Ok(hash) => update.password = Some(hash.to_string()),
-            Err(_) => panic!("Failed to hash password."),
-        }
-    }
-
-    let result = app_data.db.users.update_user_by_id(user_id, update).await;
-
-    match result {
-        Ok(user) => HttpResponse::Ok().json(user),
-        Err(_) => HttpResponse::InternalServerError().into(),
-    }
-}
-
+#[utoipa::path(
+    tag = USERS,
+    responses(
+        (status = 200, description = "User was deleted")
+    )
+)]
 #[delete("/users/{user_id}")]
 async fn delete_user(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> impl Responder {
     let user_id = path.into_inner();
 
     log_request(&format!("/users/{user_id}"), &app_data.connections);
 
-    let result = app_data.db.users.delete_user_by_id(user_id).await;
+    let result = app_data.db.users.delete_user(user_id).await;
 
     match result {
         Ok(_) => HttpResponse::Ok(),

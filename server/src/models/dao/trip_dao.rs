@@ -2,6 +2,7 @@ use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use tokio_pg_mapper::FromTokioPostgresRow;
 use tokio_pg_mapper_derive::PostgresMapper;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::Data;
@@ -13,7 +14,7 @@ use crate::{
     },
 };
 
-#[derive(Serialize, Deserialize, PostgresMapper)]
+#[derive(Serialize, Deserialize, PostgresMapper, ToSchema)]
 #[pg_mapper(table = "trip_details")]
 pub struct TripDetails {
     pub id: Uuid,
@@ -149,7 +150,7 @@ impl Data<Trip> {
 
         let stmt = r#"
             UPDATE trips
-            SET trips.owner_id = '$new_owner_id'
+            SET owner_id = '$new_owner_id'
             WHERE trips.id = '$trip_id'
             RETURNING $table_fields;
             "#;
@@ -220,7 +221,7 @@ impl Data<Trip> {
 
         let stmt = r#"
            UPDATE trips
-           SET trips.image_url = '$new_image_url'
+           SET image_url = '$new_image_url'
            WHERE trips.id = '$trip_id'
            RETURNING $table_fields;
             "#;

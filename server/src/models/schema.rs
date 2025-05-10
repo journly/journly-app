@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use time::PrimitiveDateTime;
 use tokio_pg_mapper_derive::PostgresMapper;
 use typeshare::typeshare;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 /// --- Taken from rust-postgres repository ---
@@ -61,7 +62,7 @@ use uuid::Uuid;
 /// |                                 | LTXTQUERY                           |
 
 #[typeshare]
-#[derive(Deserialize, PostgresMapper, Serialize)]
+#[derive(Deserialize, PostgresMapper, Serialize, ToSchema)]
 #[pg_mapper(table = "users")]
 pub struct User {
     pub id: Uuid,

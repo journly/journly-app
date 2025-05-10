@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
+use utoipa::ToSchema;
 
 use super::ToSql;
 
@@ -39,7 +40,7 @@ impl ToSql for UpdateUser {
 }
 
 #[typeshare]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, ToSchema)]
 pub struct CreateUser {
     pub username: String,
     pub password: String,

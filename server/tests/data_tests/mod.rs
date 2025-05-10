@@ -7,7 +7,10 @@ use crate::configure_database;
 pub mod db_context_test;
 
 #[cfg(test)]
-pub mod trip_dao_test;
+pub mod trip_dao_tests;
+
+#[cfg(test)]
+pub mod user_dao_tests;
 
 pub async fn init_db_context() -> Database {
     let config = get_configuration("test_config.toml").expect("Failed to build config");
