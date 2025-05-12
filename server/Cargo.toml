@@ -28,6 +28,7 @@ actix-rt = "2.10.0"
 reqwest = "0.12.15"
 utoipa = {version = "5.3.1", features = ["actix_extras", "uuid", "chrono"]}
 utoipa-swagger-ui = {version = "9.0.1", features= ["actix-web"]}
-utoipa-actix-web = "0.1.2"
 log = "0.4.27"
 env_logger = "0.11.8"
+actix-session = { version = "0.10.1", features = ["redis-session-rustls"] }
+actix-identity = "0.8.0"

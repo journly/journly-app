@@ -1,39 +1,24 @@
-use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
-use utoipa_actix_web::service_config::ServiceConfig;
+use actix_web::{web, HttpResponse, Responder};
 use uuid::Uuid;
 
 use crate::{
     models::api::{
-        dates::Dates, 
-        trips::{CreateTrip, TripOwner, TripTitle, TripDetails} 
+        dates::Dates,
+        trips::{CreateTrip, TripDetails, TripOwner, TripTitle},
     },
-    AppData
+    AppData,
 };
-
-pub fn init(cfg: &mut ServiceConfig) {
-    cfg.service(get_trips);
-    cfg.service(create_trip);
-    cfg.service(get_trip);
-    cfg.service(delete_trip);
-    cfg.service(get_trip_dates);
-    cfg.service(update_trip_dates);
-    cfg.service(get_trip_title);
-    cfg.service(update_trip_title);
-    cfg.service(get_trip_dates);
-    cfg.service(update_trip_dates);
-    cfg.service(get_trip_owner_id);
-    cfg.service(update_trip_owner_id);
-}
 
 const TRIPS: &str = "trips";
 
 #[utoipa::path(
     tag = TRIPS,
+    get,
+    path = "/trips",
     responses(
         (status = 200, description = "Trips were found", body = [TripDetails])
     )
 )]
-#[get("/trips")]
 pub async fn get_trips(app_data: web::Data<AppData>) -> impl Responder {
     let result = app_data.db.trips.get_all_trips().await;
 
@@ -45,11 +30,12 @@ pub async fn get_trips(app_data: web::Data<AppData>) -> impl Responder {
 
 #[utoipa::path(
     tag = TRIPS,
+    post,
+    path = "/trips",
     responses(
         (status = 200, description = "Trip was created", body = TripDetails)
     )
 )]
-#[post("/trips")]
 pub async fn create_trip(
     owner_id: web::Json<CreateTrip>,
     app_data: web::Data<AppData>,
@@ -66,11 +52,12 @@ pub async fn create_trip(
 
 #[utoipa::path(
     tag = TRIPS,
+    get,
+    path = "/trips/{trip_id}",
     responses(
         (status = 200, description = "Trip was found", body = TripDetails)
     )
 )]
-#[get("/trips/{trip_id}")]
 pub async fn get_trip(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> impl Responder {
     let trip_id = path.into_inner();
 
@@ -84,11 +71,12 @@ pub async fn get_trip(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> im
 
 #[utoipa::path(
     tag = TRIPS,
+    delete,
+    path = "/trips/{trip_id}",
     responses(
         (status = 200, description = "Trip was deleted", body = str)
     )
 )]
-#[delete("/trips/{trip_id}")]
 pub async fn delete_trip(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> impl Responder {
     let trip_id = path.into_inner();
 
@@ -102,11 +90,12 @@ pub async fn delete_trip(path: web::Path<Uuid>, app_data: web::Data<AppData>) ->
 
 #[utoipa::path(
     tag = TRIPS,
+    get,
+    path = "/trips/{trip_id}/dates",
     responses(
         (status = 200, description = "Trip dates was found", body = Dates)
     )
 )]
-#[get("/trips/{trip_id}/dates")]
 pub async fn get_trip_dates(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> impl Responder {
     let trip_id = path.into_inner();
 
@@ -123,11 +112,12 @@ pub async fn get_trip_dates(path: web::Path<Uuid>, app_data: web::Data<AppData>)
 
 #[utoipa::path(
     tag = TRIPS,
+    put,
+    path = "/trips/{trip_id}/dates",
     responses(
         (status = 200, description = "Trip dates was updated", body = Dates)
     )
 )]
-#[put("/trips/{trip_id}/dates")]
 pub async fn update_trip_dates(
     path: web::Path<Uuid>,
     update: web::Json<Dates>,
@@ -151,11 +141,12 @@ pub async fn update_trip_dates(
 
 #[utoipa::path(
     tag = TRIPS,
+    get,
+    path = "/trips/{trip_id}/owner",
     responses(
         (status = 200, description = "Trip owner was found", body = Uuid)
     )
 )]
-#[get("/trips/{trip_id}/owner")]
 pub async fn get_trip_owner_id(
     path: web::Path<Uuid>,
     app_data: web::Data<AppData>,
@@ -172,11 +163,12 @@ pub async fn get_trip_owner_id(
 
 #[utoipa::path(
     tag = TRIPS,
+    put,
+    path = "/trips/{trip_id}/owner",
     responses(
         (status = 200, description = "Trip owner was updated")
     )
 )]
-#[put("/trips/{trip_id}/owner")]
 pub async fn update_trip_owner_id(
     path: web::Path<Uuid>,
     update: web::Json<TripOwner>,
@@ -200,11 +192,12 @@ pub async fn update_trip_owner_id(
 
 #[utoipa::path(
     tag = TRIPS,
+    get,
+    path = "/trips/{trip_id}/title",
     responses(
         (status = 200, description = "Trip title was found", body = str)
     )
 )]
-#[get("/trips/{trip_id}/title")]
 pub async fn get_trip_title(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> impl Responder {
     let trip_id = path.into_inner();
 
@@ -218,11 +211,12 @@ pub async fn get_trip_title(path: web::Path<Uuid>, app_data: web::Data<AppData>)
 
 #[utoipa::path(
     tag = TRIPS,
+    put,
+    path = "/trips/{trip_id}/title",
     responses(
         (status = 200, description = "Trip title was updated", body = str)
     )
 )]
-#[put("/trips/{trip_id}/title")]
 pub async fn update_trip_title(
     path: web::Path<Uuid>,
     update: web::Json<TripTitle>,

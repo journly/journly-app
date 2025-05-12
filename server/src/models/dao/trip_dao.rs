@@ -4,9 +4,9 @@ use uuid::Uuid;
 use super::Data;
 use crate::{
     errors::MyError,
-    models::{
+    models::
         api::{dates::Dates, trips::{Trip, TripDetails}, ToSql},
-    },
+
 };
 
 impl Data<Trip> {
@@ -70,7 +70,7 @@ impl Data<Trip> {
                 RETURNING *
             )
             SELECT new_trip.id as id, owner_id, title, image_url, start_date, end_date
-            FROM new_trip 
+            FROM new_trip
             INNER JOIN new_dates
             ON new_trip.dates_id = new_dates.id;
             "#;
@@ -123,7 +123,7 @@ impl Data<Trip> {
             Some(trip) => Ok(trip.title),
             _ => Err(MyError::PGError),
         }
-    }           
+    }
 
     pub async fn update_trip_owner(
         &self,
@@ -169,11 +169,11 @@ impl Data<Trip> {
             UPDATE dates
             SET $new_values
             WHERE dates.id in (
-                SELECT dates_id 
+                SELECT dates_id
                 FROM trips
                 WHERE trips.id = '$trip_id'
             )
-            RETURNING $table_fields; 
+            RETURNING $table_fields;
             "#;
 
         let stmt = stmt.replace("$new_values", &new_dates.to_sql_values());

@@ -1,7 +1,7 @@
 use crate::spawn_app;
 
 #[actix_web::test]
-async fn health_check_returns_ok() {
+async fn health_returns_ok() {
     let address = spawn_app().await;
 
     let res = reqwest::get(format!("{}/health", address))

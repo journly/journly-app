@@ -2,39 +2,29 @@ use crate::{
     models::api::users::{NewUserDisplayName, NewUserEmail},
     AppData,
 };
-use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
+use actix_web::{
+    web::{self},
+    HttpResponse, Responder,
+};
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2,
 };
-use utoipa_actix_web::service_config::ServiceConfig;
 use uuid::Uuid;
 
-use crate::{
-    models::api::users::{CreateUser, User},
-};
-
-pub fn init(cfg: &mut ServiceConfig) {
-    cfg.service(get_user);
-    cfg.service(get_users);
-    cfg.service(create_user);
-    cfg.service(delete_user);
-    cfg.service(get_user_display_name);
-    cfg.service(update_user_display_name);
-    cfg.service(get_user_email);
-    cfg.service(update_user_email);
-}
+use crate::models::api::users::{CreateUser, User};
 
 const USERS: &str = "users";
 
 #[utoipa::path(
     tag = USERS,
+    get,
+    path = "/users",
     responses(
         (status = 200, description = "Users were found", body = [User])
     )
 )]
-#[get("/users")]
-async fn get_users(app_data: web::Data<AppData>) -> impl Responder {
+pub async fn get_users(app_data: web::Data<AppData>) -> impl Responder {
     let result = app_data.db.users.get_users().await;
 
     match result {
@@ -45,12 +35,13 @@ async fn get_users(app_data: web::Data<AppData>) -> impl Responder {
 
 #[utoipa::path(
     tag = USERS,
+    post,
+    path = "/users",
     responses(
         (status = 200, description = "User was created", body = User)
     )
 )]
-#[post("/users")]
-async fn create_user(
+pub async fn create_user(
     new_user: web::Json<CreateUser>,
     app_data: web::Data<AppData>,
 ) -> impl Responder {
@@ -81,12 +72,13 @@ async fn create_user(
 
 #[utoipa::path(
     tag = USERS,
+    get,
+    path = "/users/{user_id}",
     responses(
         (status = 200, description = "User was found", body = User)
     )
 )]
-#[get("/users/{user_id}")]
-async fn get_user(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> impl Responder {
+pub async fn get_user(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> impl Responder {
     let user_id = path.into_inner();
 
     let result = app_data.db.users.get_user(user_id).await;
@@ -99,12 +91,32 @@ async fn get_user(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> impl R
 
 #[utoipa::path(
     tag = USERS,
+    delete,
+    path = "/users/{user_id}",
+    responses(
+        (status = 200, description = "User was deleted")
+    )
+)]
+pub async fn delete_user(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> impl Responder {
+    let user_id = path.into_inner();
+
+    let result = app_data.db.users.delete_user(user_id).await;
+
+    match result {
+        Ok(_) => HttpResponse::Ok(),
+        Err(_) => HttpResponse::InternalServerError(),
+    }
+}
+
+#[utoipa::path(
+    tag = USERS,
+    get,
+    path = "/users/{user_id}/display_name",
     responses(
         (status = 200, description = "User display name was found", body = str)
     )
 )]
-#[get("/users/{user_id}/display_name")]
-async fn get_user_display_name(
+pub async fn get_user_display_name(
     path: web::Path<Uuid>,
     app_data: web::Data<AppData>,
 ) -> impl Responder {
@@ -120,12 +132,13 @@ async fn get_user_display_name(
 
 #[utoipa::path(
     tag = USERS,
+    put,
+    path = "/users/{user_id}/display_name",
     responses(
         (status = 200, description = "User display name was updated", body = str)
     )
 )]
-#[put("/users/{user_id}/display_name")]
-async fn update_user_display_name(
+pub async fn update_user_display_name(
     path: web::Path<Uuid>,
     new_display_name: web::Json<NewUserDisplayName>,
     app_data: web::Data<AppData>,
@@ -148,12 +161,13 @@ async fn update_user_display_name(
 
 #[utoipa::path(
     tag = USERS,
+    get,
+    path = "/users/{user_id}/email",
     responses(
         (status = 200, description = "User email was found", body = str)
     )
 )]
-#[get("/users/{user_id}/email")]
-async fn get_user_email(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> impl Responder {
+pub async fn get_user_email(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> impl Responder {
     let user_id = path.into_inner();
 
     let result = app_data.db.users.get_user(user_id).await;
@@ -166,12 +180,13 @@ async fn get_user_email(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> 
 
 #[utoipa::path(
     tag = USERS,
+    put,
+    path = "/users/{user_id}/email",
     responses(
         (status = 200, description = "User email was updated", body = str)
     )
 )]
-#[put("/users/{user_id}/email")]
-async fn update_user_email(
+pub async fn update_user_email(
     path: web::Path<Uuid>,
     new_email: web::Json<NewUserEmail>,
     app_data: web::Data<AppData>,
@@ -189,24 +204,6 @@ async fn update_user_email(
     match result {
         Ok(email) => HttpResponse::Ok().json(email),
         Err(_) => HttpResponse::InternalServerError().into(),
-    }
-}
-
-#[utoipa::path(
-    tag = USERS,
-    responses(
-        (status = 200, description = "User was deleted")
-    )
-)]
-#[delete("/users/{user_id}")]
-async fn delete_user(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> impl Responder {
-    let user_id = path.into_inner();
-
-    let result = app_data.db.users.delete_user(user_id).await;
-
-    match result {
-        Ok(_) => HttpResponse::Ok(),
-        Err(_) => HttpResponse::InternalServerError(),
     }
 }
 

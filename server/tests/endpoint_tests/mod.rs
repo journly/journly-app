@@ -1,2 +1,5 @@
 #[cfg(test)]
-pub mod health_check;
+pub mod test_health;
+
+#[cfg(test)]
+pub mod trip_endpoints;

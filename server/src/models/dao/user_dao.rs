@@ -31,7 +31,8 @@ impl Data<User> {
         let db = self.pg_pool.get().await.map_err(MyError::PGPoolError)?;
 
         let stmt = r#"
-            SELECT $table_fields FROM users WHERE users.id = $user_id;
+            SELECT $table_fields FROM users
+            WHERE users.id = '$user_id';
             "#;
         let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
         let stmt = stmt.replace("$user_id", &user_id.to_string());
@@ -89,7 +90,7 @@ impl Data<User> {
         let db = self.pg_pool.get().await.map_err(MyError::PGPoolError)?;
 
         let stmt = r#"
-            UPDATE users 
+            UPDATE users
             SET display_name = '$new_display_name'
             WHERE users.id = '$user_id'
             RETURNING $table_fields;

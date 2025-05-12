@@ -1,13 +1,10 @@
-use std::{
-    net::TcpListener,
-    sync::{Arc},
-};
+use std::{net::TcpListener, sync::Arc};
 
 use actix_web::{dev::Server, middleware::Logger, web::Data, App, HttpServer};
 use config::JournalyConfig;
+use routes::{TripsApiDoc, UsersApiDoc};
 use utoipa::OpenApi;
-use utoipa_actix_web::AppExt;
-use utoipa_swagger_ui::SwaggerUi;
+use utoipa_swagger_ui::{SwaggerUi, Url};
 
 use crate::database::db::Database;
 
@@ -16,29 +13,28 @@ pub mod controllers;
 pub mod database;
 pub mod errors;
 pub mod models;
+pub mod routes;
 
 pub struct AppData {
     pub db: Arc<Database>,
 }
 
 pub fn run(listener: TcpListener, app_state: Data<AppData>) -> Result<Server, std::io::Error> {
-    #[derive(OpenApi)]
-    #[openapi()]
-    struct ApiDoc;
-
     let server = HttpServer::new(move || {
         App::new()
-            .into_utoipa_app()
-            .openapi(ApiDoc::openapi())
-            .map(|app| app.wrap(Logger::default()))
+            .wrap(Logger::default())
             .app_data(app_state.clone())
-            .service(controllers::check_health)
-            .configure(controllers::init_user_controller)
-            .configure(controllers::init_trip_controller)
-            .openapi_service(|api| {
-                SwaggerUi::new("/docs/{_:.*}").url("/api-docs/openapi.json", api)
-            })
-            .into_app()
+            .configure(routes::routes)
+            .service(SwaggerUi::new("/api-docs/{_:.*}").urls(vec![
+                (
+                    Url::new("Trips API", "/api-docs/trips-openapi.json"),
+                    TripsApiDoc::openapi(),
+                ),
+                (
+                    Url::with_primary("Users API", "/api-docs/users-openapi.json", true),
+                    UsersApiDoc::openapi(),
+                ),
+            ]))
     })
     .listen(listener)?
     .run();

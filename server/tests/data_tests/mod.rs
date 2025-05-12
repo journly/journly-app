@@ -4,13 +4,13 @@ use uuid::Uuid;
 use crate::configure_database;
 
 #[cfg(test)]
-pub mod db_context_test;
+pub mod db_context;
 
 #[cfg(test)]
-pub mod trip_dao_tests;
+pub mod trip_dao;
 
 #[cfg(test)]
-pub mod user_dao_tests;
+pub mod user_dao;
 
 pub async fn init_db_context() -> Database {
     let config = get_configuration("test_config.toml").expect("Failed to build config");
