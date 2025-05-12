@@ -1,8 +1,8 @@
-pub mod user_controller;
+pub mod user;
 
-pub mod trip_controller;
+pub mod trip;
 
-pub mod auth_controller;
+pub mod auth;
 
 use actix_web::{HttpResponse, Responder};
 
