@@ -45,7 +45,7 @@ pub struct UsersApiDoc;
 pub fn routes(cfg: &mut ServiceConfig) {
     cfg.route("/health", get().to(get_health))
         .service(
-            scope("/trips")
+            scope("/api/trips")
                 .route("", get().to(get_trips))
                 .route("", post().to(create_trip))
                 .route("/{trip_id}", get().to(get_trip))
@@ -58,7 +58,7 @@ pub fn routes(cfg: &mut ServiceConfig) {
                 .route("/{trip_id}/title", put().to(update_trip_title)),
         )
         .service(
-            scope("/users")
+            scope("/api/users")
                 .route("", get().to(get_users))
                 .route("", post().to(create_user))
                 .route("/{user_id}", get().to(get_user))

@@ -14,7 +14,7 @@ const TRIPS: &str = "trips";
 #[utoipa::path(
     tag = TRIPS,
     get,
-    path = "/trips",
+    path = "/api/trips",
     responses(
         (status = 200, description = "Trips were found", body = [TripDetails])
     )
@@ -31,7 +31,7 @@ pub async fn get_trips(app_data: web::Data<AppData>) -> impl Responder {
 #[utoipa::path(
     tag = TRIPS,
     post,
-    path = "/trips",
+    path = "/api/trips",
     responses(
         (status = 200, description = "Trip was created", body = TripDetails)
     )
@@ -53,7 +53,7 @@ pub async fn create_trip(
 #[utoipa::path(
     tag = TRIPS,
     get,
-    path = "/trips/{trip_id}",
+    path = "/api/trips/{trip_id}",
     responses(
         (status = 200, description = "Trip was found", body = TripDetails)
     )
@@ -72,7 +72,7 @@ pub async fn get_trip(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> im
 #[utoipa::path(
     tag = TRIPS,
     delete,
-    path = "/trips/{trip_id}",
+    path = "/api/trips/{trip_id}",
     responses(
         (status = 200, description = "Trip was deleted", body = str)
     )
@@ -91,7 +91,7 @@ pub async fn delete_trip(path: web::Path<Uuid>, app_data: web::Data<AppData>) ->
 #[utoipa::path(
     tag = TRIPS,
     get,
-    path = "/trips/{trip_id}/dates",
+    path = "/api/trips/{trip_id}/dates",
     responses(
         (status = 200, description = "Trip dates was found", body = Dates)
     )
@@ -113,7 +113,7 @@ pub async fn get_trip_dates(path: web::Path<Uuid>, app_data: web::Data<AppData>)
 #[utoipa::path(
     tag = TRIPS,
     put,
-    path = "/trips/{trip_id}/dates",
+    path = "/api/trips/{trip_id}/dates",
     responses(
         (status = 200, description = "Trip dates was updated", body = Dates)
     )
@@ -142,7 +142,7 @@ pub async fn update_trip_dates(
 #[utoipa::path(
     tag = TRIPS,
     get,
-    path = "/trips/{trip_id}/owner",
+    path = "/api/trips/{trip_id}/owner",
     responses(
         (status = 200, description = "Trip owner was found", body = Uuid)
     )
@@ -164,7 +164,7 @@ pub async fn get_trip_owner_id(
 #[utoipa::path(
     tag = TRIPS,
     put,
-    path = "/trips/{trip_id}/owner",
+    path = "/api/trips/{trip_id}/owner",
     responses(
         (status = 200, description = "Trip owner was updated")
     )
@@ -193,7 +193,7 @@ pub async fn update_trip_owner_id(
 #[utoipa::path(
     tag = TRIPS,
     get,
-    path = "/trips/{trip_id}/title",
+    path = "/api/trips/{trip_id}/title",
     responses(
         (status = 200, description = "Trip title was found", body = str)
     )
@@ -212,7 +212,7 @@ pub async fn get_trip_title(path: web::Path<Uuid>, app_data: web::Data<AppData>)
 #[utoipa::path(
     tag = TRIPS,
     put,
-    path = "/trips/{trip_id}/title",
+    path = "/api/trips/{trip_id}/title",
     responses(
         (status = 200, description = "Trip title was updated", body = str)
     )

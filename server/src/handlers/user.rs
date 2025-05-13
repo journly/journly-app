@@ -19,7 +19,7 @@ const USERS: &str = "users";
 #[utoipa::path(
     tag = USERS,
     get,
-    path = "/users",
+    path = "/api/users",
     responses(
         (status = 200, description = "Users were found", body = [User])
     )
@@ -36,7 +36,7 @@ pub async fn get_users(app_data: web::Data<AppData>) -> impl Responder {
 #[utoipa::path(
     tag = USERS,
     post,
-    path = "/users",
+    path = "/api/users",
     responses(
         (status = 200, description = "User was created", body = User)
     )
@@ -73,7 +73,7 @@ pub async fn create_user(
 #[utoipa::path(
     tag = USERS,
     get,
-    path = "/users/{user_id}",
+    path = "/api/users/{user_id}",
     responses(
         (status = 200, description = "User was found", body = User)
     )
@@ -92,7 +92,7 @@ pub async fn get_user(path: web::Path<Uuid>, app_data: web::Data<AppData>) -> im
 #[utoipa::path(
     tag = USERS,
     delete,
-    path = "/users/{user_id}",
+    path = "/api/users/{user_id}",
     responses(
         (status = 200, description = "User was deleted")
     )
@@ -111,7 +111,7 @@ pub async fn delete_user(path: web::Path<Uuid>, app_data: web::Data<AppData>) ->
 #[utoipa::path(
     tag = USERS,
     get,
-    path = "/users/{user_id}/display_name",
+    path = "/api/users/{user_id}/display_name",
     responses(
         (status = 200, description = "User display name was found", body = str)
     )
@@ -133,7 +133,7 @@ pub async fn get_user_display_name(
 #[utoipa::path(
     tag = USERS,
     put,
-    path = "/users/{user_id}/display_name",
+    path = "/api/users/{user_id}/display_name",
     responses(
         (status = 200, description = "User display name was updated", body = str)
     )
@@ -162,7 +162,7 @@ pub async fn update_user_display_name(
 #[utoipa::path(
     tag = USERS,
     get,
-    path = "/users/{user_id}/email",
+    path = "/api/users/{user_id}/email",
     responses(
         (status = 200, description = "User email was found", body = str)
     )
@@ -181,7 +181,7 @@ pub async fn get_user_email(path: web::Path<Uuid>, app_data: web::Data<AppData>)
 #[utoipa::path(
     tag = USERS,
     put,
-    path = "/users/{user_id}/email",
+    path = "/api/users/{user_id}/email",
     responses(
         (status = 200, description = "User email was updated", body = str)
     )
