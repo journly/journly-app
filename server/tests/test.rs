@@ -18,7 +18,9 @@ pub async fn spawn_app() -> String {
 
     let app_state = init_app_state(&config).await;
 
-    let server = journaly_server::run(listener, app_state).await.expect("Failed to bind address");
+    let server = journaly_server::run(listener, app_state)
+        .await
+        .expect("Failed to bind address");
 
     actix_rt::spawn(server);
 
@@ -53,10 +55,10 @@ pub async fn configure_database(config: deadpool_postgres::Config) {
 }
 
 #[cfg(test)]
-mod data_tests;
+mod dao_test;
 
 #[cfg(test)]
-mod endpoint_tests;
+mod api_test;
 
 #[cfg(test)]
 mod config_test;
