@@ -64,7 +64,7 @@ pub fn routes(cfg: &mut ServiceConfig) {
                 .route("/{user_id}", get().to(get_user))
                 .route("/{user_id}", delete().to(delete_user))
                 .route("/{user_id}/display_name", get().to(get_user_display_name))
-                .route("/{user_id}/display_name", get().to(update_user_display_name))
+                .route("/{user_id}/display_name", put().to(update_user_display_name))
                 .route("/{user_id}/email", get().to(get_user_email))
                 .route("/{user_id}/email", put().to(update_user_email)),
         );

@@ -4,9 +4,6 @@ use uuid::Uuid;
 use crate::configure_database;
 
 #[cfg(test)]
-pub mod db_context;
-
-#[cfg(test)]
 pub mod trip_dao;
 
 #[cfg(test)]

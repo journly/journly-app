@@ -1,5 +1,5 @@
 use crate::{
-    models::api::users::{NewUserDisplayName, NewUserEmail},
+    models::api::users::{UserDisplayName, UserEmail},
     AppData,
 };
 use actix_web::{
@@ -140,7 +140,7 @@ pub async fn get_user_display_name(
 )]
 pub async fn update_user_display_name(
     path: web::Path<Uuid>,
-    new_display_name: web::Json<NewUserDisplayName>,
+    new_display_name: web::Json<UserDisplayName>,
     app_data: web::Data<AppData>,
 ) -> impl Responder {
     let user_id = path.into_inner();
@@ -188,7 +188,7 @@ pub async fn get_user_email(path: web::Path<Uuid>, app_data: web::Data<AppData>)
 )]
 pub async fn update_user_email(
     path: web::Path<Uuid>,
-    new_email: web::Json<NewUserEmail>,
+    new_email: web::Json<UserEmail>,
     app_data: web::Data<AppData>,
 ) -> impl Responder {
     let user_id = path.into_inner();

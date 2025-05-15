@@ -17,21 +17,14 @@ pub struct User {
 }
 
 #[typeshare]
-#[derive(Deserialize, Serialize)]
-pub struct NewUserDetails {
-    pub display_name: Option<String>,
-    pub password: Option<String>,
-}
-
-#[typeshare]
 #[derive(Deserialize, Serialize, ToSchema)]
-pub struct NewUserDisplayName {
+pub struct UserDisplayName {
     pub display_name: String,
 }
 
 #[typeshare]
 #[derive(Deserialize, Serialize, ToSchema)]
-pub struct NewUserEmail {
+pub struct UserEmail {
     pub email: String,
 }
 

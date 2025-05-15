@@ -156,7 +156,9 @@ pub async fn get_trip_owner_id(
     let result = app_data.db.trips.get_trip(trip_id).await;
 
     match result {
-        Ok(trip) => HttpResponse::Ok().json(trip.owner_id),
+        Ok(trip) => HttpResponse::Ok().json(TripOwner {
+            owner_id: trip.owner_id,
+        }),
         Err(_) => HttpResponse::InternalServerError().into(),
     }
 }
@@ -185,7 +187,7 @@ pub async fn update_trip_owner_id(
         .await;
 
     match result {
-        Ok(owner_id) => HttpResponse::Ok().json(owner_id),
+        Ok(owner_id) => HttpResponse::Ok().json(TripOwner { owner_id }),
         Err(_) => HttpResponse::InternalServerError().into(),
     }
 }
@@ -204,7 +206,7 @@ pub async fn get_trip_title(path: web::Path<Uuid>, app_data: web::Data<AppData>)
     let result = app_data.db.trips.get_trip(trip_id).await;
 
     match result {
-        Ok(trip) => HttpResponse::Ok().json(trip.title),
+        Ok(trip) => HttpResponse::Ok().json(TripTitle { title: trip.title }),
         Err(_) => HttpResponse::InternalServerError().into(),
     }
 }
@@ -233,7 +235,7 @@ pub async fn update_trip_title(
         .await;
 
     match result {
-        Ok(title) => HttpResponse::Ok().json(title),
+        Ok(title) => HttpResponse::Ok().json(TripTitle{title}),
         Err(_) => HttpResponse::InternalServerError().into(),
     }
 }

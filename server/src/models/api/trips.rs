@@ -16,7 +16,6 @@ pub struct Trip {
     pub dates_id: Uuid,
 }
 
-
 #[typeshare]
 #[derive(Deserialize, Serialize, ToSchema)]
 pub struct CreateTrip {

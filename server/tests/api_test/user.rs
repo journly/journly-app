@@ -2,7 +2,7 @@ use reqwest::StatusCode;
 use uuid::Uuid;
 
 use crate::spawn_app;
-use journaly_server::models::api::users::{CreateUser, NewUserDisplayName, NewUserEmail, User};
+use journaly_server::models::api::users::{CreateUser, User, UserDisplayName, UserEmail};
 
 #[actix_rt::test]
 pub async fn get_users_returns_list() {
@@ -108,7 +108,7 @@ pub async fn update_user_display_name() {
 
     let display_name = "new display name".to_string();
 
-    let new_display_name = NewUserDisplayName {
+    let new_display_name = UserDisplayName {
         display_name: display_name.clone(),
     };
 
@@ -117,11 +117,11 @@ pub async fn update_user_display_name() {
     let client = reqwest::Client::new();
 
     let response = client
-        .put(format!("{}/api/users/{}", address, client_id))
+        .put(format!("{}/api/users/{}/display_name", address, client_id))
         .json(&new_display_name)
         .send()
         .await
-        .expect("Request to PUT '/users/{user_id}' failed to resolve.");
+        .expect("Request to PUT '/users/{user_id}/display_name' failed to resolve.");
 
     assert_eq!(response.status(), StatusCode::OK);
 
@@ -145,7 +145,7 @@ pub async fn update_user_email() {
 
     let email = "newemail@journaly.com".to_string();
 
-    let new_email = NewUserEmail {
+    let new_email = UserEmail {
         email: email.clone(),
     };
 
@@ -154,11 +154,11 @@ pub async fn update_user_email() {
     let client = reqwest::Client::new();
 
     let response = client
-        .put(format!("{}/api/users/{}", address, client_id))
+        .put(format!("{}/api/users/{}/email", address, client_id))
         .json(&new_email)
         .send()
         .await
-        .expect("Request to PUT '/users/{user_id}' failed to resolve.");
+        .expect("Request to PUT '/users/{user_id}/email' failed to resolve.");
 
     assert_eq!(response.status(), StatusCode::OK);
 

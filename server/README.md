@@ -19,3 +19,24 @@ make postgres-on-docker
 > Docker is required to run this command.
 
 After the container is up and running, you can run `cargo test` to run tests.
+
+### Errors with testing
+An error message that you may run into when running `cargo test` is:
+
+```
+thread 'actix-rt|system:13|arbiter:214' panicked at /home/renchie/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/actix-server-2.5.1/src/worker.rs:429:30:
+called `Result::unwrap()` on an `Err` value: Os { code: 24, kind: Uncategorized, message: "Too many open files" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+```
+
+This happens because the test binary creates more file descriptors than available on the processes file descriptor table.
+
+#### Linux Solution
+We can manually increase the number of file descriptors that a process can have by setting `ulimit`.
+
+The below command should sufficiently increase the limit where the tests should be able to run without the issue:
+```
+ulimit -n 65535
+```
+Note that this limit will only be changed for the current shell session. So in future sessions, the command will need to be executed again.
+

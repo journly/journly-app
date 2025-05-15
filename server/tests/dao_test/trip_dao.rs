@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use crate::data_tests::init_db_context;
+use super::init_db_context;
 use chrono::NaiveDate;
 use journaly_server::models::api::dates::Dates;
 use uuid::Uuid;
