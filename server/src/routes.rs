@@ -2,6 +2,7 @@ use actix_web::web::{delete, get, post, put, scope, ServiceConfig};
 use utoipa::OpenApi;
 
 use crate::handlers::{
+    auth::login,
     get_health,
     trip::{
         create_trip, delete_trip, get_trip, get_trip_dates, get_trip_owner_id, get_trip_title,
@@ -44,6 +45,10 @@ pub struct UsersApiDoc;
 #[rustfmt::skip] // makes formatting more visually pleasing
 pub fn routes(cfg: &mut ServiceConfig) {
     cfg.route("/health", get().to(get_health))
+        .service(
+            scope("/auth")
+            .route("/login", post().to(login))
+        )
         .service(
             scope("/api/trips")
                 .route("", get().to(get_trips))

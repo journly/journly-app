@@ -13,6 +13,7 @@ pub struct User {
     pub username: String,
     pub email: Option<String>,
     pub password_hash: String,
+    pub password_salt: Vec<u8>,
     pub profile_picture_url: Option<String>,
 }
 

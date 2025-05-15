@@ -10,6 +10,7 @@ use argon2::{
     password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2,
 };
+use base64::{engine::general_purpose, Engine};
 use uuid::Uuid;
 
 use crate::models::api::users::{CreateUser, User};
@@ -48,6 +49,7 @@ pub async fn create_user(
     let new_user = new_user.into_inner();
 
     let salt = SaltString::generate(&mut OsRng);
+    let salt_bytes: Vec<u8> = general_purpose::STANDARD_NO_PAD.decode(salt.as_str()).unwrap();
 
     let argon2 = Argon2::default();
 
@@ -61,7 +63,7 @@ pub async fn create_user(
     let result = app_data
         .db
         .users
-        .add_user(new_user.username, password_hash)
+        .add_user(new_user.username, password_hash, salt_bytes)
         .await;
 
     match result {

@@ -74,7 +74,7 @@ pub async fn create_user_with_valid_params() {
     let response_body = serde_json::from_str::<User>(&response_body)
         .expect("Failed to parse POST '/users' response body");
 
-    let get_response = reqwest::get(format!("{}/users/{}", address, response_body.id))
+    let get_response = reqwest::get(format!("{}/api/users/{}", address, response_body.id))
         .await
         .expect("Request to GET '/users/{user_id}' failed to resolve.");
 

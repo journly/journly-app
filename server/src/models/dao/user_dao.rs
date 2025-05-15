@@ -53,19 +53,74 @@ impl Data<User> {
         }
     }
 
-    pub async fn add_user(&self, username: String, password_hash: String) -> Result<User, MyError> {
+    pub async fn get_user_by_username(&self, username: String) -> Result<User, MyError> {
         let db = self.pg_pool.get().await.map_err(MyError::PGPoolError)?;
 
         let stmt = r#"
-            INSERT INTO users(id, username, password_hash)
-            VALUES (gen_random_uuid(), $1, $2)
+            SELECT $table_fields FROM users
+            WHERE users.username = $1;
+            "#;
+        let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
+        let stmt = db.prepare(&stmt).await.unwrap();
+
+        let result = db
+            .query(&stmt, &[&username])
+            .await
+            .unwrap_or_else(|_| Vec::new())
+            .iter()
+            .map(|row| User::from_row_ref(row).unwrap())
+            .collect::<Vec<User>>()
+            .pop();
+
+        match result {
+            Some(user) => Ok(user),
+            _ => Err(MyError::NotFound),
+        }
+    }
+
+    pub async fn get_user_by_email(&self, email: String) -> Result<User, MyError> {
+        let db = self.pg_pool.get().await.map_err(MyError::PGPoolError)?;
+
+        let stmt = r#"
+            SELECT $table_fields FROM users
+            WHERE users.email = $1;
+            "#;
+        let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
+        let stmt = db.prepare(&stmt).await.unwrap();
+
+        let result = db
+            .query(&stmt, &[&email])
+            .await
+            .unwrap_or_else(|_| Vec::new())
+            .iter()
+            .map(|row| User::from_row_ref(row).unwrap())
+            .collect::<Vec<User>>()
+            .pop();
+
+        match result {
+            Some(user) => Ok(user),
+            _ => Err(MyError::NotFound),
+        }
+    }
+
+    pub async fn add_user(
+        &self,
+        username: String,
+        password_hash: String,
+        password_salt: Vec<u8>,
+    ) -> Result<User, MyError> {
+        let db = self.pg_pool.get().await.map_err(MyError::PGPoolError)?;
+
+        let stmt = r#"
+            INSERT INTO users(id, username, password_hash, password_salt)
+            VALUES (gen_random_uuid(), $1, $2, $3)
             RETURNING $table_fields;
             "#;
         let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
         let stmt = db.prepare(&stmt).await.unwrap();
 
         let result = db
-            .query(&stmt, &[&username, &password_hash])
+            .query(&stmt, &[&username, &password_hash, &password_salt])
             .await
             .unwrap_or_else(|_| Vec::new())
             .iter()

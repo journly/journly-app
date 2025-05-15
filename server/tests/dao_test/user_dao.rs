@@ -33,7 +33,9 @@ pub async fn add_user_works() {
     let username = "NewUser".to_string();
     let password = "12345".to_string();
 
-    let result = db.users.add_user(username, password).await;
+    let salt_bytes: Vec<u8> = Vec::new();
+
+    let result = db.users.add_user(username, password, salt_bytes).await;
 
     assert!(result.is_ok());
 }
