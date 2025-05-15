@@ -4,9 +4,11 @@ use uuid::Uuid;
 use super::Data;
 use crate::{
     errors::MyError,
-    models::
-        api::{dates::Dates, trips::{Trip, TripDetails}, ToSql},
-
+    models::api::{
+        dates::Dates,
+        trips::{Trip, TripDetails},
+        ToSql,
+    },
 };
 
 impl Data<Trip> {
@@ -35,14 +37,13 @@ impl Data<Trip> {
 
         let stmt = r#"
             SELECT $table_fields FROM trip_details
-            WHERE trip_details.id = '$trip_id';
+            WHERE trip_details.id = $1;
             "#;
         let stmt = stmt.replace("$table_fields", &TripDetails::sql_table_fields());
-        let stmt = stmt.replace("$trip_id", &trip_id.to_string());
         let stmt = db.prepare(&stmt).await.unwrap();
 
         let result = db
-            .query(&stmt, &[])
+            .query(&stmt, &[&trip_id])
             .await
             .unwrap_or_else(|_| Vec::new())
             .iter()
@@ -66,7 +67,7 @@ impl Data<Trip> {
                 RETURNING *
             ), new_trip AS (
                 INSERT INTO trips(id, owner_id, dates_id)
-                SELECT gen_random_uuid(), '$user_id', id FROM new_dates
+                SELECT gen_random_uuid(), $1, id FROM new_dates
                 RETURNING *
             )
             SELECT new_trip.id as id, owner_id, title, image_url, start_date, end_date
@@ -74,11 +75,10 @@ impl Data<Trip> {
             INNER JOIN new_dates
             ON new_trip.dates_id = new_dates.id;
             "#;
-        let stmt = stmt.replace("$user_id", &creator_user_id.to_string());
-        let stmt = db.prepare(&stmt).await.unwrap();
+        let stmt = db.prepare(stmt).await.unwrap();
 
         let result = db
-            .query(&stmt, &[])
+            .query(&stmt, &[&creator_user_id])
             .await
             .unwrap_or_else(|_| Vec::new())
             .iter()
@@ -101,17 +101,15 @@ impl Data<Trip> {
 
         let stmt = r#"
             UPDATE trips
-            SET title = '$new_title'
-            WHERE trips.id = '$trip_id'
+            SET title = $1
+            WHERE trips.id = $2
             RETURNING $table_fields;
             "#;
-        let stmt = stmt.replace("$new_title", &new_title);
-        let stmt = stmt.replace("$trip_id", &trip_id.to_string());
         let stmt = stmt.replace("$table_fields", &Trip::sql_table_fields());
         let stmt = db.prepare(&stmt).await.unwrap();
 
         let result = db
-            .query(&stmt, &[])
+            .query(&stmt, &[&new_title, &trip_id])
             .await
             .unwrap_or_else(|_| Vec::new())
             .iter()
@@ -134,17 +132,15 @@ impl Data<Trip> {
 
         let stmt = r#"
             UPDATE trips
-            SET owner_id = '$new_owner_id'
-            WHERE trips.id = '$trip_id'
+            SET owner_id = $1
+            WHERE trips.id = $2
             RETURNING $table_fields;
             "#;
-        let stmt = stmt.replace("$new_owner_id", &new_owner_id.to_string());
-        let stmt = stmt.replace("$trip_id", &trip_id.to_string());
         let stmt = stmt.replace("$table_fields", &Trip::sql_table_fields());
         let stmt = db.prepare(&stmt).await.unwrap();
 
         let result = db
-            .query(&stmt, &[])
+            .query(&stmt, &[&new_owner_id, &trip_id])
             .await
             .unwrap_or_else(|_| Vec::new())
             .iter()
@@ -171,18 +167,17 @@ impl Data<Trip> {
             WHERE dates.id in (
                 SELECT dates_id
                 FROM trips
-                WHERE trips.id = '$trip_id'
+                WHERE trips.id = $1
             )
             RETURNING $table_fields;
             "#;
 
         let stmt = stmt.replace("$new_values", &new_dates.to_sql_values());
-        let stmt = stmt.replace("$trip_id", &trip_id.to_string());
         let stmt = stmt.replace("$table_fields", &Dates::sql_table_fields());
         let stmt = db.prepare(&stmt).await.unwrap();
 
         let result = db
-            .query(&stmt, &[])
+            .query(&stmt, &[&trip_id])
             .await
             .unwrap_or_else(|_| Vec::new())
             .iter()
@@ -205,22 +200,16 @@ impl Data<Trip> {
 
         let stmt = r#"
            UPDATE trips
-           SET image_url = '$new_image_url'
-           WHERE trips.id = '$trip_id'
+           SET image_url = $1
+           WHERE trips.id = $2
            RETURNING $table_fields;
             "#;
 
-        match new_image_url {
-            Some(image_url) => stmt.replace("$new_image_url", &image_url),
-            _ => stmt.replace("$new_image_url", "NULL"),
-        };
-
-        let stmt = stmt.replace("$trip_id", &trip_id.to_string());
         let stmt = stmt.replace("$table_fields", &Trip::sql_table_fields());
         let stmt = db.prepare(&stmt).await.unwrap();
 
         let result = db
-            .query(&stmt, &[])
+            .query(&stmt, &[&new_image_url, &trip_id])
             .await
             .unwrap_or_else(|_| Vec::new())
             .iter()
@@ -239,15 +228,14 @@ impl Data<Trip> {
 
         let stmt = r#"
             DELETE FROM trips
-            WHERE trips.id = '$trip_id'
+            WHERE trips.id = $1
             RETURNING $table_fields;
             "#;
-        let stmt = stmt.replace("$trip_id", &trip_id.to_string());
         let stmt = stmt.replace("$table_fields", &Trip::sql_table_fields());
         let stmt = db.prepare(&stmt).await.unwrap();
 
         let result = db
-            .query(&stmt, &[])
+            .query(&stmt, &[&trip_id.to_string()])
             .await
             .unwrap_or_else(|_| Vec::new())
             .iter()

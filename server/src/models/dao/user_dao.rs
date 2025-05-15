@@ -32,15 +32,14 @@ impl Data<User> {
 
         let stmt = r#"
             SELECT $table_fields FROM users
-            WHERE users.id = '$user_id';
+            WHERE users.id = $1;
             "#;
         let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
-        let stmt = stmt.replace("$user_id", &user_id.to_string());
 
         let stmt = db.prepare(&stmt).await.unwrap();
 
         let result = db
-            .query(&stmt, &[])
+            .query(&stmt, &[&user_id])
             .await
             .unwrap_or_else(|_| Vec::new())
             .iter()
@@ -59,16 +58,14 @@ impl Data<User> {
 
         let stmt = r#"
             INSERT INTO users(id, username, password_hash)
-            VALUES (gen_random_uuid(), '$username', '$password_hash')
+            VALUES (gen_random_uuid(), $1, $2)
             RETURNING $table_fields;
             "#;
         let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
-        let stmt = stmt.replace("$username", &username);
-        let stmt = stmt.replace("$password_hash", &password_hash);
         let stmt = db.prepare(&stmt).await.unwrap();
 
         let result = db
-            .query(&stmt, &[])
+            .query(&stmt, &[&username, &password_hash])
             .await
             .unwrap_or_else(|_| Vec::new())
             .iter()
@@ -91,17 +88,15 @@ impl Data<User> {
 
         let stmt = r#"
             UPDATE users
-            SET display_name = '$new_display_name'
-            WHERE users.id = '$user_id'
+            SET display_name = $1
+            WHERE users.id = $2
             RETURNING $table_fields;
             "#;
-        let stmt = stmt.replace("$new_display_name", &new_display_name);
-        let stmt = stmt.replace("$user_id", &user_id.to_string());
         let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
         let stmt = db.prepare(&stmt).await.unwrap();
 
         let result = db
-            .query(&stmt, &[])
+            .query(&stmt, &[&new_display_name, &user_id])
             .await
             .unwrap_or_else(|_| Vec::new())
             .iter()
@@ -124,17 +119,15 @@ impl Data<User> {
 
         let stmt = r#"
             UPDATE users
-            SET password_hash = '$new_password_hash'
-            WHERE users.id = '$user_id'
+            SET password_hash = $1
+            WHERE users.id = $2
             RETURNING $table_fields;
             "#;
-        let stmt = stmt.replace("$new_password_hash", &new_password_hash);
-        let stmt = stmt.replace("$user_id", &user_id.to_string());
         let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
         let stmt = db.prepare(&stmt).await.unwrap();
 
         let result = db
-            .query(&stmt, &[])
+            .query(&stmt, &[&new_password_hash, &user_id])
             .await
             .unwrap_or_else(|_| Vec::new())
             .iter()
@@ -157,17 +150,15 @@ impl Data<User> {
 
         let stmt = r#"
             UPDATE users
-            SET email = '$new_email'
-            WHERE users.id = '$user_id'
+            SET email = $1
+            WHERE users.id = $2
             RETURNING $table_fields;
             "#;
-        let stmt = stmt.replace("$new_email", &new_email);
-        let stmt = stmt.replace("$user_id", &user_id.to_string());
         let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
         let stmt = db.prepare(&stmt).await.unwrap();
 
         let result = db
-            .query(&stmt, &[])
+            .query(&stmt, &[&new_email, &user_id])
             .await
             .unwrap_or_else(|_| Vec::new())
             .iter()
@@ -185,15 +176,15 @@ impl Data<User> {
         let db = self.pg_pool.get().await.map_err(MyError::PGPoolError)?;
 
         let stmt = r#"
-            DELETE FROM users WHERE id = '$user_id'
+            DELETE FROM users
+            WHERE id = $1
             RETURNING $table_fields;
             "#;
-        let stmt = stmt.replace("$user_id", &user_id.to_string());
         let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
         let stmt = db.prepare(&stmt).await.unwrap();
 
         let result = db
-            .query(&stmt, &[])
+            .query(&stmt, &[&user_id])
             .await
             .unwrap_or_else(|_| Vec::new())
             .iter()
