@@ -1,8 +1,8 @@
 use std::{net::TcpListener, sync::Arc};
 
 use actix_identity::IdentityMiddleware;
-use actix_session::{storage::RedisSessionStore, SessionMiddleware};
-use actix_web::{dev::Server, middleware::Logger, web::Data, App, HttpServer};
+use actix_session::{SessionMiddleware, storage::RedisSessionStore};
+use actix_web::{App, HttpServer, dev::Server, middleware::Logger, web::Data};
 use config::JournalyConfig;
 use routes::{TripsApiDoc, UsersApiDoc};
 use utoipa::OpenApi;
