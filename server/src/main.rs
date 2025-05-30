@@ -1,3 +1,5 @@
+use journaly_server::config::DbConfig;
+use journaly_server::database::db::get_connection_pool;
 use journaly_server::init_app_state;
 use journaly_server::{config::get_configuration, run};
 use log::info;
@@ -9,13 +11,13 @@ async fn main() -> std::io::Result<()> {
 
     info!("starting up");
 
-    let config = get_configuration("config.toml").expect("Failed to read configuration");
+    let db_config = DbConfig::get_config();
 
-    let app_state = init_app_state(&config).await;
+    let db_pool = get_connection_pool(db_config);
 
     let listener = TcpListener::bind("127.0.0.1:8080").expect("Bind failed.");
 
-    let server = run(listener, app_state).await?;
+    let server = run(listener, db_pool).await?;
 
     server.await
 }

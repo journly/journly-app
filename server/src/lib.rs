@@ -2,41 +2,37 @@ use std::{net::TcpListener, sync::Arc};
 
 use actix_identity::IdentityMiddleware;
 use actix_session::{SessionMiddleware, storage::RedisSessionStore};
-use actix_web::{App, HttpServer, dev::Server, middleware::Logger, web::Data};
-use config::JournalyConfig;
+use actix_web::{App as ActixApp, HttpServer, dev::Server, middleware::Logger, web};
+use app::{App, AppState};
 use routes::{TripsApiDoc, UsersApiDoc};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::{SwaggerUi, Url};
 
-use crate::database::db::Database;
-
+pub mod app;
 pub mod config;
-pub mod database;
-pub mod errors;
-pub mod handlers;
+pub mod controllers;
+pub mod db;
 pub mod models;
 pub mod routes;
+pub mod schema;
+pub mod util;
+pub mod views;
 
-pub struct AppData {
-    pub db: Arc<Database>,
-}
+pub async fn run(listener: TcpListener, app: Arc<App>) -> Result<Server, std::io::Error> {
+    let state = AppState(app);
 
-pub async fn run(
-    listener: TcpListener,
-    app_state: Data<AppData>,
-) -> Result<Server, std::io::Error> {
     let secret_key = actix_web::cookie::Key::generate();
 
-    let store = RedisSessionStore::new("redis://127.0.0.1:6379")
+    let store = RedisSessionStore::new(state.config.redis.get_redis_url())
         .await
         .unwrap();
 
     let server = HttpServer::new(move || {
-        App::new()
+        ActixApp::new()
             .wrap(IdentityMiddleware::default())
             .wrap(SessionMiddleware::builder(store.clone(), secret_key.clone()).build())
             .wrap(Logger::default())
-            .app_data(app_state.clone())
+            .app_data(web::Data::new(state.clone()))
             .configure(routes::routes)
             .service(SwaggerUi::new("/api-docs/{_:.*}").urls(vec![
                 (
@@ -53,10 +49,4 @@ pub async fn run(
     .run();
 
     Ok(server)
-}
-
-pub async fn init_app_state(config: &JournalyConfig) -> Data<AppData> {
-    let db = Arc::new(Database::new(&config.db_config).await);
-
-    Data::new(AppData { db })
 }

@@ -1,0 +1,147 @@
+use super::helper::OkResponse;
+use actix_web::{
+    HttpResponse, Responder,
+    web::{self, Json},
+};
+use chrono::NaiveDate;
+use diesel::result::Error::NotFound;
+use diesel_async::{AsyncConnection, scoped_futures::ScopedFutureExt};
+use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
+use uuid::Uuid;
+
+use crate::{
+    app::AppState,
+    models::{
+        trip::{NewTrip, Trip},
+        user::LoggedUser,
+    },
+    util::{
+        auth::validate_admin_user,
+        errors::{AppError, AppResult},
+    },
+    views::{EncodableTripDetails, EncodableTripOverview},
+};
+
+const TRIPS: &str = "trips";
+
+#[derive(ToSchema, Serialize)]
+pub struct GetTripsResponse {
+    trips: Vec<EncodableTripOverview>,
+}
+
+#[utoipa::path(
+    tag = TRIPS,
+    get,
+    path = "/api/v1/trips",
+    responses(
+        (status = 200, description = "Trips were found", body = GetTripsResponse)
+    )
+)]
+pub async fn get_trips(
+    admin: LoggedUser,
+    state: web::Data<AppState>,
+) -> AppResult<Json<GetTripsResponse>> {
+    let mut conn = state.db_connection().await?;
+
+    validate_admin_user(&admin, &mut conn).await?;
+
+    match Trip::get_all(&mut conn).await {
+        Ok(trips) => Ok(Json(GetTripsResponse {
+            trips: trips
+                .iter()
+                .map(|t| EncodableTripOverview::from(t.clone()))
+                .collect::<Vec<EncodableTripOverview>>(),
+        })),
+        Err(NotFound) => Err(AppError::BadRequest {
+            field: "Trip not found".to_string(),
+        }),
+        Err(_) => Err(AppError::InternalError),
+    }
+}
+
+#[derive(Deserialize, ToSchema)]
+pub struct CreateTrip {
+    user_id: Uuid,
+    title: Option<String>,
+    start_date: Option<NaiveDate>,
+    end_date: Option<NaiveDate>,
+}
+
+#[utoipa::path(
+    tag = TRIPS,
+    post,
+    path = "/api/v1/trips",
+    responses(
+        (status = 200, description = "Trip was created", body = OkResponse)
+    )
+)]
+pub async fn create_trip(
+    admin: LoggedUser,
+    trip_data: web::Json<CreateTrip>,
+    state: web::Data<AppState>,
+) -> AppResult<Json<OkResponse>> {
+    let mut conn = state.db_connection().await?;
+
+    validate_admin_user(&admin, &mut conn).await?;
+
+    let new_trip = NewTrip {
+        owner_id: &trip_data.user_id,
+        title: trip_data.title.as_deref(),
+        start_date: trip_data.start_date.as_ref(),
+        end_date: trip_data.end_date.as_ref(),
+    };
+
+    match new_trip.create(&mut conn).await {
+        Ok(_) => Ok(Json(OkResponse { ok: true })),
+        Err(_) => Err(AppError::InternalError),
+    }
+}
+
+#[derive(Deserialize, ToSchema)]
+pub struct GetTripResponse {
+    trip: EncodableTripDetails,
+}
+
+#[utoipa::path(
+    tag = TRIPS,
+    get,
+    path = "/api/v1/trips/{trip_id}",
+    responses(
+        (status = 200, description = "Trip was found", body = GetTripResponse)
+    )
+)]
+pub async fn get_trip(
+    logged_user: LoggedUser,
+    path: web::Path<Uuid>,
+    state: web::Data<AppState>,
+) -> AppResult<Json<GetTripResponse>> {
+    let trip_id = path.into_inner();
+
+    let mut conn = state.db_connection().await?;
+
+    let user_id = logged_user.id;
+
+    if !Trip::check_collaborator(&mut conn, trip_id, user_id).await {
+        return Err(AppError::Unauthorized);
+    }
+}
+
+#[utoipa::path(
+    tag = TRIPS,
+    delete,
+    path = "/api/v1/trips/{trip_id}",
+    responses(
+        (status = 200, description = "Trip was deleted", body = str)
+    )
+)]
+pub async fn delete_trip(path: web::Path<Uuid>, state: web::Data<AppState>) -> impl Responder {
+    let trip_id = path.into_inner();
+
+    let result = app_data.db.trips.delete_trip(trip_id).await;
+
+    match result {
+        Ok(_) => HttpResponse::Ok().body("Trip was successfully deleted."),
+        Err(_) => HttpResponse::InternalServerError().into(),
+    }
+}
