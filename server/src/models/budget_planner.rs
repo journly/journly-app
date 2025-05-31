@@ -1,12 +1,13 @@
-use crate::models::user::User;
-use crate::schema::{budget_planners, personal_budgets};
+use super::trip::Trip;
+use crate::{
+    models::user::User,
+    schema::{budget_planners, personal_budgets},
+};
 use bigdecimal::BigDecimal;
 use bon::Builder;
 use diesel::prelude::*;
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
 use uuid::Uuid;
-
-use super::trip::Trip;
 
 #[derive(Clone, Debug, Queryable, Insertable, Associations, Identifiable, Selectable, Builder)]
 #[diesel(belongs_to(Trip))]

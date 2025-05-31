@@ -1,6 +1,4 @@
-use super::expenses::Expense;
-use super::location::Location;
-use super::trip::Trip;
+use super::{expenses::Expense, location::Location, trip::Trip};
 use crate::schema::itinerary_items;
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;

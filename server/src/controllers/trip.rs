@@ -1,11 +1,7 @@
 use super::helper::OkResponse;
-use actix_web::{
-    HttpResponse, Responder,
-    web::{self, Json},
-};
+use actix_web::web::{self, Json};
 use chrono::NaiveDate;
 use diesel::result::Error::NotFound;
-use diesel_async::{AsyncConnection, scoped_futures::ScopedFutureExt};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -20,7 +16,7 @@ use crate::{
         auth::validate_admin_user,
         errors::{AppError, AppResult},
     },
-    views::{EncodableTripDetails, EncodableTripOverview},
+    views::{EncodableTripData, EncodableTripOverview},
 };
 
 const TRIPS: &str = "trips";
@@ -98,9 +94,9 @@ pub async fn create_trip(
     }
 }
 
-#[derive(Deserialize, ToSchema)]
+#[derive(Deserialize, ToSchema, Serialize)]
 pub struct GetTripResponse {
-    trip: EncodableTripDetails,
+    trip: EncodableTripData,
 }
 
 #[utoipa::path(
@@ -125,23 +121,14 @@ pub async fn get_trip(
     if !Trip::check_collaborator(&mut conn, &trip_id, &user_id).await {
         return Err(AppError::Unauthorized);
     }
-}
 
-#[utoipa::path(
-    tag = TRIPS,
-    delete,
-    path = "/api/v1/trips/{trip_id}",
-    responses(
-        (status = 200, description = "Trip was deleted", body = str)
-    )
-)]
-pub async fn delete_trip(path: web::Path<Uuid>, state: web::Data<AppState>) -> impl Responder {
-    let trip_id = path.into_inner();
-
-    let result = app_data.db.trips.delete_trip(trip_id).await;
-
-    match result {
-        Ok(_) => HttpResponse::Ok().body("Trip was successfully deleted."),
-        Err(_) => HttpResponse::InternalServerError().into(),
+    match Trip::get_trip_data(&mut conn, &trip_id, &user_id).await {
+        Ok(data) => Ok(Json(GetTripResponse {
+            trip: EncodableTripData::from(data),
+        })),
+        Err(NotFound) => Err(AppError::BadRequest {
+            field: "Trip not found".to_string(),
+        }),
+        Err(_) => Err(AppError::InternalError),
     }
 }

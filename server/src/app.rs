@@ -12,7 +12,7 @@ pub type PoolResult =
 #[derive(Builder)]
 pub struct App {
     pub database: Pool<AsyncPgConnection>,
-    pub config: config::Server,
+    pub config: config::JournlyConfig,
 }
 
 impl App {

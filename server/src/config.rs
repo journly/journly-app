@@ -17,14 +17,14 @@ pub struct RedisConfig {
 }
 
 #[derive(Clone, Debug)]
-pub struct Server {
+pub struct JournlyConfig {
     pub server_addr: String,
     pub server_port: String,
     pub db: DbConfig,
     pub redis: RedisConfig,
 }
 
-impl Server {
+impl JournlyConfig {
     pub fn build() -> Self {
         dotenv().ok();
 

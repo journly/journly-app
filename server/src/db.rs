@@ -1,14 +1,14 @@
 use crate::config::DbConfig;
 use actix_web::web;
 use diesel::pg::Pg;
-use diesel_async::async_connection_wrapper::AsyncConnectionWrapper;
-use diesel_async::pooled_connection::deadpool::Pool;
-use diesel_async::pooled_connection::AsyncDieselConnectionManager;
 use diesel_async::AsyncConnection;
 use diesel_async::AsyncPgConnection;
-use diesel_migrations::embed_migrations;
+use diesel_async::async_connection_wrapper::AsyncConnectionWrapper;
+use diesel_async::pooled_connection::AsyncDieselConnectionManager;
+use diesel_async::pooled_connection::deadpool::Pool;
 use diesel_migrations::EmbeddedMigrations;
 use diesel_migrations::MigrationHarness;
+use diesel_migrations::embed_migrations;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
 
@@ -19,7 +19,7 @@ pub enum DbError {
     NotFound,
 }
 
-pub async fn get_connection_pool(db_config: DbConfig) -> DbPool {
+pub async fn get_connection_pool(db_config: &DbConfig) -> DbPool {
     let url = db_config.get_db_url();
     let manager = AsyncDieselConnectionManager::<AsyncPgConnection>::new(url);
 
@@ -40,5 +40,3 @@ where
     .await
     .map_err(|_| DbError::MigrationFailed("Migration failed."))
 }
-
-

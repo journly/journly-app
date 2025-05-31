@@ -1,9 +1,9 @@
-use journaly_server::config::DbConfig;
-use journaly_server::database::db::get_connection_pool;
-use journaly_server::init_app_state;
-use journaly_server::{config::get_configuration, run};
+use journaly_server::app::App;
+use journaly_server::db::get_connection_pool;
+use journaly_server::{config::JournlyConfig, run};
 use log::info;
 use std::net::TcpListener;
+use std::sync::Arc;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -11,13 +11,22 @@ async fn main() -> std::io::Result<()> {
 
     info!("starting up");
 
-    let db_config = DbConfig::get_config();
+    let journly_config = JournlyConfig::build();
 
-    let db_pool = get_connection_pool(db_config);
+    let db_pool = get_connection_pool(&journly_config.db).await;
 
-    let listener = TcpListener::bind("127.0.0.1:8080").expect("Bind failed.");
+    let app = Arc::new(App {
+        database: db_pool,
+        config: journly_config,
+    });
 
-    let server = run(listener, db_pool).await?;
+    let listener = TcpListener::bind(format!(
+        "{}:{}",
+        app.config.server_port, app.config.server_addr
+    ))
+    .expect("Bind failed.");
+
+    let server = run(listener, app).await?;
 
     server.await
 }

@@ -4,7 +4,7 @@ use utoipa::OpenApi;
 use crate::controllers::{
     auth::login,
     get_health,
-    trip::{create_trip, delete_trip, get_trip, get_trips},
+    trip::{create_trip, get_trip, get_trips},
     user::{create_user, delete_user, get_user, get_users, update_user},
 };
 
@@ -13,7 +13,6 @@ use crate::controllers::{
     crate::controllers::trip::get_trips,
     crate::controllers::trip::create_trip,
     crate::controllers::trip::get_trip,
-    crate::controllers::trip::delete_trip,
 ))]
 pub struct TripsApiDoc;
 
@@ -39,7 +38,6 @@ pub fn routes(cfg: &mut ServiceConfig) {
                 .route("", get().to(get_trips))
                 .route("", post().to(create_trip))
                 .route("/{trip_id}", get().to(get_trip))
-                .route("/{trip_id}", delete().to(delete_trip))
         )
         .service(
             scope("/api/v1/users")

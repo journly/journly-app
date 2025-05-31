@@ -1,5 +1,4 @@
-use super::trip::Trip;
-use super::user::User;
+use super::{trip::Trip, user::User};
 use crate::schema::{expense_payers, expenses, users};
 use bigdecimal::BigDecimal;
 use diesel::prelude::*;

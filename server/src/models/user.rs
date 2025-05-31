@@ -1,5 +1,4 @@
-use std::future::{Ready, ready};
-
+use super::trip::Trip;
 use crate::{
     schema::{trips, user_trip, users},
     util::errors::AppError,
@@ -9,9 +8,8 @@ use actix_web::{FromRequest, HttpRequest, dev::Payload};
 use diesel::prelude::*;
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
 use serde::{Deserialize, Serialize};
+use std::future::{Ready, ready};
 use uuid::Uuid;
-
-use super::trip::Trip;
 
 #[derive(Debug)]
 pub struct Collaborator {
