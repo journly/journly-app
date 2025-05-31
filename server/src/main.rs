@@ -22,7 +22,7 @@ async fn main() -> std::io::Result<()> {
 
     let listener = TcpListener::bind(format!(
         "{}:{}",
-        app.config.server_port, app.config.server_addr
+        app.config.server_addr, app.config.server_port
     ))
     .expect("Bind failed.");
 
@@ -30,3 +30,4 @@ async fn main() -> std::io::Result<()> {
 
     server.await
 }
+
