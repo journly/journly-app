@@ -122,7 +122,7 @@ pub async fn get_trip(
 
     let user_id = logged_user.id;
 
-    if !Trip::check_collaborator(&mut conn, trip_id, user_id).await {
+    if !Trip::check_collaborator(&mut conn, &trip_id, &user_id).await {
         return Err(AppError::Unauthorized);
     }
 }

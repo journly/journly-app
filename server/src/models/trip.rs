@@ -1,5 +1,5 @@
 use crate::models::user_trip::UserTrip;
-use crate::schema::{budget_planners, itinerary_items, trips, user_trip, users};
+use crate::schema::{documents, expenses, itinerary_items, locations, trips, user_trip, users};
 use chrono::NaiveDate;
 use diesel::prelude::*;
 use diesel_async::{
@@ -7,10 +7,12 @@ use diesel_async::{
 };
 use uuid::Uuid;
 
-use super::expenses::{Expense, ExpensePayer};
-use super::itinerary::ItineraryItem;
 use super::{
-    budget_planner::BudgetPlanner,
+    budget_planner::{BudgetPlanner, PersonalBudget},
+    documents::Document,
+    expenses::Expense,
+    itinerary::ItineraryItem,
+    location::Location,
     user::{Collaborator, User},
 };
 
@@ -25,12 +27,16 @@ pub struct Trip {
     pub no_collaborators: i32,
 }
 
-pub struct TripData(
-    Trip,
-    BudgetPlanner,
-    Vec<(Expense, Vec<ExpensePayer>)>,
-    Vec<ItineraryItem>,
-);
+#[derive(Debug)]
+pub struct TripData {
+    pub trip: Trip,
+    pub collaborators: Vec<Collaborator>,
+    pub budget_plan: BudgetPlanner,
+    pub personal_budget_plan: PersonalBudget,
+    pub trip_expenses: Vec<(Expense, Vec<User>)>,
+    pub itinerary_items: Vec<(ItineraryItem, Option<Location>, Option<Expense>)>,
+    pub documents: Vec<Document>,
+}
 
 impl Trip {
     pub async fn get_all(conn: &mut AsyncPgConnection) -> QueryResult<Vec<Trip>> {
@@ -40,45 +46,44 @@ impl Trip {
             .await
     }
 
-    pub async fn find(conn: &mut AsyncPgConnection, id: Uuid) -> QueryResult<Trip> {
+    pub async fn find(conn: &mut AsyncPgConnection, id: &Uuid) -> QueryResult<Trip> {
         trips::table.find(id).first(conn).await
     }
 
-    pub async fn get_trip_details(
+    pub async fn get_trip_data(
         conn: &mut AsyncPgConnection,
-        trip_id: Uuid,
-        user_id: Uuid,
+        trip_id: &Uuid,
+        user_id: &Uuid,
     ) -> QueryResult<TripData> {
-        let res: TripData = conn
-            .transaction::<TripData, diesel::result::Error, _>(|conn| {
-                async move {
-                    let trip: Trip = trips::table.find(trip_id).get_result(conn).await?;
+        let trip = Self::find(conn, &trip_id).await?;
 
-                    let trip_budget_planner: BudgetPlanner = budget_planners::table
-                        .filter(budget_planners::trip_id.eq(trip_id))
-                        .select(BudgetPlanner::as_select())
-                        .get_result(conn)
-                        .await?;
+        let collaborators = Self::get_collaborators(conn, &trip_id).await?;
 
-                    let trip_itinerary_items: Vec<ItineraryItem> = itinerary_items::table
-                        .filter(itinerary_items::trip_id.eq(trip_id))
-                        .select(ItineraryItem::as_select())
-                        .get_results(conn)
-                        .await?;
+        let budget_plan = BudgetPlanner::get_from_trip(conn, &trip_id).await?;
 
-                    Ok(TripData(trip, trip_budget_planner, trip_itinerary_items))
-                }
-                .scope_boxed()
-            })
-            .await?;
+        let personal_budget_plan = PersonalBudget::get_from_trip(conn, &trip_id, &user_id).await?;
 
-        Ok(res)
+        let trip_expenses = Expense::get_expenses_with_payers(conn, &trip_id).await?;
+
+        let itinerary_items = Self::get_itinerary(conn, &trip_id).await?;
+
+        let documents = Self::get_documents(conn, &trip_id).await?;
+
+        Ok(TripData {
+            trip,
+            collaborators,
+            budget_plan,
+            personal_budget_plan,
+            trip_expenses,
+            itinerary_items,
+            documents,
+        })
     }
 
     pub async fn check_collaborator(
         conn: &mut AsyncPgConnection,
-        trip_id: Uuid,
-        user_id: Uuid,
+        trip_id: &Uuid,
+        user_id: &Uuid,
     ) -> bool {
         match user_trip::table
             .find((user_id, trip_id))
@@ -93,11 +98,11 @@ impl Trip {
 
     pub async fn get_collaborators(
         conn: &mut AsyncPgConnection,
-        trip_id: Uuid,
+        id: &Uuid,
     ) -> QueryResult<Vec<Collaborator>> {
         let collaborator: Vec<(User, UserTrip)> = user_trip::table
             .inner_join(users::table)
-            .filter(user_trip::trip_id.eq(trip_id))
+            .filter(user_trip::trip_id.eq(id))
             .select((User::as_select(), UserTrip::as_select()))
             .load(conn)
             .await?;
@@ -116,6 +121,34 @@ impl Trip {
                 }
             })
             .collect::<Vec<Collaborator>>())
+    }
+
+    pub async fn get_itinerary(
+        conn: &mut AsyncPgConnection,
+        id: &Uuid,
+    ) -> QueryResult<Vec<(ItineraryItem, Option<Location>, Option<Expense>)>> {
+        itinerary_items::table
+            .filter(itinerary_items::trip_id.eq(id))
+            .left_join(locations::table)
+            .left_join(expenses::table)
+            .select((
+                ItineraryItem::as_select(),
+                Option::<Location>::as_select(),
+                Option::<Expense>::as_select(),
+            ))
+            .load(conn)
+            .await
+    }
+
+    pub async fn get_documents(
+        conn: &mut AsyncPgConnection,
+        id: &Uuid,
+    ) -> QueryResult<Vec<Document>> {
+        documents::table
+            .filter(documents::trip_id.eq(id))
+            .select(Document::as_select())
+            .load(conn)
+            .await
     }
 }
 
@@ -138,12 +171,6 @@ impl NewTrip<'_> {
                     .await?;
 
                 BudgetPlanner::builder()
-                    .trip_id(trip.id)
-                    .build()
-                    .insert(conn)
-                    .await?;
-
-                Itinerary::builder()
                     .trip_id(trip.id)
                     .build()
                     .insert(conn)

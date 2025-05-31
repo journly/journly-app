@@ -30,9 +30,10 @@ diesel::table! {
         id -> Uuid,
         trip_id -> Uuid,
         filename -> Text,
-        document_url -> Nullable<Text>,
-        file_hash -> Nullable<Text>,
-        file_type -> Nullable<Text>,
+        document_url -> Text,
+        file_hash -> Text,
+        file_type -> Text,
+        file_size -> BigInt,
         created_at -> Timestamptz,
     }
 }
@@ -47,7 +48,7 @@ diesel::table! {
 diesel::table! {
     expenses (id) {
         id -> Uuid,
-        budget_planner_id -> Uuid,
+        trip_id -> Uuid,
         title -> Nullable<Text>,
         cost -> Nullable<Numeric>,
         currency -> Nullable<Text>,
@@ -224,7 +225,7 @@ diesel::joinable!(budget_planners -> trips (trip_id));
 diesel::joinable!(documents -> trips (trip_id));
 diesel::joinable!(expense_payers -> expenses (expense_id));
 diesel::joinable!(expense_payers -> users (user_id));
-diesel::joinable!(expenses -> budget_planners (budget_planner_id));
+diesel::joinable!(expenses -> trips (trip_id));
 diesel::joinable!(flights -> documents (from_document));
 diesel::joinable!(flights -> trips (trip_id));
 diesel::joinable!(itinerary_items -> expenses (expense_id));

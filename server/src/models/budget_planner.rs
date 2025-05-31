@@ -13,23 +13,24 @@ use super::trip::Trip;
 #[diesel(table_name = budget_planners)]
 pub struct BudgetPlanner {
     #[builder(default = Uuid::new_v4())]
-    id: Uuid,
-    trip_id: Uuid,
-    total_budget: Option<BigDecimal>,
-    currency: Option<String>,
-    accommodation_budget: Option<BigDecimal>,
-    transportation_budget: Option<BigDecimal>,
-    food_dining_budget: Option<BigDecimal>,
-    activities_budget: Option<BigDecimal>,
-    shopping_budget: Option<BigDecimal>,
+    pub id: Uuid,
+    pub trip_id: Uuid,
+    pub total_budget: Option<BigDecimal>,
+    pub currency: Option<String>,
+    pub accommodation_budget: Option<BigDecimal>,
+    pub transportation_budget: Option<BigDecimal>,
+    pub food_dining_budget: Option<BigDecimal>,
+    pub activities_budget: Option<BigDecimal>,
+    pub shopping_budget: Option<BigDecimal>,
 }
 
 impl BudgetPlanner {
     pub async fn get_from_trip(
         conn: &mut AsyncPgConnection,
-        trip: &Trip,
+        trip_id: &Uuid,
     ) -> QueryResult<BudgetPlanner> {
-        BudgetPlanner::belonging_to(trip)
+        budget_planners::table
+            .filter(budget_planners::trip_id.eq(trip_id))
             .select(BudgetPlanner::as_select())
             .first(conn)
             .await
@@ -49,26 +50,29 @@ impl BudgetPlanner {
 #[diesel(table_name = personal_budgets)]
 pub struct PersonalBudget {
     #[builder(default = Uuid::new_v4())]
-    id: Uuid,
-    trip_id: Uuid,
-    user_id: Uuid,
-    total_budget: Option<BigDecimal>,
-    accommodation_budget: Option<BigDecimal>,
-    transportation_budget: Option<BigDecimal>,
-    food_dining_budget: Option<BigDecimal>,
-    activities_budget: Option<BigDecimal>,
-    shopping_budget: Option<BigDecimal>,
-    currency: Option<String>,
+    pub id: Uuid,
+    pub trip_id: Uuid,
+    pub user_id: Uuid,
+    pub total_budget: Option<BigDecimal>,
+    pub accommodation_budget: Option<BigDecimal>,
+    pub transportation_budget: Option<BigDecimal>,
+    pub food_dining_budget: Option<BigDecimal>,
+    pub activities_budget: Option<BigDecimal>,
+    pub shopping_budget: Option<BigDecimal>,
+    pub currency: Option<String>,
     #[builder(default = false)]
-    personal_budget_enabled: bool,
+    pub personal_budget_enabled: bool,
 }
 
 impl PersonalBudget {
     pub async fn get_from_trip(
         conn: &mut AsyncPgConnection,
-        trip: &Trip,
+        trip_id: &Uuid,
+        user_id: &Uuid,
     ) -> QueryResult<PersonalBudget> {
-        PersonalBudget::belonging_to(trip)
+        personal_budgets::table
+            .filter(personal_budgets::trip_id.eq(trip_id))
+            .filter(personal_budgets::user_id.eq(user_id))
             .select(PersonalBudget::as_select())
             .first(conn)
             .await
@@ -81,4 +85,3 @@ impl PersonalBudget {
             .await
     }
 }
-

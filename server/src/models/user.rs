@@ -38,7 +38,11 @@ impl User {
     }
 
     pub async fn find(conn: &mut AsyncPgConnection, id: &Uuid) -> QueryResult<User> {
-        users::table.find(id).first(conn).await
+        users::table
+            .find(id)
+            .select(User::as_select())
+            .first(conn)
+            .await
     }
 
     pub async fn find_by_username(
@@ -64,7 +68,7 @@ impl User {
             .await
     }
 
-    pub async fn get_trips(conn: &mut AsyncPgConnection, user_id: Uuid) -> QueryResult<Vec<Trip>> {
+    pub async fn get_trips(conn: &mut AsyncPgConnection, user_id: &Uuid) -> QueryResult<Vec<Trip>> {
         user_trip::table
             .inner_join(trips::table)
             .filter(user_trip::user_id.eq(user_id))
