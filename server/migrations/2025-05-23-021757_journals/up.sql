@@ -1,0 +1,6 @@
+CREATE TABLE journals (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  last_editted TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  content TEXT
+);

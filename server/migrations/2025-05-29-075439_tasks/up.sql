@@ -1,0 +1,11 @@
+CREATE TABLE tasks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  trip_id UUID NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  completed BOOL NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  FOREIGN KEY (trip_id)
+    REFERENCES trips(id)
+    ON DELETE CASCADE
+);
