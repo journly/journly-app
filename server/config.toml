@@ -1,9 +1,19 @@
 # Server address
 server_addr="127.0.0.1"
 
-# Development port
-dev_port=8080
+# Server port
+server_port=8080
 
-# DB Config
-db_config = { host="localhost", user="postgres", password="postgres", dbname="journaly", port=5431, pool = { max_size = 16} }
+# Postgres config
+[db_config]
+pg_host="localhost"
+pg_user="postgres"
+pg_password="postgres"
+pg_port=5431
+pg_db="journly"
 
+
+# Redis config
+[redis_config]
+redis_host="localhost"
+redis_port=6379

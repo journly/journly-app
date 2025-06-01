@@ -67,9 +67,7 @@ pub async fn login(
             return Ok(());
         };
 
-        Err(AppError::BadRequest {
-            field: GENERIC_BAD_REQUEST.to_string(),
-        })
+        Err(AppError::BadRequest(GENERIC_BAD_REQUEST.to_string()))
     };
 
     if let Some(username) = &credentials.username {
@@ -83,9 +81,7 @@ pub async fn login(
                 Err(e) => return Err(e),
             },
             Err(NotFound) => {
-                return Err(AppError::BadRequest {
-                    field: GENERIC_BAD_REQUEST.to_string(),
-                });
+                return Err(AppError::BadRequest(GENERIC_BAD_REQUEST.to_string()));
             }
             Err(_) => return Err(AppError::InternalError),
         }
@@ -102,15 +98,11 @@ pub async fn login(
                 Err(e) => return Err(e),
             },
             Err(NotFound) => {
-                return Err(AppError::BadRequest {
-                    field: GENERIC_BAD_REQUEST.to_string(),
-                });
+                return Err(AppError::BadRequest(GENERIC_BAD_REQUEST.to_string()));
             }
             Err(_) => return Err(AppError::InternalError),
         }
     }
 
-    Err(AppError::BadRequest {
-        field: GENERIC_BAD_REQUEST.to_string(),
-    })
+    Err(AppError::BadRequest(GENERIC_BAD_REQUEST.to_string()))
 }

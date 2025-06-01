@@ -1,8 +1,5 @@
 use std::net::TcpListener;
 
-use journly_server::config::get_configuration;
-use journly_server::init_app_state;
-use tokio_postgres::NoTls;
 use uuid::Uuid;
 
 pub async fn spawn_app() -> String {

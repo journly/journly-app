@@ -152,9 +152,7 @@ pub async fn get_user(
                 avatar: user.avatar,
             },
         })),
-        Err(NotFound) => Err(AppError::BadRequest {
-            field: "User not found".to_string(),
-        }),
+        Err(NotFound) => Err(AppError::BadRequest("User not found".to_string())),
         Err(_) => Err(AppError::InternalError),
     }
 }
@@ -184,9 +182,7 @@ pub async fn delete_user(
 
     match result {
         Ok(_) => Ok(Json(OkResponse { ok: true })),
-        Err(NotFound) => Err(AppError::BadRequest {
-            field: "User not found".to_string(),
-        }),
+        Err(NotFound) => Err(AppError::BadRequest("User not found".to_string())),
         Err(_) => Err(AppError::InternalError),
     }
 }
@@ -231,9 +227,7 @@ pub async fn update_user(
             .await;
 
         if result == Err(NotFound) {
-            return Err(AppError::BadRequest {
-                field: "User not found".to_string(),
-            });
+            return Err(AppError::BadRequest("User not found".to_string()));
         } else if result.is_err() {
             return Err(AppError::InternalError);
         }
@@ -247,9 +241,7 @@ pub async fn update_user(
             .await;
 
         if result == Err(NotFound) {
-            return Err(AppError::BadRequest {
-                field: "User not found".to_string(),
-            });
+            return Err(AppError::BadRequest("User not found".to_string()));
         } else if result.is_err() {
             return Err(AppError::InternalError);
         }

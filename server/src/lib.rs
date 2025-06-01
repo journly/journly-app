@@ -23,7 +23,7 @@ pub async fn run(listener: TcpListener, app: Arc<App>) -> Result<Server, std::io
 
     let secret_key = actix_web::cookie::Key::generate();
 
-    let store = RedisSessionStore::new(state.config.redis.get_redis_url())
+    let store = RedisSessionStore::new(state.config.redis_config.get_redis_url())
         .await
         .unwrap();
 

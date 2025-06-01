@@ -9,11 +9,11 @@ use std::sync::Arc;
 async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
-    info!("starting up");
+    info!("Starting up");
 
-    let journly_config = JournlyConfig::build();
+    let journly_config = JournlyConfig::build("config.toml");
 
-    let db_pool = get_connection_pool(&journly_config.db).await;
+    let db_pool = get_connection_pool(&journly_config.db_config).await;
 
     let app = Arc::new(App {
         database: db_pool,
@@ -30,5 +30,9 @@ async fn main() -> std::io::Result<()> {
 
     let server = run(listener, app).await?;
 
-    server.await
+    server.await?;
+
+    info!("Server shutting down.");
+
+    Ok(())
 }

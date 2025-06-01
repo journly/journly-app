@@ -49,9 +49,7 @@ pub async fn get_trips(
                 .map(|t| EncodableTripOverview::from(t.clone()))
                 .collect::<Vec<EncodableTripOverview>>(),
         })),
-        Err(NotFound) => Err(AppError::BadRequest {
-            field: "Trip not found".to_string(),
-        }),
+        Err(NotFound) => Err(AppError::BadRequest("Trip not found".to_string())),
         Err(_) => Err(AppError::InternalError),
     }
 }
@@ -126,9 +124,7 @@ pub async fn get_trip(
         Ok(data) => Ok(Json(GetTripResponse {
             trip: EncodableTripData::from(data),
         })),
-        Err(NotFound) => Err(AppError::BadRequest {
-            field: "Trip not found".to_string(),
-        }),
+        Err(NotFound) => Err(AppError::BadRequest("Trip not found".to_string())),
         Err(_) => Err(AppError::InternalError),
     }
 }
