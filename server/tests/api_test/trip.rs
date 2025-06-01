@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use chrono::NaiveDate;
-use journaly_server::models::api::{
+use journly_server::models::api::{
     dates::Dates,
     trips::{CreateTrip, TripDetails, TripOwner, TripTitle},
 };

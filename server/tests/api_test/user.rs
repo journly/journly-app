@@ -2,13 +2,13 @@ use reqwest::StatusCode;
 use uuid::Uuid;
 
 use crate::spawn_app;
-use journaly_server::models::api::users::{CreateUser, User, UserDisplayName, UserEmail};
+use journly_server::controllers::user::{GetUsersResponse};
 
 #[actix_rt::test]
 pub async fn get_users_returns_list() {
     let address = spawn_app().await;
 
-    let response = reqwest::get(format!("{}/api/users", address))
+    let response = reqwest::get(format!("{}/api/v1/users", address))
         .await
         .expect("Request to GET '/users' failed to resolve.");
 
@@ -16,7 +16,7 @@ pub async fn get_users_returns_list() {
 
     let text = response.text().await.unwrap();
 
-    serde_json::from_str::<Vec<User>>(&text).expect("Failed to parse GET '/users' response body.");
+    serde_json::from_str::<GetUsersResponse>(&text).expect("Failed to parse GET '/users' response body.");
 }
 
 #[actix_rt::test]

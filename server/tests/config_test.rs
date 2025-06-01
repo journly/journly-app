@@ -1,5 +1,5 @@
 use confik::{Configuration, FileSource};
-use journaly_server::config::JournalyConfig;
+use journly_server::config::JournalyConfig;
 
 #[test]
 pub fn build_config() {

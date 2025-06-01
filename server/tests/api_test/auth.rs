@@ -1,4 +1,4 @@
-use journaly_server::{handlers::auth::LoginCredentials, models::api::users::CreateUser};
+use journly_server::{handlers::auth::LoginCredentials, models::api::users::CreateUser};
 use reqwest::StatusCode;
 
 use crate::spawn_app;
