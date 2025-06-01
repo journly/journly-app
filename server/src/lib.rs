@@ -4,7 +4,7 @@ use actix_identity::IdentityMiddleware;
 use actix_session::{SessionMiddleware, storage::RedisSessionStore};
 use actix_web::{App as ActixApp, HttpServer, dev::Server, middleware::Logger, web};
 use app::{App, AppState};
-use routes::{TripsApiDoc, UsersApiDoc};
+use routes::{AuthApiDoc, TripsApiDoc, UsersApiDoc};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::{SwaggerUi, Url};
 
@@ -42,6 +42,10 @@ pub async fn run(listener: TcpListener, app: Arc<App>) -> Result<Server, std::io
                 (
                     Url::with_primary("Users API", "/api-docs/users-openapi.json", true),
                     UsersApiDoc::openapi(),
+                ),
+                (
+                    Url::new("Auth API", "/api-docs/auth-openapi.json"),
+                    AuthApiDoc::openapi(),
                 ),
             ]))
     })

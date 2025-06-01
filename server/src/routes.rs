@@ -9,6 +9,10 @@ use crate::controllers::{
 };
 
 #[derive(OpenApi)]
+#[openapi(paths(crate::controllers::auth::login,))]
+pub struct AuthApiDoc;
+
+#[derive(OpenApi)]
 #[openapi(paths(
     crate::controllers::trip::get_trips,
     crate::controllers::trip::create_trip,

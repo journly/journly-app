@@ -33,7 +33,7 @@ diesel::table! {
         document_url -> Text,
         file_hash -> Text,
         file_type -> Text,
-        file_size -> BigInt,
+        file_size -> Int8,
         created_at -> Timestamptz,
     }
 }

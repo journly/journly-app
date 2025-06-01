@@ -36,9 +36,6 @@ const GENERIC_BAD_REQUEST: &str = "Check username/email and password.";
     responses(
         (status = 200, description = "Login was successful", body = str)
     ),
-    params(
-        ("id" = u64, Path, description = "id to test shit"),
-    )
 )]
 pub async fn login(
     credentials: web::Json<LoginCredentials>,

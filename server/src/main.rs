@@ -1,6 +1,6 @@
-use journaly_server::app::App;
-use journaly_server::db::get_connection_pool;
-use journaly_server::{config::JournlyConfig, run};
+use journly_server::app::App;
+use journly_server::db::get_connection_pool;
+use journly_server::{config::JournlyConfig, run};
 use log::info;
 use std::net::TcpListener;
 use std::sync::Arc;
@@ -20,6 +20,8 @@ async fn main() -> std::io::Result<()> {
         config: journly_config,
     });
 
+    app.run_migrations().await;
+
     let listener = TcpListener::bind(format!(
         "{}:{}",
         app.config.server_addr, app.config.server_port
@@ -30,4 +32,3 @@ async fn main() -> std::io::Result<()> {
 
     server.await
 }
-

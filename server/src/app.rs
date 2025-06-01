@@ -4,7 +4,7 @@ use bon::Builder;
 use derive_more::Deref;
 use diesel_async::{AsyncPgConnection, pooled_connection::deadpool::Pool};
 
-use crate::{config, util::errors::AppError};
+use crate::{config, db, util::errors::AppError};
 
 pub type PoolResult =
     Result<diesel_async::pooled_connection::deadpool::Object<AsyncPgConnection>, AppError>;
@@ -21,6 +21,12 @@ impl App {
             .get()
             .await
             .map_err(|_| AppError::InternalError)
+    }
+
+    pub async fn run_migrations(&self) {
+        let conn = self.database.get().await.unwrap();
+
+        let _ = db::run_migration(conn).await;
     }
 }
 
