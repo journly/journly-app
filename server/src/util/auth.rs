@@ -13,9 +13,9 @@ pub async fn validate_admin_user(
     match User::find(conn, &user_id).await {
         Ok(user) => {
             if user.is_admin {
-                return Ok(());
+                Ok(())
             } else {
-                return Err(AppError::Unauthorized);
+                Err(AppError::Unauthorized)
             }
         }
         Err(_) => Err(AppError::Unauthorized),

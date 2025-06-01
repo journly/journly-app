@@ -74,7 +74,7 @@ pub async fn create_trip(
     admin: LoggedUser,
     trip_data: web::Json<CreateTrip>,
     state: web::Data<AppState>,
-) -> AppResult<Json<OkResponse>> {
+) -> AppResult<OkResponse> {
     let mut conn = state.db_connection().await?;
 
     validate_admin_user(&admin, &mut conn).await?;
@@ -87,7 +87,7 @@ pub async fn create_trip(
     };
 
     match new_trip.create(&mut conn).await {
-        Ok(_) => Ok(Json(OkResponse { ok: true })),
+        Ok(_) => Ok(OkResponse::new()),
         Err(_) => Err(AppError::InternalError),
     }
 }

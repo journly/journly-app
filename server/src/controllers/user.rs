@@ -80,7 +80,7 @@ pub async fn create_user(
     admin: LoggedUser,
     new_user_data: web::Json<CreateUser>,
     state: web::Data<AppState>,
-) -> AppResult<Json<OkResponse>> {
+) -> AppResult<OkResponse> {
     let mut conn = state.db_connection().await?;
 
     validate_admin_user(&admin, &mut conn).await?;
@@ -114,7 +114,7 @@ pub async fn create_user(
     let result = new_user.insert(&mut conn).await;
 
     match result {
-        Ok(_) => Ok(Json(OkResponse { ok: true })),
+        Ok(_) => Ok(OkResponse::new()),
         Err(_) => Err(AppError::InternalError),
     }
 }
@@ -169,7 +169,7 @@ pub async fn delete_user(
     logged_user: LoggedUser,
     path: web::Path<Uuid>,
     state: web::Data<AppState>,
-) -> AppResult<Json<OkResponse>> {
+) -> AppResult<OkResponse> {
     let user_id = path.into_inner();
 
     if logged_user.id != user_id {
@@ -181,7 +181,7 @@ pub async fn delete_user(
     let result = User::delete(&mut conn, &user_id).await;
 
     match result {
-        Ok(_) => Ok(Json(OkResponse { ok: true })),
+        Ok(_) => Ok(OkResponse::new()),
         Err(NotFound) => Err(AppError::BadRequest("User not found".to_string())),
         Err(_) => Err(AppError::InternalError),
     }
@@ -208,7 +208,7 @@ pub async fn update_user(
     path: web::Path<Uuid>,
     state: web::Data<AppState>,
     new_data: web::Json<NewData>,
-) -> AppResult<Json<OkResponse>> {
+) -> AppResult<OkResponse> {
     let user_id = path.into_inner();
 
     if logged_user.id != user_id {
@@ -247,5 +247,5 @@ pub async fn update_user(
         }
     }
 
-    Ok(Json(OkResponse { ok: true }))
+    Ok(OkResponse::new())
 }

@@ -1,58 +1,61 @@
-use std::net::TcpListener;
+use std::{net::TcpListener, sync::Arc};
 
+use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
+use journly_server::{
+    app::App,
+    config::{DbConfig, JournlyConfig},
+    db::get_connection_pool,
+    run,
+};
 use uuid::Uuid;
 
 pub async fn spawn_app() -> String {
-    let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind random port");
+    let mut journly_config = JournlyConfig::build("test_config.toml");
 
-    let port = listener.local_addr().unwrap().port();
+    let db_id = configure_database(&journly_config.db_config).await;
 
-    let mut config = get_configuration("test_config.toml").expect("Failed to build config.");
+    journly_config.db_config.pg_db = db_id;
 
-    config.db_config.dbname = Some(Uuid::new_v4().to_string());
+    let db_pool = get_connection_pool(&journly_config.db_config).await;
 
-    configure_database(config.db_config.clone()).await;
+    let app = Arc::new(App {
+        database: db_pool,
+        config: journly_config,
+    });
 
-    let app_state = init_app_state(&config).await;
+    app.run_migrations().await;
 
-    let server = journly_server::run(listener, app_state)
-        .await
-        .expect("Failed to bind address");
+    let server_address = app.config.server_addr.clone();
+    let server_port = app.config.server_port.clone();
+
+    let listener =
+        TcpListener::bind(format!("{}:{}", server_address, server_port)).expect("Bind failed.");
+
+    let server = run(listener, app).await.expect("Failed to start server");
 
     actix_rt::spawn(server);
 
-    format!("http://127.0.0.1:{}", port)
+    format!("http://{}:{}", server_address, server_port)
 }
 
-pub async fn configure_database(config: deadpool_postgres::Config) {
-    let mut postgres_config = tokio_postgres::Config::new();
-    postgres_config.host(config.host.unwrap());
-    postgres_config.dbname("postgres");
-    postgres_config.port(config.port.unwrap());
-    postgres_config.user(config.user.unwrap());
-    postgres_config.password(config.password.unwrap());
+pub async fn configure_database(config: &DbConfig) -> String {
+    let url = config.get_db_url();
 
-    let (client, connection) = postgres_config
-        .connect(NoTls)
+    let mut conn = AsyncPgConnection::establish(&url)
         .await
-        .expect("Failed to connect to Postgres");
+        .expect("Failed to connect to postgres database");
 
-    actix_rt::spawn(async move {
-        if let Err(e) = connection.await {
-            eprintln!("Connection error: {}", e);
-        }
-    });
+    let test_db_id = Uuid::new_v4();
 
-    let _ = client
-        .execute(
-            &format!(r#"CREATE DATABASE "{}""#, config.dbname.unwrap()),
-            &[],
-        )
-        .await;
+    let query = diesel::sql_query(format!("CREATE DATABASE {}", test_db_id));
+
+    query
+        .execute(&mut conn)
+        .await
+        .expect(&format!("Could not create database {}", test_db_id));
+
+    test_db_id.to_string()
 }
-
-#[cfg(test)]
-mod dao_test;
 
 #[cfg(test)]
 mod api_test;
