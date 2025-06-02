@@ -12,22 +12,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    api_tokens (id) {
-        id -> Int4,
-        token -> Text,
-        name -> Text,
-        description -> Nullable<Text>,
-        user_id -> Nullable<Uuid>,
-        scopes -> Array<Nullable<Text>>,
-        token_type -> Text,
-        created_at -> Timestamptz,
-        expires_at -> Nullable<Timestamptz>,
-        last_used_at -> Nullable<Timestamptz>,
-        is_active -> Bool,
-    }
-}
-
-diesel::table! {
     budget_planners (id) {
         id -> Uuid,
         trip_id -> Uuid,
@@ -51,6 +35,14 @@ diesel::table! {
         file_type -> Text,
         file_size -> Int8,
         created_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    email_subscribers (id) {
+        id -> Uuid,
+        email -> Text,
+        subscribed_at -> Nullable<Timestamptz>,
     }
 }
 
@@ -230,14 +222,15 @@ diesel::table! {
         password_hash -> Text,
         password_salt -> Bytea,
         avatar -> Nullable<Text>,
-        is_admin -> Bool,
+        is_verified -> Bool,
+        email_verification_token -> Nullable<Uuid>,
+        token_expires_at -> Nullable<Timestamptz>,
     }
 }
 
 diesel::joinable!(accommodations -> documents (from_document));
 diesel::joinable!(accommodations -> locations (location));
 diesel::joinable!(accommodations -> trips (trip_id));
-diesel::joinable!(api_tokens -> users (user_id));
 diesel::joinable!(budget_planners -> trips (trip_id));
 diesel::joinable!(documents -> trips (trip_id));
 diesel::joinable!(expense_payers -> expenses (expense_id));
@@ -270,9 +263,9 @@ diesel::joinable!(user_trip -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     accommodations,
-    api_tokens,
     budget_planners,
     documents,
+    email_subscribers,
     expense_payers,
     expenses,
     flights,

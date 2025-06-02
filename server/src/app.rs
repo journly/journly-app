@@ -4,7 +4,7 @@ use bon::Builder;
 use derive_more::Deref;
 use diesel_async::{AsyncPgConnection, pooled_connection::deadpool::Pool};
 
-use crate::{config, db, util::errors::AppError};
+use crate::{config::Server, db, util::errors::AppError};
 
 pub type PoolResult =
     Result<diesel_async::pooled_connection::deadpool::Object<AsyncPgConnection>, AppError>;
@@ -12,7 +12,7 @@ pub type PoolResult =
 #[derive(Builder)]
 pub struct App {
     pub database: Pool<AsyncPgConnection>,
-    pub config: config::JournlyConfig,
+    pub config: Server,
 }
 
 impl App {

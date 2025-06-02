@@ -1,6 +1,6 @@
 use journly_server::app::App;
 use journly_server::db::get_connection_pool;
-use journly_server::{config::JournlyConfig, run};
+use journly_server::{config::Server, run};
 use log::info;
 use std::net::TcpListener;
 use std::sync::Arc;
@@ -9,15 +9,15 @@ use std::sync::Arc;
 async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
-    info!("Starting up");
+    info!("starting up");
 
-    let journly_config = JournlyConfig::build("config.toml");
+    let config = Server::build("config.toml");
 
-    let db_pool = get_connection_pool(&journly_config.db_config).await;
+    let db_pool = get_connection_pool(&config).await;
 
     let app = Arc::new(App {
         database: db_pool,
-        config: journly_config,
+        config,
     });
 
     app.run_migrations().await;

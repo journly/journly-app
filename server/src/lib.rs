@@ -12,9 +12,11 @@ pub mod app;
 pub mod config;
 pub mod controllers;
 pub mod db;
+pub mod email;
 pub mod models;
 pub mod routes;
 pub mod schema;
+pub mod session;
 pub mod util;
 pub mod views;
 
@@ -23,7 +25,7 @@ pub async fn run(listener: TcpListener, app: Arc<App>) -> Result<Server, std::io
 
     let secret_key = actix_web::cookie::Key::generate();
 
-    let store = RedisSessionStore::new(state.config.redis_config.get_redis_url())
+    let store = RedisSessionStore::new(state.config.redis.get_redis_url())
         .await
         .unwrap();
 

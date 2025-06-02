@@ -2,10 +2,7 @@ use crate::{
     app::AppState,
     controllers::helper::OkResponse,
     models::user::{LoggedUser, NewUser, User},
-    util::{
-        auth::validate_admin_user,
-        errors::{AppError, AppResult},
-    },
+    util::errors::{AppError, AppResult},
     views::EncodableUser,
 };
 use actix_web::web::{self, Json};
@@ -33,13 +30,8 @@ pub struct GetUsersResponse {
         (status = 200, description = "Successful Response", body = GetUsersResponse),
     )
 )]
-pub async fn get_users(
-    admin: LoggedUser,
-    state: web::Data<AppState>,
-) -> AppResult<Json<GetUsersResponse>> {
+pub async fn get_users(state: web::Data<AppState>) -> AppResult<Json<GetUsersResponse>> {
     let mut conn = state.db_connection().await?;
-
-    validate_admin_user(&admin, &mut conn).await?;
 
     let result = User::get_all(&mut conn).await;
 
@@ -77,14 +69,9 @@ pub struct CreateUser {
     )
 )]
 pub async fn create_user(
-    admin: LoggedUser,
     new_user_data: web::Json<CreateUser>,
     state: web::Data<AppState>,
 ) -> AppResult<OkResponse> {
-    let mut conn = state.db_connection().await?;
-
-    validate_admin_user(&admin, &mut conn).await?;
-
     let new_user_data = new_user_data.into_inner();
 
     let salt = SaltString::generate(&mut OsRng);

@@ -4,6 +4,5 @@ CREATE TABLE users (
   email TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
   password_salt BYTEA NOT NULL,
-  avatar TEXT,
-  is_admin BOOL NOT NULL DEFAULT FALSE
+  avatar TEXT
 );

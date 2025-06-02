@@ -12,10 +12,7 @@ use crate::{
         trip::{NewTrip, Trip},
         user::LoggedUser,
     },
-    util::{
-        auth::validate_admin_user,
-        errors::{AppError, AppResult},
-    },
+    util::errors::{AppError, AppResult},
     views::{EncodableTripData, EncodableTripOverview},
 };
 
@@ -34,13 +31,8 @@ pub struct GetTripsResponse {
         (status = 200, description = "Trips were found", body = GetTripsResponse)
     )
 )]
-pub async fn get_trips(
-    admin: LoggedUser,
-    state: web::Data<AppState>,
-) -> AppResult<Json<GetTripsResponse>> {
+pub async fn get_trips(state: web::Data<AppState>) -> AppResult<Json<GetTripsResponse>> {
     let mut conn = state.db_connection().await?;
-
-    validate_admin_user(&admin, &mut conn).await?;
 
     match Trip::get_all(&mut conn).await {
         Ok(trips) => Ok(Json(GetTripsResponse {
@@ -71,13 +63,11 @@ pub struct CreateTrip {
     )
 )]
 pub async fn create_trip(
-    admin: LoggedUser,
+    _: LoggedUser,
     trip_data: web::Json<CreateTrip>,
     state: web::Data<AppState>,
 ) -> AppResult<OkResponse> {
     let mut conn = state.db_connection().await?;
-
-    validate_admin_user(&admin, &mut conn).await?;
 
     let new_trip = NewTrip {
         owner_id: &trip_data.user_id,
