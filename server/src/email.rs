@@ -24,7 +24,7 @@ pub struct Emails {
 const DEFAULT_FROM: &str = "noreply@myjournly.com";
 
 impl Emails {
-    pub fn from_environment(config: &config::Server) -> Self {
+    pub fn from_config(config: &config::Server) -> Self {
         let login = config.mailgun_smtp.smtp_login.clone();
         let password = config.mailgun_smtp.smtp_password.clone();
         let server = config.mailgun_smtp.smtp_server.clone();
