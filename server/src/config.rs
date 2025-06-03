@@ -17,19 +17,26 @@ pub struct RedisConfig {
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct Server {
-    pub server_addr: String,
-    pub server_port: String,
-    pub postgres: PgConfig,
-    pub redis: RedisConfig,
-    pub mailgun_smtp: EmailConfig,
+pub struct BaseConfig {
+    pub production: bool,
+    pub domain_name: String,
+    pub ip_address: String,
+    pub port: String,
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct EmailConfig {
-    pub smtp_login: String,
-    pub smtp_password: String,
-    pub smtp_server: String,
+pub struct Server {
+    pub base: BaseConfig,
+    pub postgres: PgConfig,
+    pub redis: RedisConfig,
+    pub mailgun_smtp: SmtpConfig,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct SmtpConfig {
+    pub smtp_login: Option<String>,
+    pub smtp_password: Option<String>,
+    pub smtp_server: Option<String>,
 }
 
 impl Server {

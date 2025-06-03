@@ -1,8 +1,8 @@
-# Server address
-server_addr="127.0.0.1"
-
-# Server port
-server_port=8080
+[base]
+production=false
+domain_name="myjournly.com"
+ip_address="127.0.0.1"
+port=8080
 
 # Postgres config
 [postgres]
