@@ -45,8 +45,15 @@ pub async fn login(
     state: web::Data<AppState>,
 ) -> AppResult<OkResponse> {
     let validate = |user: User| -> Result<(), AppError> {
+        let user_password_salt = user.password_salt;
+        let user_password_hash = user.password_hash;
+
+        if user_password_hash.is_none() || user_password_salt.is_none() {
+            return Err(AppError::BadRequest(GENERIC_BAD_REQUEST.to_string()));
+        }
+
         let salt = match SaltString::from_b64(
-            &general_purpose::STANDARD_NO_PAD.encode(&user.password_salt),
+            &general_purpose::STANDARD_NO_PAD.encode(&user_password_salt.unwrap()),
         ) {
             Ok(res) => res,
             _ => return Err(AppError::InternalError),
@@ -59,7 +66,7 @@ pub async fn login(
             _ => return Err(AppError::InternalError),
         };
 
-        if password_hash == user.password_hash {
+        if password_hash == user_password_hash.unwrap() {
             let logged_user = LoggedUser::from(user.clone());
 
             let logged_user_string = serde_json::to_string(&logged_user).unwrap();
