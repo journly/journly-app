@@ -115,6 +115,7 @@ diesel::table! {
         map_type -> Nullable<Text>,
         title -> Nullable<Text>,
         trip_id -> Nullable<Uuid>,
+        created_at -> Nullable<Timestamptz>,
     }
 }
 
@@ -188,6 +189,7 @@ diesel::table! {
         start_date -> Nullable<Date>,
         end_date -> Nullable<Date>,
         no_collaborators -> Int4,
+        created_at -> Nullable<Timestamptz>,
     }
 }
 
@@ -222,6 +224,7 @@ diesel::table! {
         password_hash -> Text,
         password_salt -> Bytea,
         avatar -> Nullable<Text>,
+        created_at -> Nullable<Timestamptz>,
         is_verified -> Bool,
         email_verification_token -> Nullable<Uuid>,
         token_expires_at -> Nullable<Timestamptz>,
