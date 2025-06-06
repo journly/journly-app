@@ -1,34 +1,39 @@
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
-import { useUser } from "./UserProvider";
-
-interface travelDates {
-    startDate: string;
-    endDate: string;
-}
-
-interface TripContext {
-    id: string;
-    title: string;
-    travelDates: travelDates;
-}
+import { createContext, ReactNode, useContext, useState } from "react";
+import { Trip,} from "./TripsProvider";
+import { DateTime } from "luxon";
 
 interface TripContextType {
-    trips: TripContext[];
+    trip: Trip;
     updateTrips: () => void;
 }
-
 
 const TripContext = createContext<TripContextType | undefined>(undefined);
 
 export const TripProvider = ({ children }: { children: ReactNode }) => {
-    const [trips, setTrips] = useState([]);
-    const { user } = useUser();
-
-    const fetchTrips = () => {
-        fetch("/api/trips")
+    const tripId = window.location.pathname.split("/").pop() ?? "Japan"
+    const [trip, setTrip] = useState<Trip>({
+        id: tripId,
+        title: "Japan Adventure",
+        travelDates: {
+            startDate: DateTime.fromFormat("15/11/2023", "dd/MM/yyyy"),
+            endDate: DateTime.fromFormat("28/11/2023", "dd/MM/yyyy"),
+        },
+        locations: ["Tokyo", "Kyoto", "Osaka"],
+        users: [
+            {
+                username: "john_doe",
+                email: "",
+                fullName: "John Doe",
+                initials: "JD"
+            }
+        ]
+    });
+    
+    const fetchTrip = () => {
+        fetch("/api/trip/" + tripId)
         .then((res) => res.json())
-        .then((data) => setTrips(data))
-        .catch((err) => console.error("Failed to fetch trips:", err));
+        .then((data) => setTrip(data))
+        .catch((err) => console.error("Failed to fetch trip:", err));
     };
 
     // useEffect(() => {
@@ -36,7 +41,7 @@ export const TripProvider = ({ children }: { children: ReactNode }) => {
     // }, []);
 
     return (
-        <TripContext.Provider value={{ trips, updateTrips: fetchTrips }}>
+        <TripContext.Provider value={{ trip, updateTrips: fetchTrip }}>
         {children}
         </TripContext.Provider>
     );
@@ -50,7 +55,7 @@ export const TripProvider = ({ children }: { children: ReactNode }) => {
 //   return context;
 // };
 
-export const useTrips = () => {
+export const useTrip = () => {
     const context = useContext(TripContext);
     if (!context) {
         throw new Error('useTrips must be used within a TripProvider');

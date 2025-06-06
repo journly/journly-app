@@ -22,9 +22,9 @@ export function TripItem({
           <MapIcon className="h-3 w-3 text-gray-500" />
         </Box>
         } 
-      label={name} 
-      smallLabel={date}
-      link={`/trip/${key}`}
+        label={name} 
+        smallLabel={date}
+        link={`/trip/${key}`}
       />
   )
 }

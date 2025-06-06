@@ -5,7 +5,7 @@ import theme from './theme';
 import './index.css';
 import App  from './App';
 import { UserProvider } from './providers/UserProvider';
-import { TripProvider } from './providers/TripProvider';
+import { TripsProvider } from './providers/TripsProvider';
 import { BrowserRouter } from 'react-router-dom';
 
 const root = ReactDOM.createRoot(
@@ -17,9 +17,9 @@ root.render(
     <BrowserRouter>
       <ThemeProvider theme={theme}>
           <UserProvider>
-            <TripProvider>
+            <TripsProvider>
               <App />
-            </TripProvider>
+            </TripsProvider>
           </UserProvider>
       </ThemeProvider>
     </BrowserRouter>

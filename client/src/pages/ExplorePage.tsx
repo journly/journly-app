@@ -1,10 +1,10 @@
-import Page from "../components/generic/Page";
+import PageWrapper from "../components/generic/Page";
 
 export default function ExplorePage() {
 
     return (
-        <Page title="Explore">
+        <PageWrapper title="Explore">
             <h2>Explore</h2>
-        </Page>
+        </PageWrapper>
     );
 }

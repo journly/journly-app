@@ -1,10 +1,10 @@
-import Page from "../components/generic/Page";
+import PageWrapper from "../components/generic/Page";
 
 export default function JournalPage() {
 
     return (
-        <Page title="Journal">
+        <PageWrapper title="Journal">
             <h2>Journal</h2>
-        </Page>
+        </PageWrapper>
     );
 }

@@ -4,7 +4,7 @@ import { MenuItem } from './MenuItem';
 import { Typography, Box, Avatar, List, Drawer, IconButton, Menu } from '@mui/material';
 import { useUser } from '../../providers/UserProvider';
 import { SearchBar } from '../generic/Search';
-import { useTrips } from '../../providers/TripProvider';
+import { useTrips } from '../../providers/TripsProvider';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import NewTripDialog from '../NewTripDialog';
@@ -78,7 +78,7 @@ export function MenuBar() {
                 <TripItem
                   key={trip.id}
                   name={trip.title}
-                  date={`${new Date(trip.travelDates.startDate).toLocaleDateString()} - ${new Date(trip.travelDates.endDate).toLocaleDateString()}`}
+                  date={`${trip.travelDates.startDate} - ${trip.travelDates.endDate}`}
                 />
               ))}
               {/* placeholder for trips to display */}

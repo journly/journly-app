@@ -6,7 +6,7 @@ import {
   DialogContentText,
   DialogActions
 } from "@mui/material";
-import { CrossIcon, X } from "lucide-react";
+import { X } from "lucide-react";
 
 type DialogWrapperProps = {
   open: boolean;

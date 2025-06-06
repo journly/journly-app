@@ -9,6 +9,7 @@ import DefaultLayout from '../components/DefaultLayout';
 import SettingsPage from '../pages/SettingsPage';
 // import NewTripDialog from '../components/NewTripDialog';
 import StatsPage from '../pages/StatsPage';
+import { TripProvider } from '../providers/TripProvider';
 
 
 export default function Router() {
@@ -26,8 +27,14 @@ export default function Router() {
                 <Route path="/journal" element={<JournalPage />} />
                 <Route path="/explore" element={<ExplorePage />} />
                 <Route path="/stats" element={<StatsPage />} />
+                
 
-                <Route path="/trip/:id" element={<TripPage />} />
+                <Route path="/trip/:id" element={
+                    <TripProvider>
+                        <TripPage />
+                    </TripProvider>
+                } />
+
                 {/* <Route path="/trip/new" element={<NewTripDialog open={open} onClose={onClose}/>} /> */}
             </Route>
             {/* <Route element={<SettingLayout />}> */}

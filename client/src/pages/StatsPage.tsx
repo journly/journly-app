@@ -1,9 +1,9 @@
-import Page from "../components/generic/Page";
+import PageWrapper from "../components/generic/Page";
 
 export default function StatsPage() {
 
     return (
-        <Page title="Travel Stats">
+        <PageWrapper title="Travel Stats">
             <h2>Travel Stats</h2>       
-        </Page>);
+        </PageWrapper>);
 }

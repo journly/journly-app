@@ -3,6 +3,7 @@ import NewTripDialog from '../components/NewTripDialog';
 import { useEffect, useState } from 'react';
 import { Box, Button, Typography, Stack } from '@mui/material';
 import Section from '../components/generic/Section';
+import PageWrapper from '../components/generic/Page';
 export default function DashboardPage() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -36,11 +37,11 @@ export default function DashboardPage() {
     fetchRecommendations();
   }, []);
 
-  
+  //TODO: render trips if they exist and do the same for budgets, tasks and documents.
 
   return (
-    <>
-      <header className="mb-8">
+    <PageWrapper>
+      <header className="my-8">
         <Typography variant="h5" style={{ fontWeight: 600 }}>
           Welcome to Journly!
         </Typography>
@@ -98,7 +99,6 @@ export default function DashboardPage() {
                   </p>
                   <Button
                     variant="text"
-                    sx={{ '&:hover': { bgcolor: 'transparent' } }}
                     style={{
                       color: '#2563EB', 
                       fontWeight: 500, 
@@ -118,6 +118,7 @@ export default function DashboardPage() {
                     key={label}
                     fullWidth
                     variant="outlined"
+                    disableRipple
                     style={{ 
                       textTransform: 'none', 
                       borderColor: '#E5E7EB', 
@@ -154,6 +155,7 @@ export default function DashboardPage() {
           </p>
           <Button
             variant="text"
+            disableRipple
             sx={{ '&:hover': { bgcolor: 'transparent' } }}
           >
             Learn how it works
@@ -174,6 +176,7 @@ export default function DashboardPage() {
             </p>
             <Button
               variant="text"
+              disableRipple
               sx={{ '&:hover': { bgcolor: 'transparent' } }}
             >
               Invite travelers
@@ -203,6 +206,6 @@ export default function DashboardPage() {
         
       </div>
       <NewTripDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
-      </>
+    </PageWrapper>
 );
 }

@@ -37,6 +37,9 @@ export function MenuItem({
     backgroundColor: active ? '#eff6ff' : 'transparent',
     textAlign: 'left',
     transition: 'background-color 0.2s ease',
+    '&:hover': {
+      backgroundColor: active ? '#dbeafe' : '#f3f4f6',
+    },
   }));
 
 
