@@ -9,14 +9,15 @@ use utoipa::OpenApi;
 use utoipa_swagger_ui::{SwaggerUi, Url};
 
 pub mod app;
+pub mod auth;
 pub mod config;
 pub mod controllers;
 pub mod db;
 pub mod email;
+pub mod middleware;
 pub mod models;
 pub mod routes;
 pub mod schema;
-pub mod session;
 pub mod util;
 pub mod views;
 

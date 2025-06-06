@@ -66,16 +66,6 @@ pub async fn login(
             _ => return Err(AppError::InternalError),
         };
 
-        if password_hash == user_password_hash.unwrap() {
-            let logged_user = LoggedUser::from(user.clone());
-
-            let logged_user_string = serde_json::to_string(&logged_user).unwrap();
-
-            let _ = Identity::login(&req.extensions(), logged_user_string);
-
-            return Ok(());
-        };
-
         Err(AppError::BadRequest(GENERIC_BAD_REQUEST.to_string()))
     };
 

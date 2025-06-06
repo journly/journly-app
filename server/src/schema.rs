@@ -160,6 +160,15 @@ diesel::table! {
 }
 
 diesel::table! {
+    refresh_tokens (token) {
+        token -> Text,
+        user_id -> Nullable<Uuid>,
+        expires_at -> Nullable<Timestamp>,
+        created_at -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
     tasks (id) {
         id -> Uuid,
         trip_id -> Uuid,
@@ -253,6 +262,7 @@ diesel::joinable!(passengers -> flights (flight_id));
 diesel::joinable!(passengers -> users (user_id));
 diesel::joinable!(personal_budgets -> trips (trip_id));
 diesel::joinable!(personal_budgets -> users (user_id));
+diesel::joinable!(refresh_tokens -> users (user_id));
 diesel::joinable!(tasks -> trips (trip_id));
 diesel::joinable!(trip_invites -> trips (trip_id));
 diesel::joinable!(trip_invites -> users (user_id));
@@ -280,6 +290,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     occupants,
     passengers,
     personal_budgets,
+    refresh_tokens,
     tasks,
     trip_invites,
     trips,
