@@ -1,4 +1,4 @@
-use crate::config::DbConfig;
+use crate::config;
 use actix_web::web;
 use diesel::pg::Pg;
 use diesel_async::AsyncConnection;
@@ -19,8 +19,8 @@ pub enum DbError {
     NotFound,
 }
 
-pub async fn get_connection_pool(db_config: &DbConfig) -> DbPool {
-    let url = db_config.get_db_url();
+pub async fn get_connection_pool(config: &config::Server) -> DbPool {
+    let url = config.postgres.get_db_url();
     let manager = AsyncDieselConnectionManager::<AsyncPgConnection>::new(url);
 
     Pool::builder(manager)

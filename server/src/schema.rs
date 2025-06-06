@@ -39,6 +39,14 @@ diesel::table! {
 }
 
 diesel::table! {
+    email_subscribers (id) {
+        id -> Uuid,
+        email -> Text,
+        subscribed_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
     expense_payers (expense_id, user_id) {
         expense_id -> Uuid,
         user_id -> Uuid,
@@ -107,6 +115,7 @@ diesel::table! {
         map_type -> Nullable<Text>,
         title -> Nullable<Text>,
         trip_id -> Nullable<Uuid>,
+        created_at -> Nullable<Timestamptz>,
     }
 }
 
@@ -151,6 +160,15 @@ diesel::table! {
 }
 
 diesel::table! {
+    refresh_tokens (token) {
+        token -> Text,
+        user_id -> Nullable<Uuid>,
+        expires_at -> Nullable<Timestamp>,
+        created_at -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
     tasks (id) {
         id -> Uuid,
         trip_id -> Uuid,
@@ -180,6 +198,7 @@ diesel::table! {
         start_date -> Nullable<Date>,
         end_date -> Nullable<Date>,
         no_collaborators -> Int4,
+        created_at -> Nullable<Timestamptz>,
     }
 }
 
@@ -211,10 +230,13 @@ diesel::table! {
         id -> Uuid,
         username -> Text,
         email -> Text,
-        password_hash -> Text,
-        password_salt -> Bytea,
+        password_hash -> Nullable<Text>,
+        password_salt -> Nullable<Bytea>,
         avatar -> Nullable<Text>,
-        is_admin -> Bool,
+        created_at -> Nullable<Timestamptz>,
+        is_verified -> Nullable<Bool>,
+        email_verification_token -> Nullable<Uuid>,
+        token_expires_at -> Nullable<Timestamptz>,
     }
 }
 
@@ -240,6 +262,7 @@ diesel::joinable!(passengers -> flights (flight_id));
 diesel::joinable!(passengers -> users (user_id));
 diesel::joinable!(personal_budgets -> trips (trip_id));
 diesel::joinable!(personal_budgets -> users (user_id));
+diesel::joinable!(refresh_tokens -> users (user_id));
 diesel::joinable!(tasks -> trips (trip_id));
 diesel::joinable!(trip_invites -> trips (trip_id));
 diesel::joinable!(trip_invites -> users (user_id));
@@ -255,6 +278,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     accommodations,
     budget_planners,
     documents,
+    email_subscribers,
     expense_payers,
     expenses,
     flights,
@@ -266,6 +290,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     occupants,
     passengers,
     personal_budgets,
+    refresh_tokens,
     tasks,
     trip_invites,
     trips,

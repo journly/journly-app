@@ -5,6 +5,7 @@ use crate::{
 };
 use actix_identity::Identity;
 use actix_web::{FromRequest, HttpRequest, dev::Payload};
+use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
 use serde::{Deserialize, Serialize};
@@ -24,10 +25,13 @@ pub struct User {
     pub id: Uuid,
     pub username: String,
     pub email: String,
-    pub password_hash: String,
-    pub password_salt: Vec<u8>,
+    pub password_hash: Option<String>,
+    pub password_salt: Option<Vec<u8>>,
     pub avatar: Option<String>,
-    pub is_admin: bool,
+    pub created_at: Option<DateTime<Utc>>,
+    pub is_verified: Option<bool>,
+    pub email_verification_token: Option<Uuid>,
+    pub token_expires_at: Option<DateTime<Utc>>,
 }
 
 impl User {

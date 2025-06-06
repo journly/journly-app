@@ -31,3 +31,11 @@ diesel-async = { version = "0.5.2", features = ["postgres", "deadpool", "async-c
 bon = "3.6.3"
 bigdecimal = {version = "0.4.8", features = ["serde"]}
 config = "0.15.11"
+lettre = {version = "0.11.16", features = ["smtp-transport", "tokio1", "file-transport", "tokio1-native-tls"]}
+anyhow = "1.0.98"
+thiserror = "2.0.12"
+tokio-test = "0.4.4"
+jwt = "0.16.0"
+hmac = "0.12.1"
+sha2 = "0.10.9"
+dotenvy = "0.15.7"

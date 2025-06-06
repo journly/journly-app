@@ -8,6 +8,18 @@ pub struct OkResponse {
     pub ok: bool,
 }
 
+impl Default for OkResponse {
+    fn default() -> Self {
+        OkResponse::new()
+    }
+}
+
+impl OkResponse {
+    pub fn new() -> Self {
+        Self { ok: true }
+    }
+}
+
 impl Responder for OkResponse {
     type Body = BoxBody;
 

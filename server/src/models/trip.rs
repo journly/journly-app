@@ -1,6 +1,6 @@
 use crate::models::user_trip::UserTrip;
 use crate::schema::{documents, expenses, itinerary_items, locations, trips, user_trip, users};
-use chrono::NaiveDate;
+use chrono::{DateTime, NaiveDate, Utc};
 use diesel::prelude::*;
 use diesel_async::{
     AsyncConnection, AsyncPgConnection, RunQueryDsl, scoped_futures::ScopedFutureExt,
@@ -25,6 +25,7 @@ pub struct Trip {
     pub start_date: Option<NaiveDate>,
     pub end_date: Option<NaiveDate>,
     pub no_collaborators: i32,
+    pub created_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug)]

@@ -15,6 +15,8 @@ use crate::{
     util::errors::{AppError, AppResult},
 };
 
+use super::helper::OkResponse;
+
 #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
 pub struct LoginCredentials {
     pub username: Option<String>,
@@ -34,17 +36,24 @@ const GENERIC_BAD_REQUEST: &str = "Check username/email and password.";
     post,
     path = "/api/auth/login",
     responses(
-        (status = 200, description = "Login was successful", body = str)
+        (status = 200, description = "Login was successful", body = OkResponse)
     ),
 )]
 pub async fn login(
     credentials: web::Json<LoginCredentials>,
     req: HttpRequest,
     state: web::Data<AppState>,
-) -> AppResult<&'static str> {
+) -> AppResult<OkResponse> {
     let validate = |user: User| -> Result<(), AppError> {
+        let user_password_salt = user.password_salt;
+        let user_password_hash = user.password_hash;
+
+        if user_password_hash.is_none() || user_password_salt.is_none() {
+            return Err(AppError::BadRequest(GENERIC_BAD_REQUEST.to_string()));
+        }
+
         let salt = match SaltString::from_b64(
-            &general_purpose::STANDARD_NO_PAD.encode(&user.password_salt),
+            &general_purpose::STANDARD_NO_PAD.encode(&user_password_salt.unwrap()),
         ) {
             Ok(res) => res,
             _ => return Err(AppError::InternalError),
@@ -57,16 +66,6 @@ pub async fn login(
             _ => return Err(AppError::InternalError),
         };
 
-        if password_hash == user.password_hash {
-            let logged_user = LoggedUser::from(user.clone());
-
-            let logged_user_string = serde_json::to_string(&logged_user).unwrap();
-
-            let _ = Identity::login(&req.extensions(), logged_user_string);
-
-            return Ok(());
-        };
-
         Err(AppError::BadRequest(GENERIC_BAD_REQUEST.to_string()))
     };
 
@@ -77,7 +76,7 @@ pub async fn login(
 
         match result {
             Ok(user) => match validate(user) {
-                Ok(_) => return Ok("Login success."),
+                Ok(_) => return Ok(OkResponse::new()),
                 Err(e) => return Err(e),
             },
             Err(NotFound) => {
@@ -94,7 +93,7 @@ pub async fn login(
 
         match result {
             Ok(user) => match validate(user) {
-                Ok(_) => return Ok("Login success."),
+                Ok(_) => return Ok(OkResponse::new()),
                 Err(e) => return Err(e),
             },
             Err(NotFound) => {

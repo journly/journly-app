@@ -2,29 +2,44 @@ use config::Config;
 use serde::Deserialize;
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct DbConfig {
-    pub pg_host: String,
-    pub pg_user: String,
-    pub pg_password: String,
-    pub pg_port: String,
-    pub pg_db: String,
+pub struct PgConfig {
+    pub host: String,
+    pub user: String,
+    pub password: String,
+    pub port: String,
+    pub db: String,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct RedisConfig {
-    pub redis_host: String,
-    pub redis_port: String,
+    pub host: String,
+    pub port: String,
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct JournlyConfig {
-    pub server_addr: String,
-    pub server_port: String,
-    pub db_config: DbConfig,
-    pub redis_config: RedisConfig,
+pub struct BaseConfig {
+    pub production: bool,
+    pub domain_name: String,
+    pub ip_address: String,
+    pub port: String,
 }
 
-impl JournlyConfig {
+#[derive(Clone, Debug, Deserialize)]
+pub struct Server {
+    pub base: BaseConfig,
+    pub postgres: PgConfig,
+    pub redis: RedisConfig,
+    pub mailgun_smtp: SmtpConfig,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct SmtpConfig {
+    pub smtp_login: Option<String>,
+    pub smtp_password: Option<String>,
+    pub smtp_server: Option<String>,
+}
+
+impl Server {
     pub fn build(config_path: &str) -> Self {
         let configuration = Config::builder()
             .add_source(config::File::with_name(config_path))
@@ -37,17 +52,17 @@ impl JournlyConfig {
     }
 }
 
-impl DbConfig {
+impl PgConfig {
     pub fn get_db_url(&self) -> String {
         format!(
             "postgres://{}:{}@{}:{}/{}",
-            self.pg_user, self.pg_password, self.pg_host, self.pg_port, self.pg_db
+            self.user, self.password, self.host, self.port, self.db
         )
     }
 }
 
 impl RedisConfig {
     pub fn get_redis_url(&self) -> String {
-        format!("redis://{}:{}", self.redis_host, self.redis_port)
+        format!("redis://{}:{}", self.host, self.port)
     }
 }

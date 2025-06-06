@@ -6,6 +6,7 @@ CREATE TABLE trips (
   start_date DATE,
   end_date DATE,
   no_collaborators INTEGER NOT NULL DEFAULT 1,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
 
   FOREIGN KEY(owner_id) REFERENCES users(id)
 );

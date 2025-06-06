@@ -9,9 +9,12 @@ use utoipa::OpenApi;
 use utoipa_swagger_ui::{SwaggerUi, Url};
 
 pub mod app;
+pub mod auth;
 pub mod config;
 pub mod controllers;
 pub mod db;
+pub mod email;
+pub mod middleware;
 pub mod models;
 pub mod routes;
 pub mod schema;
@@ -23,7 +26,7 @@ pub async fn run(listener: TcpListener, app: Arc<App>) -> Result<Server, std::io
 
     let secret_key = actix_web::cookie::Key::generate();
 
-    let store = RedisSessionStore::new(state.config.redis_config.get_redis_url())
+    let store = RedisSessionStore::new(state.config.redis.get_redis_url())
         .await
         .unwrap();
 
