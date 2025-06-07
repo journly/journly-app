@@ -165,6 +165,8 @@ diesel::table! {
         user_id -> Nullable<Uuid>,
         expires_at -> Nullable<Timestamp>,
         created_at -> Nullable<Timestamp>,
+        parent_token -> Nullable<Text>,
+        revoked -> Nullable<Bool>,
     }
 }
 

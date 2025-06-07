@@ -30,6 +30,8 @@ const ACCESS_TOKEN_EXPIRATION: i64 = 10; // 10 mins
 
 const REFRESH_TOKEN_EXPIRATION: i64 = 10080; // 1 week
 
+const AUTH: &str = "authentication";
+
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct LoginResponse {
     access_token: String,
@@ -37,7 +39,7 @@ pub struct LoginResponse {
 }
 
 #[utoipa::path(
-    tag = "test",
+    tag = AUTH,
     post,
     path = "/api/auth/login",
     responses(

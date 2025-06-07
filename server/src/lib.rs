@@ -2,7 +2,7 @@ use std::{net::TcpListener, sync::Arc};
 
 use actix_web::{App as ActixApp, HttpServer, dev::Server, middleware::Logger, web};
 use app::{App, AppState};
-use routes::{AuthApiDoc, TripsApiDoc, UsersApiDoc};
+use routes::ApiDoc;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::{SwaggerUi, Url};
 
@@ -27,20 +27,10 @@ pub async fn run(listener: TcpListener, app: Arc<App>) -> Result<Server, std::io
             .wrap(Logger::default())
             .app_data(web::Data::new(state.clone()))
             .configure(routes::routes)
-            .service(SwaggerUi::new("/api-docs/{_:.*}").urls(vec![
-                (
-                    Url::new("Trips API", "/api-docs/trips-openapi.json"),
-                    TripsApiDoc::openapi(),
-                ),
-                (
-                    Url::with_primary("Users API", "/api-docs/users-openapi.json", true),
-                    UsersApiDoc::openapi(),
-                ),
-                (
-                    Url::new("Auth API", "/api-docs/auth-openapi.json"),
-                    AuthApiDoc::openapi(),
-                ),
-            ]))
+            .service(SwaggerUi::new("/api-docs/{_:.*}").urls(vec![(
+                Url::new("API", "/api-docs/openapi.json"),
+                ApiDoc::openapi(),
+            )]))
     })
     .listen(listener)?
     .run();

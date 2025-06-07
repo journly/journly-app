@@ -9,26 +9,18 @@ use crate::controllers::{
 };
 
 #[derive(OpenApi)]
-#[openapi(paths(crate::controllers::auth::login,))]
-pub struct AuthApiDoc;
-
-#[derive(OpenApi)]
 #[openapi(paths(
+    crate::controllers::auth::login,
     crate::controllers::trip::get_trips,
     crate::controllers::trip::create_trip,
     crate::controllers::trip::get_trip,
-))]
-pub struct TripsApiDoc;
-
-#[derive(OpenApi)]
-#[openapi(paths(
     crate::controllers::user::get_users,
     crate::controllers::user::create_user,
     crate::controllers::user::get_user,
     crate::controllers::user::delete_user,
     crate::controllers::user::update_user,
 ))]
-pub struct UsersApiDoc;
+pub struct ApiDoc;
 
 #[rustfmt::skip] // makes formatting more visually pleasing
 pub fn routes(cfg: &mut ServiceConfig) {
