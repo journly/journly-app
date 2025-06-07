@@ -1,15 +1,9 @@
 use super::trip::Trip;
-use crate::{
-    schema::{trips, user_trip, users},
-    util::errors::AppError,
-};
-use actix_identity::Identity;
-use actix_web::{FromRequest, HttpRequest, dev::Payload};
+use crate::schema::{trips, user_trip, users};
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
 use serde::{Deserialize, Serialize};
-use std::future::{Ready, ready};
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -108,22 +102,5 @@ pub struct LoggedUser {
 impl From<User> for LoggedUser {
     fn from(value: User) -> Self {
         Self { id: value.id }
-    }
-}
-
-impl FromRequest for LoggedUser {
-    type Error = actix_web::Error;
-    type Future = Ready<Result<LoggedUser, Self::Error>>;
-
-    fn from_request(req: &HttpRequest, pl: &mut Payload) -> Self::Future {
-        if let Ok(identity) = Identity::from_request(req, pl).into_inner() {
-            if let Ok(user_json) = identity.id() {
-                if let Ok(user) = serde_json::from_str(&user_json) {
-                    return ready(Ok(user));
-                }
-            }
-        }
-
-        ready(Err(AppError::Unauthorized.into()))
     }
 }

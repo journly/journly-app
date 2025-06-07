@@ -1,6 +1,8 @@
 use config::Config;
 use serde::Deserialize;
 
+use crate::auth::JwtConfig;
+
 #[derive(Clone, Debug, Deserialize)]
 pub struct PgConfig {
     pub host: String,
@@ -30,6 +32,7 @@ pub struct Server {
     pub postgres: PgConfig,
     pub redis: RedisConfig,
     pub mailgun_smtp: SmtpConfig,
+    pub jwt_config: JwtConfig,
 }
 
 #[derive(Clone, Debug, Deserialize)]

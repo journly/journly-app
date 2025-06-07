@@ -1,16 +1,16 @@
-use actix_web::{HttpRequest, web};
-//use argon2::{
-//    Argon2,
-//    password_hash::{PasswordHasher, SaltString},
-//};
-//use base64::{Engine, engine::general_purpose};
+use actix_web::{HttpMessage, HttpRequest, web};
+use argon2::{
+    Argon2,
+    password_hash::{PasswordHasher, SaltString},
+};
+use base64::{Engine, engine::general_purpose};
 use diesel::result::Error::NotFound;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::{
     app::AppState,
-    models::user::{User},
+    models::user::User,
     util::errors::{AppError, AppResult},
 };
 

@@ -1,13 +1,16 @@
 use std::{
-    future::{ready, Ready}, rc::Rc,
+    future::{Ready, ready},
+    rc::Rc,
 };
 
 use actix_web::{
-    body::BoxBody, dev::{Service, ServiceRequest, ServiceResponse, Transform}, http::Error, HttpResponse
+    HttpResponse,
+    body::BoxBody,
+    dev::{Service, ServiceRequest, ServiceResponse, Transform},
+    http::Error,
 };
-use futures::{future::LocalBoxFuture};
+use futures::future::LocalBoxFuture;
 use std::task::{Context, Poll};
-
 
 pub struct AuthMiddleware;
 
@@ -28,7 +31,6 @@ where
         }))
     }
 }
-
 
 pub struct AuthMiddlewareService<S> {
     service: Rc<S>,
@@ -77,3 +79,4 @@ where
         }
     }
 }
+
