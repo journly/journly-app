@@ -29,36 +29,6 @@ pub struct JwtConfig {
     pub algorithm: Algorithm,
 }
 
-impl Default for JwtConfig {
-    fn default() -> Self {
-        dotenv().ok();
-
-        let access_secret: String = dotenvy::var("ACCESS_TOKEN_SECRET").unwrap();
-        let refresh_secret: String = dotenvy::var("REFRESH_TOKEN_SECRET").unwrap();
-
-        Self {
-            access_secret,
-            refresh_secret,
-            algorithm: Algorithm::HS256,
-        }
-    }
-}
-
-impl JwtConfig {
-    pub fn new(algorithm: Algorithm) -> Self {
-        dotenv().ok();
-
-        let access_secret: String = dotenvy::var("ACCESS_TOKEN_SECRET").unwrap();
-        let refresh_secret: String = dotenvy::var("REFRESH_TOKEN_SECRET").unwrap();
-
-        Self {
-            access_secret,
-            refresh_secret,
-            algorithm,
-        }
-    }
-}
-
 pub fn create_access_token(user_id: Uuid, secret: &str, expiration_in_mins: i64) -> String {
     let expiration = Utc::now() + Duration::minutes(expiration_in_mins);
     let claims = Claims {
