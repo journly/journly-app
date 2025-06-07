@@ -62,7 +62,7 @@ pub async fn login(
             }
 
             let salt = match SaltString::from_b64(
-                &general_purpose::STANDARD_NO_PAD.encode(&user_password_salt.unwrap()),
+                &general_purpose::STANDARD_NO_PAD.encode(user_password_salt.unwrap()),
             ) {
                 Ok(res) => res,
                 _ => return Err(AppError::InternalError),
@@ -92,9 +92,7 @@ pub async fn login(
 
             Err(AppError::Unauthorized)
         }
-        Err(NotFound) => {
-            return Err(AppError::Unauthorized);
-        }
-        Err(_) => return Err(AppError::InternalError),
+        Err(NotFound) => Err(AppError::Unauthorized),
+        Err(_) => Err(AppError::InternalError),
     }
 }
