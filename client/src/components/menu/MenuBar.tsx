@@ -100,10 +100,10 @@ export function MenuBar() {
             <MenuItem icon={<SettingsIcon />} label="Settings" link="/settings" />
             <Box className="flex items-center gap-2 px-3 py-2 mt-2">
               <Avatar className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-medium">
-                {user?.initials || 'JD'}
+                {user?.username.charAt(0).toUpperCase() || 'JD'}
               </Avatar>
               <Box className="flex-1">
-                <p className="text-sm font-medium">{user?.fullName || 'John Doe'}</p>
+                <p className="text-sm font-medium">{user?.username || 'John Doe'}</p>
                 <p className="text-xs text-gray-500">{user?.email || 'john@example.com'}</p>
               </Box>
             </Box>
