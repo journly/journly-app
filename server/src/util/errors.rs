@@ -12,6 +12,7 @@ pub enum AppError {
     BadRequest(String),
     #[display("unauthorized")]
     Unauthorized,
+    NotFound,
 }
 
 pub type AppResult<T> = Result<T, AppError>;
@@ -22,6 +23,7 @@ impl ResponseError for AppError {
             Self::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
             Self::BadRequest(_) => StatusCode::BAD_REQUEST,
             Self::Unauthorized => StatusCode::UNAUTHORIZED,
+            Self::NotFound => StatusCode::NOT_FOUND,
         }
     }
 

@@ -6,7 +6,7 @@ use crate::{
     util::errors::{AppError, AppResult},
     views::EncodableUser,
 };
-use actix_web::web::{self, Json};
+use actix_web::{web::{self, Json}, HttpResponse, ResponseError};
 use argon2::{
     Argon2,
     password_hash::{PasswordHasher, SaltString, rand_core::OsRng},
@@ -15,7 +15,7 @@ use base64::{Engine, engine::general_purpose};
 use diesel::{ExpressionMethods, result::Error::NotFound};
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use utoipa::{openapi::security::Http, ToSchema};
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, ToSchema)]
@@ -121,6 +121,7 @@ pub struct GetUserResponse {
     path = "/api/v1/users/{user_id}",
     responses(
         (status = 200, description = "Successful Response", body = GetUserResponse),
+        (status = 404, description = "User Not Found"),
     )
 )]
 pub async fn get_user(
@@ -143,7 +144,7 @@ pub async fn get_user(
                 avatar: user.avatar,
             },
         })),
-        Err(NotFound) => Err(AppError::BadRequest("User not found".to_string())),
+        Err(NotFound) => Err(AppError::NotFound),
         Err(_) => Err(AppError::InternalError),
     }
 }
