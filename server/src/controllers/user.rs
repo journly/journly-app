@@ -124,6 +124,7 @@ pub struct GetUserResponse {
     )
 )]
 pub async fn get_user(
+    authenticated: AuthenticatedUser,
     path: web::Path<Uuid>,
     state: web::Data<AppState>,
 ) -> AppResult<Json<GetUserResponse>> {

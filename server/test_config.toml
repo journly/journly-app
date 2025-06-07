@@ -1,8 +1,8 @@
 [base]
 production=false
-domain_name="myjournly.com"
-ip_address="127.0.0.1"
-port=8080
+domain_name=""
+ip_address=""
+port=0
 
 # Postgres config
 [postgres]
@@ -20,9 +20,9 @@ port=6379
 
 # Email config
 [mailgun_smtp]
-login="support@myjournly.com"
-password="937fad110db1dae8b7757625e0578d0c-08c79601-361d57cb"
-server="smtp.mailgun.org"
+login=""
+password=""
+server=""
 
 [jwt_config]
 # secret used to generate/validate access token

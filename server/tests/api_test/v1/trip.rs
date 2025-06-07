@@ -4,7 +4,7 @@ use journly_server::controllers::trip::{CreateTrip, GetTripResponse, GetTripsRes
 use reqwest::{Client, StatusCode, header::AUTHORIZATION};
 use uuid::Uuid;
 
-use crate::spawn_app;
+use crate::{api_test::util::AuthHeader, spawn_app};
 
 #[actix_rt::test]
 pub async fn get_trips_returns_list() {
@@ -16,9 +16,11 @@ pub async fn get_trips_returns_list() {
 
     let client = Client::new();
 
+    let auth_header = AuthHeader::new(&access_token);
+
     let response = client
         .get(format!("{}/api/v1/trips", address))
-        .header(AUTHORIZATION, access_token)
+        .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
         .expect("Request could not be resolved.");
@@ -43,9 +45,11 @@ pub async fn get_trip_with_valid_id_returns_trip() {
 
     let client = Client::new();
 
+    let auth_header = AuthHeader::new(&access_token);
+
     let response = client
         .get(format!("{}/api/v1/trips/{}", address, trip_id))
-        .header(AUTHORIZATION, access_token)
+        .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
         .expect("Request could not be resolved.");
@@ -70,9 +74,11 @@ pub async fn get_trip_with_invalid_id_returns_404_not_found() {
 
     let client = Client::new();
 
+    let auth_header = AuthHeader::new(&access_token);
+
     let response = client
         .get(format!("{}/api/v1/trips/{}", address, trip_id))
-        .header(AUTHORIZATION, access_token)
+        .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
         .expect("Request could not be resolved.");
@@ -97,9 +103,14 @@ pub async fn create_trip_with_valid_information_returns_trip() {
 
     let client = reqwest::Client::new();
 
+    let auth_header = AuthHeader::new(&access_token);
+
     let response = client
         .post(format!("{}/api/v1/trips", address))
-        .header(AUTHORIZATION, &access_token)
+        .header(
+            auth_header.header_name.clone(),
+            auth_header.header_value.clone(),
+        )
         .json(&body)
         .send()
         .await
@@ -109,7 +120,7 @@ pub async fn create_trip_with_valid_information_returns_trip() {
 
     let response = client
         .get(format!("{}/api/v1/trips", address))
-        .header(AUTHORIZATION, access_token)
+        .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
         .expect("Request could not be resolved.");
@@ -123,8 +134,7 @@ pub async fn create_trip_with_valid_information_returns_trip() {
     assert!(
         trips
             .iter()
-            .find(|trip| trip.title == Some("New Trip".to_string()))
-            .is_some()
+            .any(|trip| trip.title == Some("New Trip".to_string()))
     )
 }
 
@@ -147,10 +157,15 @@ pub async fn create_trip_with_invalid_information_returns_400_bad_request() {
 
     let url = format!("{}/api/v1/trips", address);
 
+    let auth_header = AuthHeader::new(&access_token);
+
     // invalid owner_id
     let bad_resp1 = client
         .post(&url)
-        .header(AUTHORIZATION, &access_token)
+        .header(
+            auth_header.header_name.clone(),
+            auth_header.header_value.clone(),
+        )
         .json(&body)
         .send()
         .await
@@ -161,7 +176,7 @@ pub async fn create_trip_with_invalid_information_returns_400_bad_request() {
     // no request body
     let bad_resp2 = client
         .post(url)
-        .header(AUTHORIZATION, access_token)
+        .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
         .expect("Request could not be resolved.");

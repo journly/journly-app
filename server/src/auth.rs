@@ -5,7 +5,6 @@ use actix_web::{
     web::Data,
 };
 use chrono::{Duration, Utc};
-use dotenvy::dotenv;
 use futures::future::{Ready, ready};
 use jsonwebtoken::{
     Algorithm, DecodingKey, EncodingKey, Header, TokenData, Validation, decode, encode,
@@ -82,5 +81,34 @@ impl FromRequest for AuthenticatedUser {
         }
 
         ready(Err(ErrorUnauthorized("Invalid or missing token")))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use uuid::Uuid;
+
+    use crate::auth::verify_jwt;
+
+    use super::create_access_token;
+
+    #[test]
+    fn created_token_can_be_verified_correctly() {
+        let secret = "super-secret-token-secret";
+
+        let access_token = create_access_token(Uuid::new_v4(), secret, 1);
+
+        assert!(verify_jwt(&access_token, secret).is_ok())
+    }
+
+    #[test]
+    fn invalid_token_is_invalid() {
+        let secret = "super-secret-token-secret";
+
+        let another_secret = "fake-secret";
+
+        let access_token = create_access_token(Uuid::new_v4(), another_secret, 1);
+
+        assert!(verify_jwt(&access_token, secret).is_err())
     }
 }

@@ -1,7 +1,7 @@
-use reqwest::{Client, StatusCode, header::AUTHORIZATION};
+use reqwest::{Client, StatusCode};
 use uuid::Uuid;
 
-use crate::spawn_app;
+use crate::{api_test::util::AuthHeader, spawn_app};
 use journly_server::controllers::{
     helper::OkResponse,
     user::{CreateUser, GetUserResponse, GetUsersResponse, UpdateInformation},
@@ -17,12 +17,14 @@ pub async fn get_users_returns_list() {
 
     let client = Client::new();
 
+    let auth_header = AuthHeader::new(&access_token);
+
     let response = client
         .get(format!("{}/api/v1/users", address))
-        .header(AUTHORIZATION, access_token)
+        .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
-        .expect("Request to GET '/users' failed to resolve.");
+        .expect("Request to GET '/users' failed to resolve");
 
     assert_eq!(response.status(), StatusCode::OK);
 
@@ -44,9 +46,11 @@ pub async fn get_user_with_valid_id_returns_user() {
 
     let client = Client::new();
 
+    let auth_header = AuthHeader::new(&access_token);
+
     let response = client
         .get(format!("{}/api/v1/users/{}", address, client_id))
-        .header(AUTHORIZATION, access_token)
+        .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
         .expect("Request to GET '/users/{user_id}' failed to resolve.");
@@ -71,9 +75,11 @@ pub async fn get_user_with_invalid_id_returns_404_not_found() {
 
     let client = Client::new();
 
+    let auth_header = AuthHeader::new(&access_token);
+
     let response = client
         .get(format!("{}/api/v1/users/{}", address, invalid_client_id))
-        .header(AUTHORIZATION, access_token)
+        .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
         .expect("Request to GET '/users/{user_id}' failed to resolve.");
@@ -97,10 +103,15 @@ pub async fn create_user_with_valid_params() {
 
     let client = reqwest::Client::new();
 
+    let auth_header = AuthHeader::new(&access_token);
+
     let response = client
         .post(format!("{}/api/v1/users", address))
         .json(&new_user)
-        .header(AUTHORIZATION, &access_token)
+        .header(
+            auth_header.header_name.clone(),
+            auth_header.header_value.clone(),
+        )
         .send()
         .await
         .expect("Request to POST '/users' failed to resolve.");
@@ -114,7 +125,7 @@ pub async fn create_user_with_valid_params() {
 
     let get_response = client
         .get(format!("{}/api/v1/users", address))
-        .header(AUTHORIZATION, access_token)
+        .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
         .expect("Request to GET '/users' failed to resolve.");
@@ -123,12 +134,7 @@ pub async fn create_user_with_valid_params() {
         .unwrap()
         .users;
 
-    assert!(
-        users
-            .iter()
-            .find(|user| user.username == new_user.username)
-            .is_some()
-    );
+    assert!(users.iter().any(|user| user.username == new_user.username));
 }
 
 #[actix_rt::test]
@@ -147,9 +153,11 @@ pub async fn create_user_with_invalid_params() {
 
     let client = reqwest::Client::new();
 
+    let auth_header = AuthHeader::new(&access_token);
+
     let response = client
         .post(format!("{}/api/v1/users", address))
-        .header(AUTHORIZATION, access_token)
+        .header(auth_header.header_name, auth_header.header_value)
         .json(&new_user)
         .send()
         .await
@@ -177,9 +185,14 @@ pub async fn update_user_username() {
 
     let client = reqwest::Client::new();
 
+    let auth_header = AuthHeader::new(&access_token);
+
     let response = client
         .put(format!("{}/api/v1/users/{}", address, client_id))
-        .header(AUTHORIZATION, &access_token)
+        .header(
+            auth_header.header_name.clone(),
+            auth_header.header_value.clone(),
+        )
         .json(&update_information)
         .send()
         .await
@@ -189,7 +202,7 @@ pub async fn update_user_username() {
 
     let response = client
         .get(format!("{}/api/v1/users/{}", address, client_id))
-        .header(AUTHORIZATION, access_token)
+        .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
         .expect("Request to GET '/users/{user_id}' failed to resolve.");
@@ -223,9 +236,14 @@ pub async fn update_user_email() {
 
     let client = reqwest::Client::new();
 
+    let auth_header = AuthHeader::new(&access_token);
+
     let response = client
         .put(format!("{}/api/v1/users/{}/email", address, client_id))
-        .header(AUTHORIZATION, &access_token)
+        .header(
+            auth_header.header_name.clone(),
+            auth_header.header_value.clone(),
+        )
         .json(&update_information)
         .send()
         .await
@@ -235,7 +253,7 @@ pub async fn update_user_email() {
 
     let response = client
         .get(format!("{}/api/v1/users/{}", address, client_id))
-        .header(AUTHORIZATION, access_token)
+        .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
         .expect("Request to GET '/users/{user_id}' failed to resolve.");
