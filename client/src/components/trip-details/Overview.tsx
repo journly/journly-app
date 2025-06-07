@@ -85,8 +85,8 @@ const Overview = () =>{
                     <Typography variant="h6" fontWeight={500} className="text-gray-900">
                         Tasks
                     </Typography>
-                    <Box className="flex items-center justify-center p-1 rounded-full cursor-pointer hover:bg-blue-100 transition-colors">
-                        <Plus className="h-5 w-8 text-blue-600" onClick={() => setOpenTaskDialog(true)} />
+                    <Box className="flex items-center justify-center p-1 rounded-full cursor-pointer hover:bg-blue-100 transition-colors" onClick={() => setOpenTaskDialog(true)}>
+                        <Plus className="h-5 w-8 text-blue-600" />
                     </Box>
                 </Box>
                 <List className="mt-1 text-gray-600">

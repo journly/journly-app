@@ -62,8 +62,8 @@ const TripBanner: React.FC<TripBannerProps> = () => {
                             <Avatar alt="D" src="/avatars/user1.jpg"/>
                             <Avatar alt="E" src="/avatars/user1.jpg"/>
                         </AvatarGroup>
-                        <Box className="flex items-center justify-center p-2 rounded-full cursor-pointer hover:bg-gray-400 transition-colors">
-                            <Users className="h-5 w-5" color="white" onClick={() => setUsersDialogOpen(true)}/>
+                        <Box className="flex items-center justify-center p-2 rounded-full cursor-pointer hover:bg-gray-400 transition-colors" onClick={() => setUsersDialogOpen(true)}>
+                            <Users className="h-5 w-5" color="white" />
                         </Box>
                     </Box>
                 </div>
