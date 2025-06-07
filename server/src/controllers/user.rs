@@ -1,5 +1,6 @@
 use crate::{
     app::AppState,
+    auth::AuthenticatedUser,
     controllers::helper::OkResponse,
     models::user::{NewUser, User},
     util::errors::{AppError, AppResult},
@@ -30,7 +31,10 @@ pub struct GetUsersResponse {
         (status = 200, description = "Successful Response", body = GetUsersResponse),
     )
 )]
-pub async fn get_users(state: web::Data<AppState>) -> AppResult<Json<GetUsersResponse>> {
+pub async fn get_users(
+    authenticated: AuthenticatedUser,
+    state: web::Data<AppState>,
+) -> AppResult<Json<GetUsersResponse>> {
     let mut conn = state.db_connection().await?;
 
     let result = User::get_all(&mut conn).await;
@@ -152,6 +156,7 @@ pub async fn get_user(
     )
 )]
 pub async fn delete_user(
+    authenticated: AuthenticatedUser,
     path: web::Path<Uuid>,
     state: web::Data<AppState>,
 ) -> AppResult<OkResponse> {
@@ -185,6 +190,7 @@ pub struct UpdateInformation {
     )
 )]
 pub async fn update_user(
+    authenticated: AuthenticatedUser,
     path: web::Path<Uuid>,
     state: web::Data<AppState>,
     new_data: web::Json<UpdateInformation>,

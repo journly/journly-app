@@ -1,4 +1,4 @@
-use actix_web::{HttpMessage, HttpRequest, web};
+use actix_web::web::{self, Json};
 use argon2::{
     Argon2,
     password_hash::{PasswordHasher, SaltString},
@@ -10,16 +10,14 @@ use utoipa::ToSchema;
 
 use crate::{
     app::AppState,
+    auth::create_access_token,
     models::user::User,
     util::errors::{AppError, AppResult},
 };
 
-use super::helper::OkResponse;
-
 #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
 pub struct LoginCredentials {
-    pub username: Option<String>,
-    pub email: Option<String>,
+    pub email: String,
     pub password: String,
 }
 
@@ -28,79 +26,75 @@ pub enum ValidateResult<'a> {
     Found(&'a str),
 }
 
-const GENERIC_BAD_REQUEST: &str = "Check username/email and password.";
+const ACCESS_TOKEN_EXPIRATION: i64 = 10; // 10 mins
+
+const REFRESH_TOKEN_EXPIRATION: i64 = 10080; // 1 week
+
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct LoginResponse {
+    access_token: String,
+    refresh_token: String,
+}
 
 #[utoipa::path(
     tag = "test",
     post,
     path = "/api/auth/login",
     responses(
-        (status = 200, description = "Login was successful", body = OkResponse)
+        (status = 200, description = "Login was successful", body = LoginResponse)
     ),
 )]
 pub async fn login(
     credentials: web::Json<LoginCredentials>,
-    req: HttpRequest,
     state: web::Data<AppState>,
-) -> AppResult<OkResponse> {
-    let validate = |user: User| -> Result<(), AppError> {
-        let user_password_salt = user.password_salt;
-        let user_password_hash = user.password_hash;
+) -> AppResult<Json<LoginResponse>> {
+    let mut conn = state.db_connection().await?;
 
-        if user_password_hash.is_none() || user_password_salt.is_none() {
-            return Err(AppError::BadRequest(GENERIC_BAD_REQUEST.to_string()));
-        }
+    let result = User::find_by_email(&mut conn, &credentials.email).await;
 
-        let salt = match SaltString::from_b64(
-            &general_purpose::STANDARD_NO_PAD.encode(&user_password_salt.unwrap()),
-        ) {
-            Ok(res) => res,
-            _ => return Err(AppError::InternalError),
-        };
+    match result {
+        Ok(user) => {
+            let user_password_salt = user.password_salt;
+            let user_password_hash = user.password_hash;
 
-        let argon2 = Argon2::default();
-
-        let password_hash = match argon2.hash_password(credentials.password.as_bytes(), &salt) {
-            Ok(hash) => hash.to_string(),
-            _ => return Err(AppError::InternalError),
-        };
-
-        Err(AppError::BadRequest(GENERIC_BAD_REQUEST.to_string()))
-    };
-
-    if let Some(username) = &credentials.username {
-        let mut conn = state.db_connection().await?;
-
-        let result = User::find_by_username(&mut conn, username).await;
-
-        match result {
-            Ok(user) => match validate(user) {
-                Ok(_) => return Ok(OkResponse::new()),
-                Err(e) => return Err(e),
-            },
-            Err(NotFound) => {
-                return Err(AppError::BadRequest(GENERIC_BAD_REQUEST.to_string()));
+            if user_password_hash.is_none() || user_password_salt.is_none() {
+                return Err(AppError::Unauthorized);
             }
-            Err(_) => return Err(AppError::InternalError),
-        }
-    }
 
-    if let Some(email) = &credentials.email {
-        let mut conn = state.db_connection().await?;
+            let salt = match SaltString::from_b64(
+                &general_purpose::STANDARD_NO_PAD.encode(&user_password_salt.unwrap()),
+            ) {
+                Ok(res) => res,
+                _ => return Err(AppError::InternalError),
+            };
 
-        let result = User::find_by_email(&mut conn, email).await;
+            let argon2 = Argon2::default();
 
-        match result {
-            Ok(user) => match validate(user) {
-                Ok(_) => return Ok(OkResponse::new()),
-                Err(e) => return Err(e),
-            },
-            Err(NotFound) => {
-                return Err(AppError::BadRequest(GENERIC_BAD_REQUEST.to_string()));
+            let password_hash = match argon2.hash_password(credentials.password.as_bytes(), &salt) {
+                Ok(hash) => hash.to_string(),
+                _ => return Err(AppError::InternalError),
+            };
+
+            if password_hash == user_password_hash.unwrap() {
+                let access_token_secret = state.config.jwt_config.access_secret.clone();
+                let refresh_token_secret = state.config.jwt_config.refresh_secret.clone();
+
+                let access_token =
+                    create_access_token(user.id, access_token_secret, ACCESS_TOKEN_EXPIRATION);
+                let refresh_token =
+                    create_access_token(user.id, refresh_token_secret, REFRESH_TOKEN_EXPIRATION);
+
+                return Ok(Json(LoginResponse {
+                    access_token,
+                    refresh_token,
+                }));
             }
-            Err(_) => return Err(AppError::InternalError),
-        }
-    }
 
-    Err(AppError::BadRequest(GENERIC_BAD_REQUEST.to_string()))
+            Err(AppError::Unauthorized)
+        }
+        Err(NotFound) => {
+            return Err(AppError::Unauthorized);
+        }
+        Err(_) => return Err(AppError::InternalError),
+    }
 }
