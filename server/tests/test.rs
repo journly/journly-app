@@ -1,9 +1,9 @@
-use std::{net::TcpListener, sync::Arc};
+use std::{net::TcpListener, ops::Deref, sync::Arc};
 
 use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
 use journly_server::{
     app::App,
-    auth::AuthSecrets,
+    auth::create_access_token,
     config::{PgConfig, Server},
     db::get_connection_pool,
     email::Emails,
@@ -11,8 +11,15 @@ use journly_server::{
 };
 use uuid::Uuid;
 
-pub async fn spawn_app() -> String {
+pub struct TestApp {
+    address: String,
+    access_token: String,
+}
+
+pub async fn spawn_app() -> TestApp {
     let mut config = Server::build("test_config.toml");
+
+    let access_token_secret = config.jwt_config.access_secret.clone();
 
     let db_id = configure_database(&config.postgres).await;
 
@@ -24,7 +31,6 @@ pub async fn spawn_app() -> String {
 
     let app = Arc::new(App {
         database: db_pool,
-        auth_secrets: AuthSecrets::init(),
         emails,
         config,
     });
@@ -41,7 +47,10 @@ pub async fn spawn_app() -> String {
 
     actix_rt::spawn(server);
 
-    format!("http://{}:{}", server_address, server_port)
+    TestApp {
+        address: format!("http://{}:{}", server_address, server_port),
+        access_token: create_access_token(Uuid::new_v4(), &access_token_secret, 10),
+    }
 }
 
 pub async fn configure_database(config: &PgConfig) -> String {
@@ -53,12 +62,12 @@ pub async fn configure_database(config: &PgConfig) -> String {
 
     let test_db_id = Uuid::new_v4();
 
-    let query = diesel::sql_query(format!("CREATE DATABASE {}", test_db_id));
+    let query = diesel::sql_query(format!(r#"CREATE DATABASE "{}""#, test_db_id));
 
     query
         .execute(&mut conn)
         .await
-        .expect(&format!("Could not create database {}", test_db_id));
+        .unwrap_or_else(|_| panic!("Could not create database {}", test_db_id));
 
     test_db_id.to_string()
 }

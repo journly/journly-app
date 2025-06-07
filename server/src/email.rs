@@ -141,6 +141,8 @@ impl EmailBackend {
 
 #[cfg(test)]
 mod tests {
+    use tokio_test::{assert_err, assert_ok};
+
     use super::*;
 
     struct TestEmail;

@@ -16,7 +16,7 @@ use crate::{
 
 const TRIPS: &str = "trips";
 
-#[derive(ToSchema, Serialize)]
+#[derive(ToSchema, Serialize, Deserialize)]
 pub struct GetTripsResponse {
     pub trips: Vec<EncodableTripOverview>,
 }
@@ -47,7 +47,7 @@ pub async fn get_trips(
     }
 }
 
-#[derive(Deserialize, ToSchema)]
+#[derive(Deserialize, Serialize, ToSchema)]
 pub struct CreateTrip {
     pub user_id: Uuid,
     pub title: Option<String>,
