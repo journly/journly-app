@@ -1,15 +1,19 @@
 use actix_web::web::{ServiceConfig, delete, get, post, put, scope};
 use utoipa::OpenApi;
 
-use crate::controllers::{
-    auth::login,
-    get_health,
-    trip::{create_trip, get_trip, get_trips},
-    user::{create_user, delete_user, get_user, get_users, update_user},
+use crate::{
+    config::Server,
+    controllers::{
+        auth::{get_access_token, login},
+        get_health,
+        trip::{create_trip, get_trip, get_trips},
+        user::{create_user, delete_user, get_user, get_users, update_user},
+    },
 };
 
 #[derive(OpenApi)]
 #[openapi(paths(
+    crate::controllers::auth::get_access_token,
     crate::controllers::auth::login,
     crate::controllers::trip::get_trips,
     crate::controllers::trip::create_trip,
@@ -23,7 +27,7 @@ use crate::controllers::{
 pub struct ApiDoc;
 
 #[rustfmt::skip] // makes formatting more visually pleasing
-pub fn routes(cfg: &mut ServiceConfig) {
+pub fn routes(cfg: &mut ServiceConfig, config: Server) {
     cfg.route("/health", get().to(get_health))
         .service(
             scope("/auth")
@@ -43,4 +47,11 @@ pub fn routes(cfg: &mut ServiceConfig) {
                 .route("/{user_id}", delete().to(delete_user))
                 .route("/{user_id}", put().to(update_user))
         );
+
+    if !config.base.production {
+        cfg.service(
+            scope("/dev")
+            .route("/access-token", get().to(get_access_token))
+        );
+    };
 }
