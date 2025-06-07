@@ -1,7 +1,7 @@
 use crate::{
     app::AppState,
     controllers::helper::OkResponse,
-    models::user::{LoggedUser, NewUser, User},
+    models::user::{NewUser, User},
     util::errors::{AppError, AppResult},
     views::EncodableUser,
 };
@@ -19,7 +19,7 @@ use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct GetUsersResponse {
-    users: Vec<EncodableUser>,
+    pub users: Vec<EncodableUser>,
 }
 
 #[utoipa::path(
@@ -53,11 +53,11 @@ pub async fn get_users(state: web::Data<AppState>) -> AppResult<Json<GetUsersRes
     }
 }
 
-#[derive(Deserialize, ToSchema)]
+#[derive(Deserialize, Serialize, ToSchema)]
 pub struct CreateUser {
-    username: String,
-    email: String,
-    password: String,
+    pub username: String,
+    pub email: String,
+    pub password: String,
 }
 
 #[utoipa::path(
@@ -106,9 +106,9 @@ pub async fn create_user(
     }
 }
 
-#[derive(Serialize, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct GetUserResponse {
-    user: EncodableUser,
+    pub user: EncodableUser,
 }
 
 #[utoipa::path(
@@ -120,7 +120,6 @@ pub struct GetUserResponse {
     )
 )]
 pub async fn get_user(
-    _: LoggedUser,
     path: web::Path<Uuid>,
     state: web::Data<AppState>,
 ) -> AppResult<Json<GetUserResponse>> {
@@ -153,15 +152,10 @@ pub async fn get_user(
     )
 )]
 pub async fn delete_user(
-    logged_user: LoggedUser,
     path: web::Path<Uuid>,
     state: web::Data<AppState>,
 ) -> AppResult<OkResponse> {
     let user_id = path.into_inner();
-
-    if logged_user.id != user_id {
-        return Err(AppError::Unauthorized);
-    }
 
     let mut conn = state.db_connection().await?;
 
@@ -174,12 +168,12 @@ pub async fn delete_user(
     }
 }
 
-#[derive(Deserialize, ToSchema)]
-pub struct NewData {
+#[derive(Deserialize, Serialize, ToSchema)]
+pub struct UpdateInformation {
     #[schema(example = "NewUsername")]
-    username: Option<String>,
+    pub username: Option<String>,
     #[schema(example = "newemail@journly.com")]
-    email: Option<String>,
+    pub email: Option<String>,
 }
 
 #[utoipa::path(
@@ -191,16 +185,11 @@ pub struct NewData {
     )
 )]
 pub async fn update_user(
-    logged_user: LoggedUser,
     path: web::Path<Uuid>,
     state: web::Data<AppState>,
-    new_data: web::Json<NewData>,
+    new_data: web::Json<UpdateInformation>,
 ) -> AppResult<OkResponse> {
     let user_id = path.into_inner();
-
-    if logged_user.id != user_id {
-        return Err(AppError::Unauthorized);
-    }
 
     let mut conn = state.db_connection().await?;
 

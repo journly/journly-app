@@ -20,7 +20,7 @@ const TRIPS: &str = "trips";
 
 #[derive(ToSchema, Serialize)]
 pub struct GetTripsResponse {
-    trips: Vec<EncodableTripOverview>,
+    pub trips: Vec<EncodableTripOverview>,
 }
 
 #[utoipa::path(
@@ -48,10 +48,10 @@ pub async fn get_trips(state: web::Data<AppState>) -> AppResult<Json<GetTripsRes
 
 #[derive(Deserialize, ToSchema)]
 pub struct CreateTrip {
-    user_id: Uuid,
-    title: Option<String>,
-    start_date: Option<NaiveDate>,
-    end_date: Option<NaiveDate>,
+    pub user_id: Uuid,
+    pub title: Option<String>,
+    pub start_date: Option<NaiveDate>,
+    pub end_date: Option<NaiveDate>,
 }
 
 #[utoipa::path(
@@ -84,7 +84,7 @@ pub async fn create_trip(
 
 #[derive(Deserialize, ToSchema, Serialize)]
 pub struct GetTripResponse {
-    trip: EncodableTripData,
+    pub trip: EncodableTripData,
 }
 
 #[utoipa::path(

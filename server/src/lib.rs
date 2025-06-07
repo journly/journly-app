@@ -1,7 +1,5 @@
 use std::{net::TcpListener, sync::Arc};
 
-use actix_identity::IdentityMiddleware;
-use actix_session::{SessionMiddleware, storage::RedisSessionStore};
 use actix_web::{App as ActixApp, HttpServer, dev::Server, middleware::Logger, web};
 use app::{App, AppState};
 use routes::{AuthApiDoc, TripsApiDoc, UsersApiDoc};
@@ -24,16 +22,8 @@ pub mod views;
 pub async fn run(listener: TcpListener, app: Arc<App>) -> Result<Server, std::io::Error> {
     let state = AppState(app);
 
-    let secret_key = actix_web::cookie::Key::generate();
-
-    let store = RedisSessionStore::new(state.config.redis.get_redis_url())
-        .await
-        .unwrap();
-
     let server = HttpServer::new(move || {
         ActixApp::new()
-            .wrap(IdentityMiddleware::default())
-            .wrap(SessionMiddleware::builder(store.clone(), secret_key.clone()).build())
             .wrap(Logger::default())
             .app_data(web::Data::new(state.clone()))
             .configure(routes::routes)

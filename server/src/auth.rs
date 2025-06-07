@@ -1,60 +1,60 @@
-use chrono::{Duration, Utc};
-use dotenvy::{dotenv, var};
-use hmac::{Hmac, Mac};
-use jwt::{Header, SignWithKey, Token};
+use dotenvy::dotenv;
+use jsonwebtoken::Algorithm;
 use serde::{Deserialize, Serialize};
-use sha2::Sha384;
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
-    pub sub: Uuid,
+    pub sub: Uuid, // user ID
     pub exp: usize,
     pub iat: usize,
 }
 
-pub fn create_access_token(user_id: Uuid) -> String {
-    let key = get_secret_key();
-
-    let expiration = Utc::now() + Duration::minutes(15);
-
-    let claims = Claims {
-        sub: user_id,
-        exp: expiration.timestamp() as usize,
-        iat: Utc::now().timestamp() as usize,
-    };
-
-    let token = Token::new(Header::default(), claims)
-        .sign_with_key(&key)
-        .unwrap();
-
-    token.into()
+#[derive(Clone, Debug, Deserialize)]
+pub struct JwtConfig {
+    pub access_secret: String,
+    pub refresh_secret: String,
+    pub algorithm: Algorithm,
+    pub enabled: bool,
 }
 
-pub fn create_refresh_token(user_id: Uuid) -> String {
-    let key = get_secret_key();
+impl Default for JwtConfig {
+    fn default() -> Self {
+        dotenv().ok();
 
-    let expiration = Utc::now() + Duration::days(7);
+        let access_secret: String = dotenvy::var("ACCESS_TOKEN_SECRET").unwrap();
+        let refresh_secret: String = dotenvy::var("REFRESH_TOKEN_SECRET").unwrap();
 
-    let claims = Claims {
-        sub: user_id,
-        exp: expiration.timestamp() as usize,
-        iat: Utc::now().timestamp() as usize,
-    };
-
-    let token = Token::new(Header::default(), claims)
-        .sign_with_key(&key)
-        .unwrap();
-
-    token.into()
+        Self {
+            access_secret,
+            refresh_secret,
+            algorithm: Algorithm::HS256,
+            enabled: true,
+        }
+    }
 }
 
-pub fn get_secret_key() -> Hmac<Sha384> {
-    dotenv().ok();
+impl JwtConfig {
+    pub fn new(algorithm: Algorithm) -> Self {
+        dotenv().ok();
 
-    let secret: String = var("JWT_SECRET").expect("JWT_SECRET is required.");
+        let access_secret: String = dotenvy::var("ACCESS_TOKEN_SECRET").unwrap();
+        let refresh_secret: String = dotenvy::var("REFRESH_TOKEN_SECRET").unwrap();
 
-    let secret = secret.as_bytes();
+        Self {
+            access_secret,
+            refresh_secret,
+            algorithm,
+            enabled: true,
+        }
+    }
 
-    Hmac::new_from_slice(secret).unwrap()
+    pub fn disabled() -> Self {
+        Self {
+            access_secret: "dummy-secret".to_string(),
+            refresh_secret: "dummy-secret".to_string(),
+            algorithm: Algorithm::HS256,
+            enabled: false,
+        }
+    }
 }

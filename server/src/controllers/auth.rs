@@ -1,4 +1,3 @@
-use actix_identity::Identity;
 use actix_web::{HttpMessage, HttpRequest, web};
 use argon2::{
     Argon2,
@@ -11,7 +10,7 @@ use utoipa::ToSchema;
 
 use crate::{
     app::AppState,
-    models::user::{LoggedUser, User},
+    models::user::User,
     util::errors::{AppError, AppResult},
 };
 

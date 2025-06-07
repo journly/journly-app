@@ -23,3 +23,25 @@ port=6379
 login="support@myjournly.com"
 password="937fad110db1dae8b7757625e0578d0c-08c79601-361d57cb"
 server="smtp.mailgun.org"
+
+[jwt_config]
+# secret used to generate/validate access token
+access_secret= "secret-token"
+# secret used to generate/validate refresh token
+refresh_secret= "secret-token"
+# Supported algorithms:
+#   HS256,
+#   HS384,
+#   HS512,
+#   ES256,
+#   ES384,
+#   RS256,
+#   RS384,
+#   RS512,
+#   PS256,
+#   PS384,
+#   PS512,
+#   EdDSA,
+algorithm="HS256"
+# Disable when running test or in dev environment
+enabled=true
