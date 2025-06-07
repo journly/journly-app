@@ -1,5 +1,6 @@
 use std::{net::TcpListener, sync::Arc};
 
+use actix_cors::Cors;
 use actix_web::{App as ActixApp, HttpServer, dev::Server, middleware::Logger, web};
 use app::{App, AppState};
 use routes::ApiDoc;
@@ -25,6 +26,13 @@ pub async fn run(listener: TcpListener, app: Arc<App>) -> Result<Server, std::io
     let server = HttpServer::new(move || {
         ActixApp::new()
             .wrap(Logger::default())
+            .wrap(
+            Cors::default()
+                .allow_any_origin() // or .allowed_origin("http://localhost:5173")
+                .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+                .allow_any_header()
+                    .max_age(3600),
+            )
             .app_data(web::Data::new(state.clone()))
             .configure(routes::routes)
             .service(SwaggerUi::new("/api-docs/{_:.*}").urls(vec![(

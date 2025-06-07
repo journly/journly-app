@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { EncodableUser, UsersApi } from '../api-client';
 
 export interface User {
     username: string;
@@ -9,26 +10,34 @@ export interface User {
 
 // Context value type
 interface UserContextType {
-  user: User | null;
-  setUser: (user: User | null) => void;
+  user: EncodableUser | null;
+  setUser: (user: EncodableUser | null) => void;
 }
+
+const userApi = new UsersApi();
 
 // Create context with default
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 // Provider component
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<EncodableUser | null>(null);
 
 //TODO: Fetch user data from API and set it in state
-    // useEffect(() => {
-    //     const fetchUserData = async () => {
-    //     const response = await fetch('/api/user');
-    //     const data = await response.json();
-    //     setUser(data);
-    //     };
-    //     fetchUserData();
-    // }, []);
+    useEffect(() => {
+       const fetchUserData = async () => {
+            try {
+                const response = await userApi.getUser({
+                    userId: 'current', // Replace with actual user ID or logic to get current user ID
+                });
+                if (response) {
+                    setUser(response.user as EncodableUser);
+                }
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+            }
+        }
+    }, []);
   
 
   return (
