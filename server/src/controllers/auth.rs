@@ -7,6 +7,7 @@ use base64::{Engine, engine::general_purpose};
 use diesel::result::Error::NotFound;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+use uuid::Uuid;
 
 use crate::{
     app::AppState,
@@ -31,6 +32,29 @@ const ACCESS_TOKEN_EXPIRATION: i64 = 10; // 10 mins
 const REFRESH_TOKEN_EXPIRATION: i64 = 10080; // 1 week
 
 const AUTH: &str = "authentication";
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct GetAccessTokenResponse {
+    pub access_token: String,
+}
+
+#[utoipa::path(
+    tag = "development",
+    post,
+    path = "/api/dev/auth/access-token",
+    responses(
+        (status = 200, description = "Successful response", body = GetAccessTokenResponse)
+    )
+)]
+pub async fn get_access_token(
+    state: web::Data<AppState>,
+) -> AppResult<Json<GetAccessTokenResponse>> {
+    let token = create_access_token(Uuid::new_v4(), &state.config.jwt_config.access_secret, 10);
+
+    Ok(Json(GetAccessTokenResponse {
+        access_token: token,
+    }))
+}
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct LoginResponse {

@@ -34,7 +34,7 @@ pub async fn run(listener: TcpListener, app: Arc<App>) -> Result<Server, std::io
                     .max_age(3600),
             )
             .app_data(web::Data::new(state.clone()))
-            .configure(routes::routes)
+            .configure(|cfg| routes::routes(cfg, state.config.clone()))
             .service(SwaggerUi::new("/api-docs/{_:.*}").urls(vec![(
                 Url::new("API", "/api-docs/openapi.json"),
                 ApiDoc::openapi(),
