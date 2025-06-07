@@ -12,12 +12,6 @@ password="postgres"
 port=5431
 db="journly"
 
-
-# Redis config
-[redis]
-host="localhost"
-port=6379
-
 # Email config
 [mailgun_smtp]
 login="support@myjournly.com"

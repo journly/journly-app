@@ -13,12 +13,6 @@ pub struct PgConfig {
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct RedisConfig {
-    pub host: String,
-    pub port: String,
-}
-
-#[derive(Clone, Debug, Deserialize)]
 pub struct BaseConfig {
     pub production: bool,
     pub domain_name: String,
@@ -30,7 +24,6 @@ pub struct BaseConfig {
 pub struct Server {
     pub base: BaseConfig,
     pub postgres: PgConfig,
-    pub redis: RedisConfig,
     pub mailgun_smtp: SmtpConfig,
     pub jwt_config: JwtConfig,
 }
@@ -61,11 +54,5 @@ impl PgConfig {
             "postgres://{}:{}@{}:{}/{}",
             self.user, self.password, self.host, self.port, self.db
         )
-    }
-}
-
-impl RedisConfig {
-    pub fn get_redis_url(&self) -> String {
-        format!("redis://{}:{}", self.host, self.port)
     }
 }
