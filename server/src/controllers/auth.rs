@@ -1,5 +1,4 @@
-use actix_identity::Identity;
-use actix_web::{HttpMessage, HttpRequest, web};
+use actix_web::{HttpRequest, web};
 use argon2::{
     Argon2,
     password_hash::{PasswordHasher, SaltString},
@@ -11,7 +10,7 @@ use utoipa::ToSchema;
 
 use crate::{
     app::AppState,
-    models::user::{LoggedUser, User},
+    models::user::{User},
     util::errors::{AppError, AppResult},
 };
 
@@ -41,7 +40,7 @@ const GENERIC_BAD_REQUEST: &str = "Check username/email and password.";
 )]
 pub async fn login(
     credentials: web::Json<LoginCredentials>,
-    req: HttpRequest,
+    _req: HttpRequest,
     state: web::Data<AppState>,
 ) -> AppResult<OkResponse> {
     let validate = |user: User| -> Result<(), AppError> {
@@ -52,19 +51,19 @@ pub async fn login(
             return Err(AppError::BadRequest(GENERIC_BAD_REQUEST.to_string()));
         }
 
-        let salt = match SaltString::from_b64(
-            &general_purpose::STANDARD_NO_PAD.encode(&user_password_salt.unwrap()),
-        ) {
-            Ok(res) => res,
-            _ => return Err(AppError::InternalError),
-        };
+        //let salt = match SaltString::from_b64(
+        //    &general_purpose::STANDARD_NO_PAD.encode(&user_password_salt.unwrap()),
+        //) {
+        //    Ok(res) => res,
+        //    _ => return Err(AppError::InternalError),
+        //};
 
-        let argon2 = Argon2::default();
+        //let argon2 = Argon2::default();
 
-        let password_hash = match argon2.hash_password(credentials.password.as_bytes(), &salt) {
-            Ok(hash) => hash.to_string(),
-            _ => return Err(AppError::InternalError),
-        };
+        //let password_hash = match argon2.hash_password(credentials.password.as_bytes(), &salt) {
+        //    Ok(hash) => hash.to_string(),
+        //    _ => return Err(AppError::InternalError),
+        //};
 
         Err(AppError::BadRequest(GENERIC_BAD_REQUEST.to_string()))
     };
