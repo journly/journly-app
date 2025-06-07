@@ -3,9 +3,9 @@ use std::{
 };
 
 use actix_web::{
-    body::BoxBody, dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform}, http::Error, middleware::{ErrorHandlerResponse, ErrorHandlers}, HttpResponse
+    body::BoxBody, dev::{Service, ServiceRequest, ServiceResponse, Transform}, http::Error, HttpResponse
 };
-use futures::{future::LocalBoxFuture, FutureExt};
+use futures::{future::LocalBoxFuture};
 use std::task::{Context, Poll};
 
 
@@ -58,7 +58,7 @@ where
             .and_then(|s| s.strip_prefix("Bearer "));
 
         match auth_header {
-            Some(claims) => {
+            Some(_claims) => {
                 // If the Authorization header is valid, proceed with the service call
                 let fut = service.call(req);
                 Box::pin(async move {
@@ -77,45 +77,3 @@ where
         }
     }
 }
-
-//impl<S, B> Service<ServiceRequest> for AuthMiddlewareService<S>
-//where
-//    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
-//    S::Future: 'static,
-//    B: 'static,
-//{
-//    type Response = ServiceResponse<B>;
-//    type Error = Error;
-//    type Future = LocalBoxFuture<'static, Result<Self::Response, Self::Error>>;
-//
-//    forward_ready!(service);
-//
-//    fn call(&self, req: ServiceRequest) -> Self::Future {
-//        let service = self.service;
-//
-//        // Extract and verify the Authorization header
-//        let auth_header = req
-//            .headers()
-//            .get("Authorization")
-//            .and_then(|h| h.to_str().ok())
-//            .and_then(|s| s.strip_prefix("Bearer "));
-//            //.and_then(|token| verify_jwt(token));
-//
-//        match auth_header {
-//            Some(claims) => {
-//                let fut = service.call(req);
-//                Box::pin(async move {
-//                    let res = fut.await?;
-//                    Ok(res.map_into_boxed_body())
-//                })
-//            }
-//            None => {
-//                let (req, _) = req.into_parts();
-//                let response = HttpResponse::Unauthorized()
-//                    .body("Missing Authorization header")
-//                    .map_into_boxed_body();
-//                Box::pin(async { Ok(ServiceResponse::new(req, response)) });
-//            }
-//        }
-//    }
-//}

@@ -1,9 +1,9 @@
 use actix_web::{HttpRequest, web};
-use argon2::{
-    Argon2,
-    password_hash::{PasswordHasher, SaltString},
-};
-use base64::{Engine, engine::general_purpose};
+//use argon2::{
+//    Argon2,
+//    password_hash::{PasswordHasher, SaltString},
+//};
+//use base64::{Engine, engine::general_purpose};
 use diesel::result::Error::NotFound;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
