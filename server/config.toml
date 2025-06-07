@@ -43,5 +43,3 @@ refresh_secret= "secret-token"
 #   PS512,
 #   EdDSA,
 algorithm="HS256"
-# Disable when running test or in dev environment
-enabled=true

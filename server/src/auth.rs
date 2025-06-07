@@ -1,7 +1,7 @@
 use actix_web::{
     Error, FromRequest, HttpRequest,
     dev::Payload,
-    error::{ErrorInternalServerError, ErrorUnauthorized, InternalError},
+    error::{ErrorInternalServerError, ErrorUnauthorized},
     web::Data,
 };
 use chrono::{Duration, Utc};
@@ -27,7 +27,6 @@ pub struct JwtConfig {
     pub access_secret: String,
     pub refresh_secret: String,
     pub algorithm: Algorithm,
-    pub enabled: bool,
 }
 
 impl Default for JwtConfig {
@@ -41,7 +40,6 @@ impl Default for JwtConfig {
             access_secret,
             refresh_secret,
             algorithm: Algorithm::HS256,
-            enabled: true,
         }
     }
 }
@@ -57,16 +55,6 @@ impl JwtConfig {
             access_secret,
             refresh_secret,
             algorithm,
-            enabled: true,
-        }
-    }
-
-    pub fn disabled() -> Self {
-        Self {
-            access_secret: "dummy-secret".to_string(),
-            refresh_secret: "dummy-secret".to_string(),
-            algorithm: Algorithm::HS256,
-            enabled: false,
         }
     }
 }
@@ -123,8 +111,6 @@ impl FromRequest for AuthenticatedUser {
             }
         }
 
-        ready(Err(actix_web::error::ErrorUnauthorized(
-            "Invalid or missing token",
-        )))
+        ready(Err(ErrorUnauthorized("Invalid or missing token")))
     }
 }
