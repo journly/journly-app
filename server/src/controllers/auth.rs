@@ -42,6 +42,7 @@ pub struct GetAccessTokenResponse {
     tag = "development",
     post,
     path = "/api/dev/auth/access-token",
+    description = "",
     responses(
         (status = 200, description = "Successful response", body = GetAccessTokenResponse)
     )
