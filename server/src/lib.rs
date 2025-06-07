@@ -1,7 +1,7 @@
 use std::{net::TcpListener, sync::Arc};
 
 use actix_cors::Cors;
-use actix_web::{App as ActixApp, HttpServer, dev::Server, middleware::Logger, web};
+use actix_web::{App as ActixApp, HttpServer, dev::Server, http, middleware::Logger, web};
 use app::{App, AppState};
 use routes::ApiDoc;
 use utoipa::OpenApi;
@@ -20,19 +20,35 @@ pub mod schema;
 pub mod util;
 pub mod views;
 
+fn cors_with_allowed_origins(config: config::Server) -> Cors {
+    let mut cors = Cors::default()
+        .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
+        .allowed_headers(vec![
+            http::header::AUTHORIZATION,
+            http::header::CONTENT_TYPE,
+        ])
+        .supports_credentials()
+        .max_age(3600);
+
+    if config.base.production {
+        let origins = config.base.allowed_origins;
+
+        for origin in origins {
+            cors = cors.allowed_origin(&origin);
+        }
+    } else {
+        cors = cors.allow_any_origin();
+    }
+    cors
+}
+
 pub async fn run(listener: TcpListener, app: Arc<App>) -> Result<Server, std::io::Error> {
     let state = AppState(app);
 
     let server = HttpServer::new(move || {
         ActixApp::new()
             .wrap(Logger::default())
-            .wrap(
-            Cors::default()
-                .allow_any_origin() // or .allowed_origin("http://localhost:5173")
-                .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"])
-                .allow_any_header()
-                    .max_age(3600),
-            )
+            .wrap(cors_with_allowed_origins(state.config.clone()))
             .app_data(web::Data::new(state.clone()))
             .configure(|cfg| routes::routes(cfg, state.config.clone()))
             .service(SwaggerUi::new("/api-docs/{_:.*}").urls(vec![(
