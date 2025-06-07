@@ -1,4 +1,5 @@
 use crate::models::user_trip::UserTrip;
+use crate::schema::trips::owner_id;
 use crate::schema::{documents, expenses, itinerary_items, locations, trips, user_trip, users};
 use chrono::{DateTime, NaiveDate, Utc};
 use diesel::prelude::*;
@@ -161,7 +162,7 @@ pub struct NewTrip<'a> {
 
 impl NewTrip<'_> {
     pub async fn create(&self, conn: &mut AsyncPgConnection) -> QueryResult<Trip> {
-        conn.transaction(|conn| {
+        conn.transaction(|conn: &mut AsyncPgConnection| {
             async move {
                 let trip: Trip = diesel::insert_into(trips::table)
                     .values(self)

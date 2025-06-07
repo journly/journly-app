@@ -3,16 +3,15 @@ use std::str::FromStr;
 use journly_server::controllers::trip::{CreateTrip, GetTripResponse, GetTripsResponse};
 use reqwest::{Client, StatusCode, header::AUTHORIZATION};
 use uuid::Uuid;
+use defer_rs::defer;
 
 use crate::{api_test::util::AuthHeader, spawn_app};
 
 #[actix_rt::test]
 pub async fn get_trips_returns_list() {
     let test_app = spawn_app().await;
-
-    let address = test_app.address;
-
-    let access_token = test_app.access_token;
+    let address = test_app.address.clone();
+    let access_token = test_app.access_token.clone();
 
     let client = Client::new();
 
@@ -31,15 +30,14 @@ pub async fn get_trips_returns_list() {
 
     serde_json::from_str::<GetTripsResponse>(&text)
         .expect("Failed to parse get_trips return value.");
+
 }
 
 #[actix_rt::test]
 pub async fn get_trip_with_valid_id_returns_trip() {
     let test_app = spawn_app().await;
-
-    let address = test_app.address;
-
-    let access_token = test_app.access_token;
+    let address = test_app.address.clone();
+    let access_token = test_app.access_token.clone();
 
     let trip_id = "c8381024-3f79-4a10-b5fe-06dc24e74bdc";
 
@@ -65,10 +63,10 @@ pub async fn get_trip_with_valid_id_returns_trip() {
 #[actix_rt::test]
 pub async fn get_trip_with_invalid_id_returns_404_not_found() {
     let test_app = spawn_app().await;
-
-    let address = test_app.address;
-
-    let access_token = test_app.access_token;
+    let address = test_app.address.clone();
+    let access_token = test_app.access_token.clone();
+    defer!({
+    });
 
     let trip_id = "invalid-trip-id";
 
@@ -89,13 +87,11 @@ pub async fn get_trip_with_invalid_id_returns_404_not_found() {
 #[actix_rt::test]
 pub async fn create_trip_with_valid_information_returns_trip() {
     let test_app = spawn_app().await;
-
-    let address = test_app.address;
-
-    let access_token = test_app.access_token;
+    let address = test_app.address.clone();
+    let access_token = test_app.access_token.clone();
 
     let body = CreateTrip {
-        user_id: Uuid::from_str("612e21ed-869b-4130-bb72-fc7549f93609").unwrap(),
+        user_id: Uuid::from_str("11111111-1111-1111-1111-111111111111").unwrap(),
         title: Some("New Trip".to_string()),
         start_date: None,
         end_date: None,
@@ -141,10 +137,8 @@ pub async fn create_trip_with_valid_information_returns_trip() {
 #[actix_rt::test]
 pub async fn create_trip_with_invalid_information_returns_400_bad_request() {
     let test_app = spawn_app().await;
-
-    let address = test_app.address;
-
-    let access_token = test_app.access_token;
+    let address = test_app.address.clone();
+    let access_token = test_app.access_token.clone();
 
     let body = CreateTrip {
         user_id: Uuid::new_v4(),

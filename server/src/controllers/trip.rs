@@ -79,7 +79,10 @@ pub async fn create_trip(
 
     match new_trip.create(&mut conn).await {
         Ok(_) => Ok(OkResponse::new()),
-        Err(_) => Err(AppError::InternalError),
+        Err(e) => {
+            eprintln!("Error during test: {}", e); 
+            Err(AppError::BadRequest(format!("invalid request")))
+        }
     }
 }
 

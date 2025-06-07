@@ -1,6 +1,5 @@
 use reqwest::{Client, StatusCode};
 use uuid::Uuid;
-
 use crate::{api_test::util::AuthHeader, spawn_app};
 use journly_server::controllers::{
     helper::OkResponse,
@@ -10,10 +9,8 @@ use journly_server::controllers::{
 #[actix_rt::test]
 pub async fn get_users_returns_list() {
     let test_app = spawn_app().await;
-
-    let address = test_app.address;
-
-    let access_token = test_app.access_token;
+    let address = test_app.address.clone();
+    let access_token = test_app.access_token.clone();
 
     let client = Client::new();
 
@@ -37,11 +34,8 @@ pub async fn get_users_returns_list() {
 #[actix_rt::test]
 pub async fn get_user_with_valid_id_returns_user() {
     let test_app = spawn_app().await;
-
-    let address = test_app.address;
-
-    let access_token = test_app.access_token;
-
+    let address = test_app.address.clone();
+    let access_token = test_app.access_token.clone();
     let client_id = "612e21ed-869b-4130-bb72-fc7549f93609";
 
     let client = Client::new();
@@ -66,10 +60,8 @@ pub async fn get_user_with_valid_id_returns_user() {
 #[actix_rt::test]
 pub async fn get_user_with_invalid_id_returns_404_not_found() {
     let test_app = spawn_app().await;
-
-    let address = test_app.address;
-
-    let access_token = test_app.access_token;
+    let address = test_app.address.clone();
+    let access_token = test_app.access_token.clone();
 
     let invalid_client_id = Uuid::new_v4();
 
@@ -90,10 +82,8 @@ pub async fn get_user_with_invalid_id_returns_404_not_found() {
 #[actix_rt::test]
 pub async fn create_user_with_valid_params() {
     let test_app = spawn_app().await;
-
-    let address = test_app.address;
-
-    let access_token = test_app.access_token;
+    let address = test_app.address.clone();
+    let access_token = test_app.access_token.clone();
 
     let new_user = CreateUser {
         username: "new_user".to_string(),
@@ -140,10 +130,8 @@ pub async fn create_user_with_valid_params() {
 #[actix_rt::test]
 pub async fn create_user_with_invalid_params() {
     let test_app = spawn_app().await;
-
-    let address = test_app.address;
-
-    let access_token = test_app.access_token;
+    let address = test_app.address.clone();
+    let access_token = test_app.access_token.clone();
 
     let new_user = CreateUser {
         username: "fdsa fds dsf sdff sfsd fasd@$!Q) +_".to_string(),
@@ -169,10 +157,9 @@ pub async fn create_user_with_invalid_params() {
 #[actix_rt::test]
 pub async fn update_user_username() {
     let test_app = spawn_app().await;
+    let address = test_app.address.clone();
+    let access_token = test_app.access_token.clone();
 
-    let address = test_app.address;
-
-    let access_token = test_app.access_token;
 
     let username = "new_username".to_string();
 
@@ -220,10 +207,8 @@ pub async fn update_user_username() {
 #[actix_rt::test]
 pub async fn update_user_email() {
     let test_app = spawn_app().await;
-
-    let address = test_app.address;
-
-    let access_token = test_app.access_token;
+    let address = test_app.address.clone();
+    let access_token = test_app.access_token.clone();
 
     let email = "newemail@journaly.com".to_string();
 
