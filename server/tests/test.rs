@@ -1,4 +1,4 @@
-use std::{net::TcpListener, ops::Deref, sync::Arc};
+use std::{net::TcpListener, sync::Arc};
 
 use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
 use journly_server::{
@@ -37,18 +37,15 @@ pub async fn spawn_app() -> TestApp {
 
     app.run_migrations().await;
 
-    let server_address = app.config.base.ip_address.clone();
-    let server_port = app.config.base.port.clone();
-
-    let listener =
-        TcpListener::bind(format!("{}:{}", server_address, server_port)).expect("Bind failed.");
+    let listener = TcpListener::bind("127.0.0.1:0").expect("Bind failed.");
+    let port = listener.local_addr().unwrap().port();
 
     let server = run(listener, app).await.expect("Failed to start server");
 
     actix_rt::spawn(server);
 
     TestApp {
-        address: format!("http://{}:{}", server_address, server_port),
+        address: format!("http://127.0.0.1:{}", port),
         access_token: create_access_token(Uuid::new_v4(), &access_token_secret, 10),
     }
 }
