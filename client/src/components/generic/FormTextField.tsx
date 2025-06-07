@@ -30,19 +30,19 @@ const FormTextField: React.FC<FormTextFieldProps> = ({
 
     return (
         <TextField
-        fullWidth={fullWidth}
-        multiline={multiline}
-        rows={rows}
-        type={type}
-        name={name}
-        label={label}
-        value={values[name] ?? ""}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        error={fieldError}
-        helperText={requiredMessage}
-        required={required}
-        variant="outlined"
+            fullWidth={fullWidth}
+            multiline={multiline}
+            rows={rows}
+            type={type}
+            name={name}
+            label={label}
+            value={values[name] ?? ""}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            error={fieldError}
+            helperText={requiredMessage}
+            required={required}
+            variant="outlined"
         />
     );
 };

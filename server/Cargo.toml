@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 actix-web = "4"
+actix-cors = "0.6"
 chrono = {version="0.4.40", features = ["serde"]}
 derive_more = "2.0.1"
 rust_decimal = { version = "1.37.1", features = ["serde"]}
