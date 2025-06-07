@@ -1,4 +1,4 @@
-use reqwest::StatusCode;
+use reqwest::{Client, StatusCode, header::AUTHORIZATION};
 use uuid::Uuid;
 
 use crate::spawn_app;
@@ -9,9 +9,18 @@ use journly_server::controllers::{
 
 #[actix_rt::test]
 pub async fn get_users_returns_list() {
-    let address = spawn_app().await;
+    let test_app = spawn_app().await;
 
-    let response = reqwest::get(format!("{}/api/v1/users", address))
+    let address = test_app.address;
+
+    let access_token = test_app.access_token;
+
+    let client = Client::new();
+
+    let response = client
+        .get(format!("{}/api/v1/users", address))
+        .header(AUTHORIZATION, access_token)
+        .send()
         .await
         .expect("Request to GET '/users' failed to resolve.");
 
@@ -25,11 +34,20 @@ pub async fn get_users_returns_list() {
 
 #[actix_rt::test]
 pub async fn get_user_with_valid_id_returns_user() {
-    let address = spawn_app().await;
+    let test_app = spawn_app().await;
+
+    let address = test_app.address;
+
+    let access_token = test_app.access_token;
 
     let client_id = "612e21ed-869b-4130-bb72-fc7549f93609";
 
-    let response = reqwest::get(format!("{}/api/v1/users/{}", address, client_id))
+    let client = Client::new();
+
+    let response = client
+        .get(format!("{}/api/v1/users/{}", address, client_id))
+        .header(AUTHORIZATION, access_token)
+        .send()
         .await
         .expect("Request to GET '/users/{user_id}' failed to resolve.");
 
@@ -43,11 +61,20 @@ pub async fn get_user_with_valid_id_returns_user() {
 
 #[actix_rt::test]
 pub async fn get_user_with_invalid_id_returns_404_not_found() {
-    let address = spawn_app().await;
+    let test_app = spawn_app().await;
+
+    let address = test_app.address;
+
+    let access_token = test_app.access_token;
 
     let invalid_client_id = Uuid::new_v4();
 
-    let response = reqwest::get(format!("{}/api/v1/users/{}", address, invalid_client_id))
+    let client = Client::new();
+
+    let response = client
+        .get(format!("{}/api/v1/users/{}", address, invalid_client_id))
+        .header(AUTHORIZATION, access_token)
+        .send()
         .await
         .expect("Request to GET '/users/{user_id}' failed to resolve.");
 
@@ -56,7 +83,11 @@ pub async fn get_user_with_invalid_id_returns_404_not_found() {
 
 #[actix_rt::test]
 pub async fn create_user_with_valid_params() {
-    let address = spawn_app().await;
+    let test_app = spawn_app().await;
+
+    let address = test_app.address;
+
+    let access_token = test_app.access_token;
 
     let new_user = CreateUser {
         username: "new_user".to_string(),
@@ -69,6 +100,7 @@ pub async fn create_user_with_valid_params() {
     let response = client
         .post(format!("{}/api/v1/users", address))
         .json(&new_user)
+        .header(AUTHORIZATION, &access_token)
         .send()
         .await
         .expect("Request to POST '/users' failed to resolve.");
@@ -80,7 +112,10 @@ pub async fn create_user_with_valid_params() {
     let _ = serde_json::from_str::<OkResponse>(&response_body)
         .expect("Failed to parse POST '/users' response body");
 
-    let get_response = reqwest::get(format!("{}/api/v1/users", address))
+    let get_response = client
+        .get(format!("{}/api/v1/users", address))
+        .header(AUTHORIZATION, access_token)
+        .send()
         .await
         .expect("Request to GET '/users' failed to resolve.");
 
@@ -98,7 +133,11 @@ pub async fn create_user_with_valid_params() {
 
 #[actix_rt::test]
 pub async fn create_user_with_invalid_params() {
-    let address = spawn_app().await;
+    let test_app = spawn_app().await;
+
+    let address = test_app.address;
+
+    let access_token = test_app.access_token;
 
     let new_user = CreateUser {
         username: "fdsa fds dsf sdff sfsd fasd@$!Q) +_".to_string(),
@@ -110,6 +149,7 @@ pub async fn create_user_with_invalid_params() {
 
     let response = client
         .post(format!("{}/api/v1/users", address))
+        .header(AUTHORIZATION, access_token)
         .json(&new_user)
         .send()
         .await
@@ -120,7 +160,11 @@ pub async fn create_user_with_invalid_params() {
 
 #[actix_rt::test]
 pub async fn update_user_username() {
-    let address = spawn_app().await;
+    let test_app = spawn_app().await;
+
+    let address = test_app.address;
+
+    let access_token = test_app.access_token;
 
     let username = "new_username".to_string();
 
@@ -135,6 +179,7 @@ pub async fn update_user_username() {
 
     let response = client
         .put(format!("{}/api/v1/users/{}", address, client_id))
+        .header(AUTHORIZATION, &access_token)
         .json(&update_information)
         .send()
         .await
@@ -142,7 +187,10 @@ pub async fn update_user_username() {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let response = reqwest::get(format!("{}/api/v1/users/{}", address, client_id))
+    let response = client
+        .get(format!("{}/api/v1/users/{}", address, client_id))
+        .header(AUTHORIZATION, access_token)
+        .send()
         .await
         .expect("Request to GET '/users/{user_id}' failed to resolve.");
 
@@ -158,7 +206,11 @@ pub async fn update_user_username() {
 
 #[actix_rt::test]
 pub async fn update_user_email() {
-    let address = spawn_app().await;
+    let test_app = spawn_app().await;
+
+    let address = test_app.address;
+
+    let access_token = test_app.access_token;
 
     let email = "newemail@journaly.com".to_string();
 
@@ -173,6 +225,7 @@ pub async fn update_user_email() {
 
     let response = client
         .put(format!("{}/api/v1/users/{}/email", address, client_id))
+        .header(AUTHORIZATION, &access_token)
         .json(&update_information)
         .send()
         .await
@@ -180,7 +233,10 @@ pub async fn update_user_email() {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let response = reqwest::get(format!("{}/api/v1/users/{}", address, client_id))
+    let response = client
+        .get(format!("{}/api/v1/users/{}", address, client_id))
+        .header(AUTHORIZATION, access_token)
+        .send()
         .await
         .expect("Request to GET '/users/{user_id}' failed to resolve.");
 

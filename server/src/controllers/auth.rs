@@ -80,9 +80,9 @@ pub async fn login(
                 let refresh_token_secret = state.config.jwt_config.refresh_secret.clone();
 
                 let access_token =
-                    create_access_token(user.id, access_token_secret, ACCESS_TOKEN_EXPIRATION);
+                    create_access_token(user.id, &access_token_secret, ACCESS_TOKEN_EXPIRATION);
                 let refresh_token =
-                    create_access_token(user.id, refresh_token_secret, REFRESH_TOKEN_EXPIRATION);
+                    create_access_token(user.id, &refresh_token_secret, REFRESH_TOKEN_EXPIRATION);
 
                 return Ok(Json(LoginResponse {
                     access_token,

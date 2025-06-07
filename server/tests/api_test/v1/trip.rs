@@ -1,23 +1,25 @@
 use std::str::FromStr;
 
-use chrono::NaiveDate;
-use journly_server::{
-    controllers::{
-        helper::OkResponse,
-        trip::{CreateTrip, GetTripResponse, GetTripsResponse},
-    },
-    models::api::dates::Dates,
-};
-use reqwest::StatusCode;
+use journly_server::controllers::trip::{CreateTrip, GetTripResponse, GetTripsResponse};
+use reqwest::{Client, StatusCode, header::AUTHORIZATION};
 use uuid::Uuid;
 
 use crate::spawn_app;
 
 #[actix_rt::test]
 pub async fn get_trips_returns_list() {
-    let address = spawn_app().await;
+    let test_app = spawn_app().await;
 
-    let response = reqwest::get(format!("{}/api/v1/trips", address))
+    let address = test_app.address;
+
+    let access_token = test_app.access_token;
+
+    let client = Client::new();
+
+    let response = client
+        .get(format!("{}/api/v1/trips", address))
+        .header(AUTHORIZATION, access_token)
+        .send()
         .await
         .expect("Request could not be resolved.");
 
@@ -31,11 +33,20 @@ pub async fn get_trips_returns_list() {
 
 #[actix_rt::test]
 pub async fn get_trip_with_valid_id_returns_trip() {
-    let address = spawn_app().await;
+    let test_app = spawn_app().await;
+
+    let address = test_app.address;
+
+    let access_token = test_app.access_token;
 
     let trip_id = "c8381024-3f79-4a10-b5fe-06dc24e74bdc";
 
-    let response = reqwest::get(format!("{}/api/v1/trips/{}", address, trip_id))
+    let client = Client::new();
+
+    let response = client
+        .get(format!("{}/api/v1/trips/{}", address, trip_id))
+        .header(AUTHORIZATION, access_token)
+        .send()
         .await
         .expect("Request could not be resolved.");
 
@@ -49,11 +60,20 @@ pub async fn get_trip_with_valid_id_returns_trip() {
 
 #[actix_rt::test]
 pub async fn get_trip_with_invalid_id_returns_404_not_found() {
-    let address = spawn_app().await;
+    let test_app = spawn_app().await;
+
+    let address = test_app.address;
+
+    let access_token = test_app.access_token;
 
     let trip_id = "invalid-trip-id";
 
-    let response = reqwest::get(format!("{}/api/v1/trips/{}", address, trip_id))
+    let client = Client::new();
+
+    let response = client
+        .get(format!("{}/api/v1/trips/{}", address, trip_id))
+        .header(AUTHORIZATION, access_token)
+        .send()
         .await
         .expect("Request could not be resolved.");
 
@@ -62,7 +82,11 @@ pub async fn get_trip_with_invalid_id_returns_404_not_found() {
 
 #[actix_rt::test]
 pub async fn create_trip_with_valid_information_returns_trip() {
-    let address = spawn_app().await;
+    let test_app = spawn_app().await;
+
+    let address = test_app.address;
+
+    let access_token = test_app.access_token;
 
     let body = CreateTrip {
         user_id: Uuid::from_str("612e21ed-869b-4130-bb72-fc7549f93609").unwrap(),
@@ -75,6 +99,7 @@ pub async fn create_trip_with_valid_information_returns_trip() {
 
     let response = client
         .post(format!("{}/api/v1/trips", address))
+        .header(AUTHORIZATION, &access_token)
         .json(&body)
         .send()
         .await
@@ -82,7 +107,10 @@ pub async fn create_trip_with_valid_information_returns_trip() {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let response = reqwest::get(format!("{}/api/v1/trips", address))
+    let response = client
+        .get(format!("{}/api/v1/trips", address))
+        .header(AUTHORIZATION, access_token)
+        .send()
         .await
         .expect("Request could not be resolved.");
 
@@ -95,14 +123,18 @@ pub async fn create_trip_with_valid_information_returns_trip() {
     assert!(
         trips
             .iter()
-            .find(|trip| trip.title == "New Trip".to_string())
+            .find(|trip| trip.title == Some("New Trip".to_string()))
             .is_some()
     )
 }
 
 #[actix_rt::test]
 pub async fn create_trip_with_invalid_information_returns_400_bad_request() {
-    let address = spawn_app().await;
+    let test_app = spawn_app().await;
+
+    let address = test_app.address;
+
+    let access_token = test_app.access_token;
 
     let body = CreateTrip {
         user_id: Uuid::new_v4(),
@@ -118,6 +150,7 @@ pub async fn create_trip_with_invalid_information_returns_400_bad_request() {
     // invalid owner_id
     let bad_resp1 = client
         .post(&url)
+        .header(AUTHORIZATION, &access_token)
         .json(&body)
         .send()
         .await
@@ -128,6 +161,7 @@ pub async fn create_trip_with_invalid_information_returns_400_bad_request() {
     // no request body
     let bad_resp2 = client
         .post(url)
+        .header(AUTHORIZATION, access_token)
         .send()
         .await
         .expect("Request could not be resolved.");

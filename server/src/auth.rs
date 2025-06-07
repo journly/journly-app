@@ -71,7 +71,7 @@ impl JwtConfig {
     }
 }
 
-pub fn create_access_token(user_id: Uuid, secret: String, expiration_in_mins: i64) -> String {
+pub fn create_access_token(user_id: Uuid, secret: &str, expiration_in_mins: i64) -> String {
     let expiration = Utc::now() + Duration::minutes(expiration_in_mins);
     let claims = Claims {
         sub: user_id,
@@ -89,7 +89,7 @@ pub fn create_access_token(user_id: Uuid, secret: String, expiration_in_mins: i6
 
 pub fn verify_jwt(
     token: &str,
-    secret: String,
+    secret: &str,
 ) -> Result<TokenData<Claims>, jsonwebtoken::errors::Error> {
     decode::<Claims>(
         token,
@@ -116,7 +116,7 @@ impl FromRequest for AuthenticatedUser {
         if let Some(header) = req.headers().get("Authorization") {
             if let Ok(header_str) = header.to_str() {
                 if let Some(token) = header_str.strip_prefix("Bearer ") {
-                    if let Ok(token_data) = verify_jwt(token, config.jwt_config.access_secret) {
+                    if let Ok(token_data) = verify_jwt(token, &config.jwt_config.access_secret) {
                         return ready(Ok(AuthenticatedUser(token_data.claims.sub)));
                     }
                 }
