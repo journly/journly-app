@@ -1,11 +1,6 @@
 #[cfg(test)]
 pub mod health;
 
-#[cfg(test)]
-pub mod trip;
+pub mod v1;
 
-#[cfg(test)]
-pub mod user;
-
-#[cfg(test)]
-pub mod auth;
+pub mod util;

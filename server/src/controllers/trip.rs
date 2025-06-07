@@ -8,19 +8,17 @@ use uuid::Uuid;
 
 use crate::{
     app::AppState,
-    models::{
-        trip::{NewTrip, Trip},
-        user::LoggedUser,
-    },
+    auth::AuthenticatedUser,
+    models::trip::{NewTrip, Trip},
     util::errors::{AppError, AppResult},
     views::{EncodableTripData, EncodableTripOverview},
 };
 
 const TRIPS: &str = "trips";
 
-#[derive(ToSchema, Serialize)]
+#[derive(ToSchema, Serialize, Deserialize)]
 pub struct GetTripsResponse {
-    trips: Vec<EncodableTripOverview>,
+    pub trips: Vec<EncodableTripOverview>,
 }
 
 #[utoipa::path(
@@ -31,7 +29,10 @@ pub struct GetTripsResponse {
         (status = 200, description = "Trips were found", body = GetTripsResponse)
     )
 )]
-pub async fn get_trips(state: web::Data<AppState>) -> AppResult<Json<GetTripsResponse>> {
+pub async fn get_trips(
+    authenticated: AuthenticatedUser,
+    state: web::Data<AppState>,
+) -> AppResult<Json<GetTripsResponse>> {
     let mut conn = state.db_connection().await?;
 
     match Trip::get_all(&mut conn).await {
@@ -46,12 +47,12 @@ pub async fn get_trips(state: web::Data<AppState>) -> AppResult<Json<GetTripsRes
     }
 }
 
-#[derive(Deserialize, ToSchema)]
+#[derive(Deserialize, Serialize, ToSchema)]
 pub struct CreateTrip {
-    user_id: Uuid,
-    title: Option<String>,
-    start_date: Option<NaiveDate>,
-    end_date: Option<NaiveDate>,
+    pub user_id: Uuid,
+    pub title: Option<String>,
+    pub start_date: Option<NaiveDate>,
+    pub end_date: Option<NaiveDate>,
 }
 
 #[utoipa::path(
@@ -63,7 +64,7 @@ pub struct CreateTrip {
     )
 )]
 pub async fn create_trip(
-    _: LoggedUser,
+    authenticated: AuthenticatedUser,
     trip_data: web::Json<CreateTrip>,
     state: web::Data<AppState>,
 ) -> AppResult<OkResponse> {
@@ -84,7 +85,7 @@ pub async fn create_trip(
 
 #[derive(Deserialize, ToSchema, Serialize)]
 pub struct GetTripResponse {
-    trip: EncodableTripData,
+    pub trip: EncodableTripData,
 }
 
 #[utoipa::path(
@@ -96,7 +97,7 @@ pub struct GetTripResponse {
     )
 )]
 pub async fn get_trip(
-    logged_user: LoggedUser,
+    authenticated: AuthenticatedUser,
     path: web::Path<Uuid>,
     state: web::Data<AppState>,
 ) -> AppResult<Json<GetTripResponse>> {
@@ -104,7 +105,7 @@ pub async fn get_trip(
 
     let mut conn = state.db_connection().await?;
 
-    let user_id = logged_user.id;
+    let user_id = authenticated.0;
 
     if !Trip::check_collaborator(&mut conn, &trip_id, &user_id).await {
         return Err(AppError::Unauthorized);
