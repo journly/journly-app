@@ -10,6 +10,10 @@ git clone https://github.com/journaly-app/journaly-backend.git <DIRECTORY>
 ```
 2. Upon cloning, simply CD into the project directory and run `cargo build` and you are free to get coding!
 
+## Local development
+1. Install `docker` and `docker-compose`
+2. Run `docker-compose up -f docker-compose.yaml`
+
 
 ## Testing
 To run tests, you first need to build the Postgres container using the Makefile in the project root directory. To do that, run the following command:
