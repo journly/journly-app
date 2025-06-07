@@ -3,30 +3,36 @@ use std::{net::TcpListener, sync::Arc};
 use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
 use journly_server::{
     app::App,
-    config::{DbConfig, JournlyConfig},
+    auth::AuthSecrets,
+    config::{PgConfig, Server},
     db::get_connection_pool,
+    email::Emails,
     run,
 };
 use uuid::Uuid;
 
 pub async fn spawn_app() -> String {
-    let mut journly_config = JournlyConfig::build("test_config.toml");
+    let mut config = Server::build("test_config.toml");
 
-    let db_id = configure_database(&journly_config.db_config).await;
+    let db_id = configure_database(&config.postgres).await;
 
-    journly_config.db_config.pg_db = db_id;
+    config.postgres.db = db_id;
 
-    let db_pool = get_connection_pool(&journly_config.db_config).await;
+    let db_pool = get_connection_pool(&config).await;
+
+    let emails = Emails::new_in_memory();
 
     let app = Arc::new(App {
         database: db_pool,
-        config: journly_config,
+        auth_secrets: AuthSecrets::init(),
+        emails,
+        config,
     });
 
     app.run_migrations().await;
 
-    let server_address = app.config.server_addr.clone();
-    let server_port = app.config.server_port.clone();
+    let server_address = app.config.base.ip_address.clone();
+    let server_port = app.config.base.port.clone();
 
     let listener =
         TcpListener::bind(format!("{}:{}", server_address, server_port)).expect("Bind failed.");
@@ -38,7 +44,7 @@ pub async fn spawn_app() -> String {
     format!("http://{}:{}", server_address, server_port)
 }
 
-pub async fn configure_database(config: &DbConfig) -> String {
+pub async fn configure_database(config: &PgConfig) -> String {
     let url = config.get_db_url();
 
     let mut conn = AsyncPgConnection::establish(&url)
@@ -59,6 +65,3 @@ pub async fn configure_database(config: &DbConfig) -> String {
 
 #[cfg(test)]
 mod api_test;
-
-#[cfg(test)]
-mod config_test;
