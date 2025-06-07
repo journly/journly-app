@@ -3,6 +3,7 @@ production=false
 domain_name=""
 ip_address=""
 port=0
+allowed_origins=[""]
 
 # Postgres config
 [postgres]
@@ -10,7 +11,7 @@ host="localhost"
 user="postgres"
 password="postgres"
 port=5431
-db="journly"
+db="postgres"
 
 # Email config
 [mailgun_smtp]
