@@ -1,20 +1,27 @@
-use std::{net::TcpListener, sync::Arc};
-use tokio::runtime::Runtime;
-use diesel_async::{pooled_connection::deadpool::Pool, AsyncConnection, AsyncPgConnection, RunQueryDsl};
+use actix_rt::Runtime;
+use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
 use journly_server::{
-    app::App, auth::create_access_token, config::{PgConfig, Server}, db::get_connection_pool, email::Emails, models::user::NewUser, run, schema::users
+    app::App,
+    auth::create_access_token,
+    config::{PgConfig, Server},
+    db::get_connection_pool,
+    email::Emails,
+    run,
 };
+use std::{net::TcpListener, sync::Arc};
 use uuid::Uuid;
 
 pub struct TestApp {
     address: String,
     access_token: String,
     database_id: String,
-    database: Pool<AsyncPgConnection>,
+    config: Server,
 }
 
 pub async fn spawn_app() -> TestApp {
     let mut config = Server::build("test_config.toml");
+
+    let test_app_config = config.clone();
 
     let access_token_secret = config.jwt_config.access_secret.clone();
 
@@ -46,37 +53,41 @@ pub async fn spawn_app() -> TestApp {
         address: format!("http://127.0.0.1:{}", port),
         access_token: create_access_token(Uuid::new_v4(), &access_token_secret, 10),
         database_id: db_id,
-        database: db_pool,
+        config: test_app_config,
     }
 }
 
 impl Drop for TestApp {
     fn drop(&mut self) {
-        // Use the current runtime's handle to spawn the cleanup task
-        let database = self.database.clone();
-        let database_id = self.database_id.clone();
-        if let Ok(handle) = tokio::runtime::Handle::try_current() {
-            handle.spawn(async move {
-                let mut conn = database.get().await.unwrap();
-                diesel::sql_query(format!(r#"DELETE DATABASE "{}""#, database_id))
+        let pg_url = self.config.postgres.get_db_url();
+        let db_id = self.database_id.clone();
+
+        std::thread::spawn(move || {
+            let rt = Runtime::new().unwrap();
+
+            rt.block_on(async move {
+                let mut conn = AsyncPgConnection::establish(&pg_url)
+                    .await
+                    .expect("Could not establish connection to postgres database.");
+
+                let disconnect_users = format!(
+                    "SELECT pg_terminate_backend(pid)
+            FROM pg_stat_activity
+            WHERE datname = '{}';",
+                    db_id
+                );
+
+                diesel::sql_query(&disconnect_users)
                     .execute(&mut conn)
                     .await
-                    .unwrap();
-            });
-        } else {
-            // Fallback for non-tokio contexts (not recommended for production)
-            let rt = tokio::runtime::Builder::new_current_thread()
-                .enable_all()
-                .build()
-                .unwrap();
-            rt.block_on(async {
-                let mut conn = self.database.get().await.unwrap();
-                diesel::sql_query(format!(r#"DELETE DATABASE "{}""#, self.database_id))
+                    .expect("Could not disconnect connections.");
+
+                diesel::sql_query(format!(r#"DROP DATABASE "{}""#, db_id))
                     .execute(&mut conn)
                     .await
-                    .unwrap();
+                    .expect("Could not drop database");
             });
-        }
+        });
     }
 }
 
@@ -169,17 +180,13 @@ async fn load_fixtures(conn: &mut AsyncPgConnection) -> Result<(), diesel::resul
             NULL,
             NULL,
             NULL
-        );"
+        );",
     ];
     for raw in raws {
-        diesel::sql_query(raw)
-            .execute(conn)
-            .await?;
+        diesel::sql_query(raw).execute(conn).await?;
     }
     Ok(())
 }
-
-
 
 #[cfg(test)]
 mod api_test;

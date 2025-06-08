@@ -1,9 +1,8 @@
 use std::str::FromStr;
 
 use journly_server::controllers::trip::{CreateTrip, GetTripResponse, GetTripsResponse};
-use reqwest::{Client, StatusCode, header::AUTHORIZATION};
+use reqwest::{Client, StatusCode};
 use uuid::Uuid;
-use defer_rs::defer;
 
 use crate::{api_test::util::AuthHeader, spawn_app};
 
@@ -30,7 +29,6 @@ pub async fn get_trips_returns_list() {
 
     serde_json::from_str::<GetTripsResponse>(&text)
         .expect("Failed to parse get_trips return value.");
-
 }
 
 #[actix_rt::test]
@@ -65,8 +63,6 @@ pub async fn get_trip_with_invalid_id_returns_404_not_found() {
     let test_app = spawn_app().await;
     let address = test_app.address.clone();
     let access_token = test_app.access_token.clone();
-    defer!({
-    });
 
     let trip_id = "invalid-trip-id";
 

@@ -888,25 +888,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "092966b41edc516079bdf31ec78a2e0588d1d0c08f78b91d8307215928642b2b"
 
 [[package]]
-name = "defer-rs"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e473484ea59ca2e7347d5d78da70dda8a8d3b625f0d716009da0936a0bd7272"
-dependencies = [
- "defer-rs-impl",
-]
-
-[[package]]
-name = "defer-rs-impl"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2fd0db9be2c6191aaab2294e9f6390c549f9112cebc6a0a8281c0cfd694523cc"
-dependencies = [
- "quote",
- "syn 2.0.100",
-]
-
-[[package]]
 name = "deranged"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1832,7 +1813,6 @@ dependencies = [
  "bon",
  "chrono",
  "config",
- "defer-rs",
  "derive_more 2.0.1",
  "diesel",
  "diesel-async",
