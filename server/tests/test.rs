@@ -1,6 +1,4 @@
-use actix_rt::Runtime;
 use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
-use futures::executor::block_on;
 use journly_server::{
     app::App,
     auth::create_access_token,
@@ -50,10 +48,10 @@ pub async fn spawn_app() -> TestApp {
 
     actix_rt::spawn(server);
 
-    eprintln!("TestApp creating db: {}", db_id);
+    eprintln!("TestApp creating db: {db_id}");
 
     TestApp {
-        address: format!("http://127.0.0.1:{}", port),
+        address: format!("http://127.0.0.1:{port}"),
         access_token: create_access_token(Uuid::new_v4(), &access_token_secret, 10),
         database_id: db_id,
         config: test_app_config,
@@ -97,12 +95,12 @@ pub async fn configure_database(config: &PgConfig) -> String {
 
     let test_db_id = Uuid::new_v4();
 
-    let query = diesel::sql_query(format!(r#"CREATE DATABASE "{}""#, test_db_id));
+    let query = diesel::sql_query(format!(r#"CREATE DATABASE "{test_db_id}""#));
 
     query
         .execute(&mut conn)
         .await
-        .unwrap_or_else(|_| panic!("Could not create database {}", test_db_id));
+        .unwrap_or_else(|_| panic!("Could not create database {test_db_id}"));
 
     test_db_id.to_string()
 }

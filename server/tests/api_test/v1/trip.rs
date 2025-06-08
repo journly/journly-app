@@ -17,7 +17,7 @@ pub async fn get_trips_returns_list() {
     let auth_header = AuthHeader::new(&access_token);
 
     let response = client
-        .get(format!("{}/api/v1/trips", address))
+        .get(format!("{address}/api/v1/trips"))
         .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
@@ -46,7 +46,7 @@ pub async fn get_trip_with_valid_id_returns_trip() {
     let auth_header = AuthHeader::new(&access_token);
 
     let response = client
-        .get(format!("{}/api/v1/trips/{}", address, trip_id))
+        .get(format!("{address}/api/v1/trips/{trip_id}"))
         .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
@@ -75,7 +75,7 @@ pub async fn get_trip_with_invalid_id_returns_404_not_found() {
     let auth_header = AuthHeader::new(&access_token);
 
     let response = client
-        .get(format!("{}/api/v1/trips/{}", address, trip_id))
+        .get(format!("{address}/api/v1/trips/{trip_id}"))
         .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
@@ -104,7 +104,7 @@ pub async fn create_trip_with_valid_information_returns_trip() {
     let auth_header = AuthHeader::new(&access_token);
 
     let response1 = client
-        .post(format!("{}/api/v1/trips", address))
+        .post(format!("{address}/api/v1/trips"))
         .header(
             auth_header.header_name.clone(),
             auth_header.header_value.clone(),
@@ -115,7 +115,7 @@ pub async fn create_trip_with_valid_information_returns_trip() {
         .expect("Request could not be resolved.");
 
     let response2 = client
-        .get(format!("{}/api/v1/trips", address))
+        .get(format!("{address}/api/v1/trips"))
         .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
@@ -152,7 +152,7 @@ pub async fn create_trip_with_invalid_information_returns_400_bad_request() {
 
     let client = reqwest::Client::new();
 
-    let url = format!("{}/api/v1/trips", address);
+    let url = format!("{address}/api/v1/trips");
 
     let auth_header = AuthHeader::new(&access_token);
 

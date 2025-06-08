@@ -16,7 +16,7 @@ pub async fn get_users_returns_list() {
     let auth_header = AuthHeader::new(&access_token);
 
     let response = client
-        .get(format!("{}/api/v1/users", address))
+        .get(format!("{address}/api/v1/users"))
         .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
@@ -44,7 +44,7 @@ pub async fn get_user_with_valid_id_returns_user() {
     let auth_header = AuthHeader::new(&access_token);
 
     let response = client
-        .get(format!("{}/api/v1/users/{}", address, client_id))
+        .get(format!("{address}/api/v1/users/{client_id}"))
         .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
@@ -73,7 +73,7 @@ pub async fn get_user_with_invalid_id_returns_404_not_found() {
     let auth_header = AuthHeader::new(&access_token);
 
     let response = client
-        .get(format!("{}/api/v1/users/{}", address, invalid_client_id))
+        .get(format!("{address}/api/v1/users/{invalid_client_id}"))
         .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
@@ -101,7 +101,7 @@ pub async fn create_user_with_valid_params() {
     let auth_header = AuthHeader::new(&access_token);
 
     let response = client
-        .post(format!("{}/api/v1/users", address))
+        .post(format!("{address}/api/v1/users"))
         .json(&new_user)
         .header(
             auth_header.header_name.clone(),
@@ -112,7 +112,7 @@ pub async fn create_user_with_valid_params() {
         .expect("Request to POST '/users' failed to resolve.");
 
     let get_response = client
-        .get(format!("{}/api/v1/users", address))
+        .get(format!("{address}/api/v1/users"))
         .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
@@ -145,7 +145,7 @@ pub async fn create_user_with_invalid_params() {
     let auth_header = AuthHeader::new(&access_token);
 
     let response = client
-        .post(format!("{}/api/v1/users", address))
+        .post(format!("{address}/api/v1/users"))
         .header(auth_header.header_name, auth_header.header_value)
         .json(&new_user)
         .send()
@@ -177,7 +177,7 @@ pub async fn update_user_username() {
     let auth_header = AuthHeader::new(&access_token);
 
     let response1 = client
-        .put(format!("{}/api/v1/users/{}", address, client_id))
+        .put(format!("{address}/api/v1/users/{client_id}"))
         .header(
             auth_header.header_name.clone(),
             auth_header.header_value.clone(),
@@ -227,7 +227,7 @@ pub async fn update_user_email() {
     let auth_header = AuthHeader::new(&access_token);
 
     let response1 = client
-        .put(format!("{}/api/v1/users/{}", address, client_id))
+        .put(format!("{address}/api/v1/users/{client_id}"))
         .header(
             auth_header.header_name.clone(),
             auth_header.header_value.clone(),
@@ -238,7 +238,7 @@ pub async fn update_user_email() {
         .expect("Request to PUT '/users/{user_id}' failed to resolve.");
 
     let response2 = client
-        .get(format!("{}/api/v1/users/{}", address, client_id))
+        .get(format!("{address}/api/v1/users/{client_id}"))
         .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
