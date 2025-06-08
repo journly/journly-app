@@ -1824,6 +1824,7 @@ dependencies = [
  "jsonwebtoken",
  "lettre",
  "log",
+ "regex",
  "reqwest",
  "rust_decimal",
  "serde",

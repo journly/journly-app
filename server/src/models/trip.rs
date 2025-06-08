@@ -58,17 +58,11 @@ impl Trip {
         user_id: &Uuid,
     ) -> QueryResult<TripData> {
         let trip = Self::find(conn, trip_id).await?;
-
         let collaborators = Self::get_collaborators(conn, trip_id).await?;
-
         let budget_plan = BudgetPlanner::get_from_trip(conn, trip_id).await?;
-
         let personal_budget_plan = PersonalBudget::get_from_trip(conn, trip_id, user_id).await?;
-
         let trip_expenses = Expense::get_expenses_with_payers(conn, trip_id).await?;
-
         let itinerary_items = Self::get_itinerary(conn, trip_id).await?;
-
         let documents = Self::get_documents(conn, trip_id).await?;
 
         Ok(TripData {

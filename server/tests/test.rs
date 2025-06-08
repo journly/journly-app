@@ -52,7 +52,11 @@ pub async fn spawn_app() -> TestApp {
 
     TestApp {
         address: format!("http://127.0.0.1:{port}"),
-        access_token: create_access_token(Uuid::new_v4(), &access_token_secret, 10),
+        access_token: create_access_token(
+            Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap(),
+            &access_token_secret,
+            10,
+        ),
         database_id: db_id,
         config: test_app_config,
     }
@@ -176,12 +180,27 @@ async fn load_fixtures(conn: &mut AsyncPgConnection) -> Result<(), diesel::resul
             NULL,
             NULL
         );",
+        "INSERT INTO trips VALUES ('c8381024-3f79-4a10-b5fe-06dc24e74bdc'::UUID, '11111111-1111-1111-1111-111111111111'::UUID, 'foo');",
+        "INSERT INTO user_trip VALUES ('11111111-1111-1111-1111-111111111111'::UUID, 'c8381024-3f79-4a10-b5fe-06dc24e74bdc'::UUID);",
     ];
     for raw in raws {
         diesel::sql_query(raw).execute(conn).await?;
     }
     Ok(())
 }
+
+// CREATE TABLE trips (
+//  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+//  owner_id UUID NOT NULL,
+//  title TEXT,
+//  banner_image TEXT,
+//  start_date DATE,
+//  end_date DATE,
+//  no_collaborators INTEGER NOT NULL DEFAULT 1,
+//  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+//
+//  FOREIGN KEY(owner_id) REFERENCES users(id)
+//);
 
 #[cfg(test)]
 mod api_test;
