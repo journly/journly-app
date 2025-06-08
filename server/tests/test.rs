@@ -1,5 +1,6 @@
 use actix_rt::Runtime;
 use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
+use futures::executor::block_on;
 use journly_server::{
     app::App,
     auth::create_access_token,
@@ -49,6 +50,8 @@ pub async fn spawn_app() -> TestApp {
 
     actix_rt::spawn(server);
 
+    eprintln!("TestApp creating db: {}", db_id);
+
     TestApp {
         address: format!("http://127.0.0.1:{}", port),
         access_token: create_access_token(Uuid::new_v4(), &access_token_secret, 10),
@@ -57,37 +60,31 @@ pub async fn spawn_app() -> TestApp {
     }
 }
 
-impl Drop for TestApp {
-    fn drop(&mut self) {
+impl TestApp {
+    pub async fn cleanup(&self) {
         let pg_url = self.config.postgres.get_db_url();
-        let db_id = self.database_id.clone();
+        let mut conn = AsyncPgConnection::establish(&pg_url)
+            .await
+            .expect("Could not connect");
 
-        std::thread::spawn(move || {
-            let rt = Runtime::new().unwrap();
-
-            rt.block_on(async move {
-                let mut conn = AsyncPgConnection::establish(&pg_url)
-                    .await
-                    .expect("Could not establish connection to postgres database.");
-
-                let disconnect_users = format!(
-                    "SELECT pg_terminate_backend(pid)
+        let disconnect_users = format!(
+            "SELECT pg_terminate_backend(pid)
             FROM pg_stat_activity
             WHERE datname = '{}';",
-                    db_id
-                );
+            self.database_id
+        );
 
-                diesel::sql_query(&disconnect_users)
-                    .execute(&mut conn)
-                    .await
-                    .expect("Could not disconnect connections.");
+        diesel::sql_query(&disconnect_users)
+            .execute(&mut conn)
+            .await
+            .expect("Could not disconnect");
 
-                diesel::sql_query(format!(r#"DROP DATABASE "{}""#, db_id))
-                    .execute(&mut conn)
-                    .await
-                    .expect("Could not drop database");
-            });
-        });
+        diesel::sql_query(format!(r#"DROP DATABASE "{}""#, self.database_id))
+            .execute(&mut conn)
+            .await
+            .expect("Could not drop database");
+
+        println!("Dropped test db {}", self.database_id);
     }
 }
 

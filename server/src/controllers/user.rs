@@ -6,7 +6,7 @@ use crate::{
     util::errors::{AppError, AppResult},
     views::EncodableUser,
 };
-use actix_web::{web::{self, Json}, HttpResponse, ResponseError};
+use actix_web::web::{self, Json};
 use argon2::{
     Argon2,
     password_hash::{PasswordHasher, SaltString, rand_core::OsRng},
@@ -15,7 +15,7 @@ use base64::{Engine, engine::general_purpose};
 use diesel::{ExpressionMethods, result::Error::NotFound};
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
-use utoipa::{openapi::security::Http, ToSchema};
+use utoipa::{ToSchema, openapi::security::Http};
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, ToSchema)]

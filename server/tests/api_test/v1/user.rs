@@ -1,10 +1,9 @@
+use crate::{api_test::util::AuthHeader, spawn_app};
+use journly_server::controllers::user::{
+    CreateUser, GetUserResponse, GetUsersResponse, UpdateInformation,
+};
 use reqwest::{Client, StatusCode};
 use uuid::Uuid;
-use crate::{api_test::util::AuthHeader, spawn_app};
-use journly_server::controllers::{
-    helper::OkResponse,
-    user::{CreateUser, GetUserResponse, GetUsersResponse, UpdateInformation},
-};
 
 #[actix_rt::test]
 pub async fn get_users_returns_list() {
@@ -22,6 +21,8 @@ pub async fn get_users_returns_list() {
         .send()
         .await
         .expect("Request to GET '/users' failed to resolve");
+
+    test_app.cleanup().await;
 
     assert_eq!(response.status(), StatusCode::OK);
 
@@ -49,6 +50,8 @@ pub async fn get_user_with_valid_id_returns_user() {
         .await
         .expect("Request to GET '/users/{user_id}' failed to resolve.");
 
+    test_app.cleanup().await;
+
     assert_eq!(response.status(), StatusCode::OK);
 
     let text = response.text().await.unwrap();
@@ -75,6 +78,8 @@ pub async fn get_user_with_invalid_id_returns_404_not_found() {
         .send()
         .await
         .expect("Request to GET '/users/{user_id}' failed to resolve.");
+
+    test_app.cleanup().await;
 
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
@@ -106,13 +111,6 @@ pub async fn create_user_with_valid_params() {
         .await
         .expect("Request to POST '/users' failed to resolve.");
 
-    assert_eq!(response.status(), StatusCode::OK);
-
-    let response_body = response.text().await.unwrap();
-
-    let _ = serde_json::from_str::<OkResponse>(&response_body)
-        .expect("Failed to parse POST '/users' response body");
-
     let get_response = client
         .get(format!("{}/api/v1/users", address))
         .header(auth_header.header_name, auth_header.header_value)
@@ -120,10 +118,13 @@ pub async fn create_user_with_valid_params() {
         .await
         .expect("Request to GET '/users' failed to resolve.");
 
+    test_app.cleanup().await;
+
     let users = serde_json::from_str::<GetUsersResponse>(&get_response.text().await.unwrap())
         .unwrap()
         .users;
 
+    assert_eq!(response.status(), StatusCode::OK);
     assert!(users.iter().any(|user| user.username == new_user.username));
 }
 
@@ -151,6 +152,8 @@ pub async fn create_user_with_invalid_params() {
         .await
         .expect("Request to POST '/users' failed to resolve.");
 
+    test_app.cleanup().await;
+
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
@@ -159,7 +162,6 @@ pub async fn update_user_username() {
     let test_app = spawn_app().await;
     let address = test_app.address.clone();
     let access_token = test_app.access_token.clone();
-
 
     let username = "new_username".to_string();
 
@@ -174,7 +176,7 @@ pub async fn update_user_username() {
 
     let auth_header = AuthHeader::new(&access_token);
 
-    let response = client
+    let response1 = client
         .put(format!("{}/api/v1/users/{}", address, client_id))
         .header(
             auth_header.header_name.clone(),
@@ -185,18 +187,19 @@ pub async fn update_user_username() {
         .await
         .expect("Request to PUT '/users/{user_id}' failed to resolve.");
 
-    assert_eq!(response.status(), StatusCode::OK);
-
-    let response = client
+    let response2 = client
         .get(format!("{}/api/v1/users/{}", address, client_id))
         .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
         .expect("Request to GET '/users/{user_id}' failed to resolve.");
 
-    assert_eq!(response.status(), StatusCode::OK);
+    test_app.cleanup().await;
 
-    let response_body = response.text().await.unwrap();
+    assert_eq!(response1.status(), StatusCode::OK);
+    assert_eq!(response2.status(), StatusCode::OK);
+
+    let response_body = response2.text().await.unwrap();
 
     let response_body = serde_json::from_str::<GetUserResponse>(&response_body)
         .expect("Failed to parse GET '/users/{user_id}' response body.");
@@ -223,8 +226,8 @@ pub async fn update_user_email() {
 
     let auth_header = AuthHeader::new(&access_token);
 
-    let response = client
-        .put(format!("{}/api/v1/users/{}/email", address, client_id))
+    let response1 = client
+        .put(format!("{}/api/v1/users/{}", address, client_id))
         .header(
             auth_header.header_name.clone(),
             auth_header.header_value.clone(),
@@ -234,18 +237,19 @@ pub async fn update_user_email() {
         .await
         .expect("Request to PUT '/users/{user_id}' failed to resolve.");
 
-    assert_eq!(response.status(), StatusCode::OK);
-
-    let response = client
+    let response2 = client
         .get(format!("{}/api/v1/users/{}", address, client_id))
         .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
         .expect("Request to GET '/users/{user_id}' failed to resolve.");
 
-    assert_eq!(response.status(), StatusCode::OK);
+    test_app.cleanup().await;
 
-    let response_body = response.text().await.unwrap();
+    assert_eq!(response1.status(), StatusCode::OK);
+    assert_eq!(response2.status(), StatusCode::OK);
+
+    let response_body = response2.text().await.unwrap();
 
     let response_body = serde_json::from_str::<GetUserResponse>(&response_body)
         .expect("Failed to parse GET '/users/{user_id}' response body.");

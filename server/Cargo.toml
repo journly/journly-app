@@ -24,7 +24,7 @@ utoipa-swagger-ui = {version = "9.0.1", features= ["actix-web"]}
 log = "0.4.27"
 env_logger = "0.11.8"
 base64 = "0.22.1"
-diesel = { version = "2.2.10", features = ["uuid", "chrono",  "serde_json", "numeric"] }
+diesel = { version = "2.2.10", features = ["uuid", "chrono",  "serde_json", "numeric" ] }
 diesel_migrations = "2.2.0"
 diesel-async = { version = "0.5.2", features = ["postgres", "deadpool", "async-connection-wrapper"] }
 bon = "3.6.3"

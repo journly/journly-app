@@ -8,6 +8,7 @@ async fn health_returns_ok() {
         .await
         .expect("Request could not be resolved");
 
-    assert!(res.status().is_success());
+    test_app.cleanup().await;
 
+    assert!(res.status().is_success());
 }

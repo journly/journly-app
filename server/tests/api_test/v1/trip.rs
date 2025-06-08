@@ -23,6 +23,8 @@ pub async fn get_trips_returns_list() {
         .await
         .expect("Request could not be resolved.");
 
+    test_app.cleanup().await;
+
     assert_eq!(response.status(), StatusCode::OK);
 
     let text = response.text().await.unwrap();
@@ -49,6 +51,8 @@ pub async fn get_trip_with_valid_id_returns_trip() {
         .send()
         .await
         .expect("Request could not be resolved.");
+
+    test_app.cleanup().await;
 
     assert_eq!(response.status(), StatusCode::OK);
 
@@ -77,6 +81,8 @@ pub async fn get_trip_with_invalid_id_returns_404_not_found() {
         .await
         .expect("Request could not be resolved.");
 
+    test_app.cleanup().await;
+
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
@@ -97,7 +103,7 @@ pub async fn create_trip_with_valid_information_returns_trip() {
 
     let auth_header = AuthHeader::new(&access_token);
 
-    let response = client
+    let response1 = client
         .post(format!("{}/api/v1/trips", address))
         .header(
             auth_header.header_name.clone(),
@@ -108,21 +114,22 @@ pub async fn create_trip_with_valid_information_returns_trip() {
         .await
         .expect("Request could not be resolved.");
 
-    assert_eq!(response.status(), StatusCode::OK);
-
-    let response = client
+    let response2 = client
         .get(format!("{}/api/v1/trips", address))
         .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
         .expect("Request could not be resolved.");
 
-    let text = response.text().await.unwrap();
+    test_app.cleanup().await;
+
+    let text = response2.text().await.unwrap();
 
     let trips = serde_json::from_str::<GetTripsResponse>(&text)
         .unwrap()
         .trips;
 
+    assert_eq!(response1.status(), StatusCode::OK);
     assert!(
         trips
             .iter()
@@ -161,8 +168,6 @@ pub async fn create_trip_with_invalid_information_returns_400_bad_request() {
         .await
         .expect("Request could not be resolved.");
 
-    assert_eq!(bad_resp1.status(), StatusCode::BAD_REQUEST);
-
     // no request body
     let bad_resp2 = client
         .post(url)
@@ -171,5 +176,8 @@ pub async fn create_trip_with_invalid_information_returns_400_bad_request() {
         .await
         .expect("Request could not be resolved.");
 
+    test_app.cleanup().await;
+
+    assert_eq!(bad_resp1.status(), StatusCode::BAD_REQUEST);
     assert_eq!(bad_resp2.status(), StatusCode::BAD_REQUEST);
 }
