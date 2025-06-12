@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use journly_server::controllers::trip::{CreateTrip, GetTripResponse, GetTripsResponse};
-use reqwest::{Client, StatusCode, header::AUTHORIZATION};
+use reqwest::{Client, StatusCode};
 use uuid::Uuid;
 
 use crate::{api_test::util::AuthHeader, spawn_app};
@@ -9,21 +9,21 @@ use crate::{api_test::util::AuthHeader, spawn_app};
 #[actix_rt::test]
 pub async fn get_trips_returns_list() {
     let test_app = spawn_app().await;
-
-    let address = test_app.address;
-
-    let access_token = test_app.access_token;
+    let address = test_app.address.clone();
+    let access_token = test_app.access_token.clone();
 
     let client = Client::new();
 
     let auth_header = AuthHeader::new(&access_token);
 
     let response = client
-        .get(format!("{}/api/v1/trips", address))
+        .get(format!("{address}/api/v1/trips"))
         .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
         .expect("Request could not be resolved.");
+
+    test_app.cleanup().await;
 
     assert_eq!(response.status(), StatusCode::OK);
 
@@ -36,10 +36,8 @@ pub async fn get_trips_returns_list() {
 #[actix_rt::test]
 pub async fn get_trip_with_valid_id_returns_trip() {
     let test_app = spawn_app().await;
-
-    let address = test_app.address;
-
-    let access_token = test_app.access_token;
+    let address = test_app.address.clone();
+    let access_token = test_app.access_token.clone();
 
     let trip_id = "c8381024-3f79-4a10-b5fe-06dc24e74bdc";
 
@@ -48,11 +46,13 @@ pub async fn get_trip_with_valid_id_returns_trip() {
     let auth_header = AuthHeader::new(&access_token);
 
     let response = client
-        .get(format!("{}/api/v1/trips/{}", address, trip_id))
+        .get(format!("{address}/api/v1/trips/{trip_id}"))
         .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
         .expect("Request could not be resolved.");
+
+    test_app.cleanup().await;
 
     assert_eq!(response.status(), StatusCode::OK);
 
@@ -65,10 +65,8 @@ pub async fn get_trip_with_valid_id_returns_trip() {
 #[actix_rt::test]
 pub async fn get_trip_with_invalid_id_returns_404_not_found() {
     let test_app = spawn_app().await;
-
-    let address = test_app.address;
-
-    let access_token = test_app.access_token;
+    let address = test_app.address.clone();
+    let access_token = test_app.access_token.clone();
 
     let trip_id = "invalid-trip-id";
 
@@ -77,11 +75,13 @@ pub async fn get_trip_with_invalid_id_returns_404_not_found() {
     let auth_header = AuthHeader::new(&access_token);
 
     let response = client
-        .get(format!("{}/api/v1/trips/{}", address, trip_id))
+        .get(format!("{address}/api/v1/trips/{trip_id}"))
         .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
         .expect("Request could not be resolved.");
+
+    test_app.cleanup().await;
 
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
@@ -89,13 +89,11 @@ pub async fn get_trip_with_invalid_id_returns_404_not_found() {
 #[actix_rt::test]
 pub async fn create_trip_with_valid_information_returns_trip() {
     let test_app = spawn_app().await;
-
-    let address = test_app.address;
-
-    let access_token = test_app.access_token;
+    let address = test_app.address.clone();
+    let access_token = test_app.access_token.clone();
 
     let body = CreateTrip {
-        user_id: Uuid::from_str("612e21ed-869b-4130-bb72-fc7549f93609").unwrap(),
+        user_id: Uuid::from_str("11111111-1111-1111-1111-111111111111").unwrap(),
         title: Some("New Trip".to_string()),
         start_date: None,
         end_date: None,
@@ -105,8 +103,8 @@ pub async fn create_trip_with_valid_information_returns_trip() {
 
     let auth_header = AuthHeader::new(&access_token);
 
-    let response = client
-        .post(format!("{}/api/v1/trips", address))
+    let response1 = client
+        .post(format!("{address}/api/v1/trips"))
         .header(
             auth_header.header_name.clone(),
             auth_header.header_value.clone(),
@@ -116,21 +114,22 @@ pub async fn create_trip_with_valid_information_returns_trip() {
         .await
         .expect("Request could not be resolved.");
 
-    assert_eq!(response.status(), StatusCode::OK);
-
-    let response = client
-        .get(format!("{}/api/v1/trips", address))
+    let response2 = client
+        .get(format!("{address}/api/v1/trips"))
         .header(auth_header.header_name, auth_header.header_value)
         .send()
         .await
         .expect("Request could not be resolved.");
 
-    let text = response.text().await.unwrap();
+    test_app.cleanup().await;
+
+    let text = response2.text().await.unwrap();
 
     let trips = serde_json::from_str::<GetTripsResponse>(&text)
         .unwrap()
         .trips;
 
+    assert_eq!(response1.status(), StatusCode::OK);
     assert!(
         trips
             .iter()
@@ -141,10 +140,8 @@ pub async fn create_trip_with_valid_information_returns_trip() {
 #[actix_rt::test]
 pub async fn create_trip_with_invalid_information_returns_400_bad_request() {
     let test_app = spawn_app().await;
-
-    let address = test_app.address;
-
-    let access_token = test_app.access_token;
+    let address = test_app.address.clone();
+    let access_token = test_app.access_token.clone();
 
     let body = CreateTrip {
         user_id: Uuid::new_v4(),
@@ -155,7 +152,7 @@ pub async fn create_trip_with_invalid_information_returns_400_bad_request() {
 
     let client = reqwest::Client::new();
 
-    let url = format!("{}/api/v1/trips", address);
+    let url = format!("{address}/api/v1/trips");
 
     let auth_header = AuthHeader::new(&access_token);
 
@@ -171,8 +168,6 @@ pub async fn create_trip_with_invalid_information_returns_400_bad_request() {
         .await
         .expect("Request could not be resolved.");
 
-    assert_eq!(bad_resp1.status(), StatusCode::BAD_REQUEST);
-
     // no request body
     let bad_resp2 = client
         .post(url)
@@ -181,5 +176,8 @@ pub async fn create_trip_with_invalid_information_returns_400_bad_request() {
         .await
         .expect("Request could not be resolved.");
 
+    test_app.cleanup().await;
+
+    assert_eq!(bad_resp1.status(), StatusCode::BAD_REQUEST);
     assert_eq!(bad_resp2.status(), StatusCode::BAD_REQUEST);
 }

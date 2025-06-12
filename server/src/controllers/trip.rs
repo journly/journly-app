@@ -79,7 +79,10 @@ pub async fn create_trip(
 
     match new_trip.create(&mut conn).await {
         Ok(_) => Ok(OkResponse::new()),
-        Err(_) => Err(AppError::InternalError),
+        Err(e) => {
+            eprintln!("Error during test: {}", e);
+            Err(AppError::BadRequest("invalid request".to_string()))
+        }
     }
 }
 
@@ -93,7 +96,9 @@ pub struct GetTripResponse {
     get,
     path = "/api/v1/trips/{trip_id}",
     responses(
-        (status = 200, description = "Trip was found", body = GetTripResponse)
+        (status = 200, description = "Trip was found", body = GetTripResponse),
+        (status = 401, description = "User unauthorised to get trip"),
+        (status = 404, description = "Trip not found")
     )
 )]
 pub async fn get_trip(

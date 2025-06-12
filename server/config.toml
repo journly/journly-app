@@ -3,6 +3,7 @@ production=false
 domain_name="myjournly.com"
 ip_address="127.0.0.1"
 port=8080
+allowed_origins=["http://localhost:5173"]
 
 # Postgres config
 [postgres]

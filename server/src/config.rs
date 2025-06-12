@@ -18,6 +18,7 @@ pub struct BaseConfig {
     pub domain_name: String,
     pub ip_address: String,
     pub port: String,
+    pub allowed_origins: Vec<String>,
 }
 
 #[derive(Clone, Debug, Deserialize)]

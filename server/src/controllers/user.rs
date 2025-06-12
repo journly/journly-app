@@ -15,8 +15,9 @@ use base64::{Engine, engine::general_purpose};
 use diesel::{ExpressionMethods, result::Error::NotFound};
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use utoipa::{ToSchema, openapi::security::Http};
 use uuid::Uuid;
+use regex::Regex;
 
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct GetUsersResponse {
@@ -64,6 +65,11 @@ pub struct CreateUser {
     pub password: String,
 }
 
+fn is_valid_email(email: &str) -> bool {
+    let re = Regex::new(r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$").unwrap();
+    re.is_match(email)
+}
+
 #[utoipa::path(
     tag = "users",
     post,
@@ -90,6 +96,11 @@ pub async fn create_user(
         password_hash = hash.to_string();
     } else {
         return Err(AppError::InternalError);
+    }
+
+    // check email validity
+    if !is_valid_email(&new_user_data.email) {
+        return Err(AppError::BadRequest("Malformed email address".to_string()));
     }
 
     let new_user = NewUser {
@@ -121,6 +132,7 @@ pub struct GetUserResponse {
     path = "/api/v1/users/{user_id}",
     responses(
         (status = 200, description = "Successful Response", body = GetUserResponse),
+        (status = 404, description = "User Not Found"),
     )
 )]
 pub async fn get_user(
@@ -143,7 +155,7 @@ pub async fn get_user(
                 avatar: user.avatar,
             },
         })),
-        Err(NotFound) => Err(AppError::BadRequest("User not found".to_string())),
+        Err(NotFound) => Err(AppError::NotFound),
         Err(_) => Err(AppError::InternalError),
     }
 }
