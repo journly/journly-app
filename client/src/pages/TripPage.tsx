@@ -1,5 +1,5 @@
 
-import { Tab, Tabs } from "@mui/material";
+import { Tab, Tabs, Box } from "@mui/material";
 import { useState } from "react";
 import PageWrapper from "../components/generic/Page";
 import TabPabel from "../components/generic/TabPanel";
