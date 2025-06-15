@@ -38,3 +38,6 @@ refresh_secret= "secret-token"
 #   PS512,
 #   EdDSA,
 algorithm="HS256"
+# expiration time in minutes
+access_token_expiration=5
+refresh_token_expiration=10080

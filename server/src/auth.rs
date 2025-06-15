@@ -1,7 +1,7 @@
 use actix_web::{
     Error, FromRequest, HttpRequest,
     dev::Payload,
-    error::{ErrorBadRequest, ErrorInternalServerError, ErrorUnauthorized},
+    error::{ErrorInternalServerError, ErrorUnauthorized},
     web::Data,
 };
 use chrono::{Duration, TimeZone, Utc};
@@ -26,6 +26,8 @@ pub struct JwtConfig {
     pub access_secret: String,
     pub refresh_secret: String,
     pub algorithm: Algorithm,
+    pub access_token_expiration: i64,
+    pub refresh_token_expiration: i64,
 }
 
 pub fn create_token(user_id: &Uuid, secret: &str, expiration_in_mins: i64) -> String {
