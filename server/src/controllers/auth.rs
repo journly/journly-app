@@ -14,11 +14,9 @@ use uuid::Uuid;
 use crate::{
     app::AppState,
     auth::{AuthenticatedUser, create_token},
-    models::{
-        refresh_tokens::{self, RefreshToken},
-        user::User,
-    },
+    models::{refresh_tokens::RefreshToken, user::User},
     util::errors::{AppError, AppResult},
+    views::EncodableUser,
 };
 
 use super::helper::OkResponse;
@@ -52,7 +50,7 @@ pub struct GetAccessTokenResponse {
     description = "",
     responses(
         (status = 200, description = "Successful response", body = GetAccessTokenResponse)
-    )
+    ),
 )]
 pub async fn get_access_token(
     state: web::Data<AppState>,
@@ -62,6 +60,36 @@ pub async fn get_access_token(
     Ok(Json(GetAccessTokenResponse {
         access_token: token,
     }))
+}
+
+#[derive(Deserialize, Serialize, ToSchema)]
+pub struct GetMeResponse {
+    pub user: EncodableUser,
+}
+
+#[utoipa::path(
+    tag = AUTH,
+    get,
+    path = "/api/auth/me",
+    responses(
+        (status = 200, description = "Successful response", body = GetMeResponse),
+        (status = 404, description = "User not found")
+    ),
+)]
+pub async fn get_me(
+    authenticated: AuthenticatedUser,
+    state: web::Data<AppState>,
+) -> AppResult<Json<GetMeResponse>> {
+    let user_id = authenticated.0;
+
+    let mut conn = state.db_connection().await?;
+
+    match User::find(&mut conn, &user_id).await {
+        Ok(user) => Ok(Json(GetMeResponse {
+            user: EncodableUser::from(user),
+        })),
+        Err(_) => Err(AppError::NotFound),
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
@@ -132,18 +160,23 @@ pub async fn login(
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
-pub struct LogoutBody {
+pub struct RefreshTokenBody {
     pub refresh_token: String,
 }
 
 #[utoipa::path(
     tag=AUTH,
     post,
-    path="/"
+    path="/api/auth/logout",
+    responses(
+        (status = 200, description = "Logout was successful", body = OkResponse),
+        (status = 401, description = "Invalid or missing token"),
+        (status = 500, description = "Internal server error"),
+    ),
 )]
 pub async fn logout(
     authenticated: AuthenticatedUser,
-    body: web::Json<LogoutBody>,
+    body: web::Json<RefreshTokenBody>,
     state: web::Data<AppState>,
 ) -> AppResult<OkResponse> {
     use crate::schema::refresh_tokens;
@@ -166,5 +199,52 @@ pub async fn logout(
     match refresh_token.revoke(&mut conn).await {
         Ok(_) => Ok(OkResponse::default()),
         Err(_) => Err(AppError::InternalError),
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct RefreshResponse {
+    pub refresh_token: String,
+}
+
+#[utoipa::path(
+    tag=AUTH,
+    post,
+    path="/api/auth/refresh",
+    responses(
+        (status = 200, description = "Refresh was succesful", body = RefreshResponse)
+    )
+)]
+pub async fn refresh(
+    body: web::Json<RefreshTokenBody>,
+    state: web::Data<AppState>,
+) -> AppResult<Json<RefreshResponse>> {
+    let mut conn = state.db_connection().await?;
+
+    use crate::schema::refresh_tokens;
+    let refresh_token_hash = hex::encode(Sha256::digest(body.refresh_token.as_bytes()));
+
+    let refresh_token: RefreshToken = refresh_tokens::table
+        .find(refresh_token_hash)
+        .select(RefreshToken::as_select())
+        .first(&mut conn)
+        .await
+        .map_err(|_| AppError::Unauthorized)?;
+
+    if refresh_token.user_id.is_some() {
+        let secret = &state.config.jwt_config.refresh_secret;
+        let expiration_time = state.config.jwt_config.refresh_token_expiration;
+
+        match refresh_token
+            .issue_new(&mut conn, secret, expiration_time)
+            .await
+        {
+            Ok(new_refresh_token) => Ok(Json(RefreshResponse {
+                refresh_token: new_refresh_token,
+            })),
+            Err(_) => Err(AppError::InternalError),
+        }
+    } else {
+        Err(AppError::Unauthorized)
     }
 }

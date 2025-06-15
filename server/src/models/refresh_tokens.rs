@@ -27,7 +27,7 @@ impl RefreshToken {
             .await
     }
 
-    pub async fn issue_new_token(
+    pub async fn issue_new_refresh_token(
         conn: &mut AsyncPgConnection,
         user_id: &Uuid,
         secret: &str,
@@ -58,14 +58,13 @@ impl RefreshToken {
         Ok(new_refresh_token)
     }
 
-    pub async fn issue_new_token_from_existing(
+    pub async fn issue_new(
+        &self,
         conn: &mut AsyncPgConnection,
-        refresh_token: &str,
-        user_id: &Uuid,
         secret: &str,
         expiration_in_mins: i64,
     ) -> QueryResult<String> {
-        let new_refresh_token = create_token(user_id, secret, expiration_in_mins);
+        let new_refresh_token = create_token(&self.user_id.unwrap(), secret, expiration_in_mins);
 
         let new_refresh_token_hash = hex::encode(Sha256::digest(new_refresh_token.as_bytes()));
 
@@ -75,14 +74,14 @@ impl RefreshToken {
 
         let new_record = RefreshToken {
             token: new_refresh_token_hash.to_string(),
-            user_id: Some(*user_id),
+            user_id: self.user_id,
             expires_at: expires_at.naive_utc(),
             created_at: created_at.naive_utc(),
             parent_token: None,
             revoked: false,
         };
 
-        let original_refresh_token = hex::encode(Sha256::digest(refresh_token.as_bytes()));
+        let original_refresh_token = hex::encode(Sha256::digest(self.token.as_bytes()));
 
         conn.transaction::<(), Error, _>(|conn| {
             async move {

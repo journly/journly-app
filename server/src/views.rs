@@ -24,6 +24,17 @@ pub struct EncodableUser {
     pub avatar: Option<String>,
 }
 
+impl From<User> for EncodableUser {
+    fn from(value: User) -> Self {
+        EncodableUser {
+            id: value.id,
+            username: value.username,
+            email: value.email,
+            avatar: value.avatar,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct EncodableCollaborator {
     pub id: Uuid,
