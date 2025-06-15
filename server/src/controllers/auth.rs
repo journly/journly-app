@@ -94,8 +94,8 @@ pub async fn get_me(
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct LoginResponse {
-    access_token: String,
-    refresh_token: String,
+    pub access_token: String,
+    pub refresh_token: String,
 }
 
 #[utoipa::path(
@@ -204,6 +204,7 @@ pub async fn logout(
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct RefreshResponse {
+    pub access_token: String,
     pub refresh_token: String,
 }
 
@@ -231,17 +232,23 @@ pub async fn refresh(
         .await
         .map_err(|_| AppError::Unauthorized)?;
 
-    if refresh_token.user_id.is_some() {
+    if let Some(user_id) = refresh_token.user_id {
         let secret = &state.config.jwt_config.refresh_secret;
-        let expiration_time = state.config.jwt_config.refresh_token_expiration;
+        let access_expiration_time = state.config.jwt_config.access_token_expiration;
+        let refresh_expiration_time = state.config.jwt_config.refresh_token_expiration;
 
         match refresh_token
-            .issue_new(&mut conn, secret, expiration_time)
+            .issue_new(&mut conn, secret, refresh_expiration_time)
             .await
         {
-            Ok(new_refresh_token) => Ok(Json(RefreshResponse {
-                refresh_token: new_refresh_token,
-            })),
+            Ok(refresh_token) => {
+                let access_token = create_token(&user_id, secret, access_expiration_time);
+
+                Ok(Json(RefreshResponse {
+                    access_token,
+                    refresh_token,
+                }))
+            }
             Err(_) => Err(AppError::InternalError),
         }
     } else {

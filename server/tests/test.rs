@@ -1,7 +1,7 @@
 use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
 use journly_server::{
     app::App,
-    auth::create_access_token,
+    auth::create_token,
     config::{PgConfig, Server},
     db::get_connection_pool,
     email::Emails,
@@ -52,8 +52,8 @@ pub async fn spawn_app() -> TestApp {
 
     TestApp {
         address: format!("http://127.0.0.1:{port}"),
-        access_token: create_access_token(
-            Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap(),
+        access_token: create_token(
+            &Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap(),
             &access_token_secret,
             10,
         ),

@@ -16,9 +16,8 @@ use diesel::{ExpressionMethods, result::Error::NotFound};
 use diesel_async::RunQueryDsl;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use utoipa::{ToSchema, openapi::security::Http};
+use utoipa::ToSchema;
 use uuid::Uuid;
-
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct GetUsersResponse {
     pub users: Vec<EncodableUser>,
