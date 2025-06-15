@@ -4,7 +4,7 @@ use utoipa::OpenApi;
 use crate::{
     config::Server,
     controllers::{
-        auth::{get_access_token, login},
+        auth::{get_access_token, get_me, login, logout, refresh},
         get_health,
         trip::{create_trip, get_trip, get_trips},
         user::{create_user, delete_user, get_user, get_users, update_user},
@@ -14,7 +14,10 @@ use crate::{
 #[derive(OpenApi)]
 #[openapi(paths(
     crate::controllers::auth::get_access_token,
+    crate::controllers::auth::get_me,
     crate::controllers::auth::login,
+    crate::controllers::auth::logout,
+    crate::controllers::auth::refresh,
     crate::controllers::trip::get_trips,
     crate::controllers::trip::create_trip,
     crate::controllers::trip::get_trip,
@@ -32,6 +35,9 @@ pub fn routes(cfg: &mut ServiceConfig, config: Server) {
         .service(
             scope("/auth")
             .route("/login", post().to(login))
+            .route("/logout", post().to(logout))
+            .route("/refresh", post().to(refresh))
+            .route("/me", get().to(get_me))
         )
         .service(
             scope("/api/v1/trips")

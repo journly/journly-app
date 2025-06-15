@@ -1,6 +1,6 @@
 use crate::{api_test::util::AuthHeader, spawn_app};
 use journly_server::controllers::user::{
-    CreateUser, GetUserResponse, GetUsersResponse, UpdateInformationBody,
+    CreateUserBody, GetUserResponse, GetUsersResponse, UpdateInformationBody,
 };
 use reqwest::{Client, StatusCode};
 use uuid::Uuid;
@@ -90,7 +90,7 @@ pub async fn create_user_with_valid_params() {
     let address = test_app.address.clone();
     let access_token = test_app.access_token.clone();
 
-    let new_user = CreateUser {
+    let new_user = CreateUserBody {
         username: "new_user".to_string(),
         email: "newuser@email.com".to_string(),
         password: "password_test".to_string(),
@@ -103,10 +103,6 @@ pub async fn create_user_with_valid_params() {
     let response = client
         .post(format!("{address}/api/v1/users"))
         .json(&new_user)
-        .header(
-            auth_header.header_name.clone(),
-            auth_header.header_value.clone(),
-        )
         .send()
         .await
         .expect("Request to POST '/users' failed to resolve.");
@@ -132,9 +128,8 @@ pub async fn create_user_with_valid_params() {
 pub async fn create_user_with_invalid_params() {
     let test_app = spawn_app().await;
     let address = test_app.address.clone();
-    let access_token = test_app.access_token.clone();
 
-    let new_user = CreateUser {
+    let new_user = CreateUserBody {
         username: "fdsa fds dsf sdff sfsd fasd@$!Q) +_".to_string(),
         email: "afsf asd19199900)(@$)".to_string(),
         password: "3249 fa 0$)@%_! ().. -~~~".to_string(),
@@ -142,11 +137,8 @@ pub async fn create_user_with_invalid_params() {
 
     let client = reqwest::Client::new();
 
-    let auth_header = AuthHeader::new(&access_token);
-
     let response = client
         .post(format!("{address}/api/v1/users"))
-        .header(auth_header.header_name, auth_header.header_value)
         .json(&new_user)
         .send()
         .await
