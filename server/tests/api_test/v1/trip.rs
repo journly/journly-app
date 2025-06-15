@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use journly_server::controllers::trip::{CreateTrip, GetTripResponse, GetTripsResponse};
+use journly_server::controllers::trip::{CreateTripBody, GetTripResponse, GetTripsResponse};
 use reqwest::{Client, StatusCode};
 use uuid::Uuid;
 
@@ -92,7 +92,7 @@ pub async fn create_trip_with_valid_information_returns_trip() {
     let address = test_app.address.clone();
     let access_token = test_app.access_token.clone();
 
-    let body = CreateTrip {
+    let body = CreateTripBody {
         user_id: Uuid::from_str("11111111-1111-1111-1111-111111111111").unwrap(),
         title: Some("New Trip".to_string()),
         start_date: None,
@@ -143,7 +143,7 @@ pub async fn create_trip_with_invalid_information_returns_400_bad_request() {
     let address = test_app.address.clone();
     let access_token = test_app.access_token.clone();
 
-    let body = CreateTrip {
+    let body = CreateTripBody {
         user_id: Uuid::new_v4(),
         title: None,
         start_date: None,

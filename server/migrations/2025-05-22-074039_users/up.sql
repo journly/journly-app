@@ -5,5 +5,8 @@ CREATE TABLE users (
   password_hash TEXT,
   password_salt BYTEA,
   avatar TEXT,
-  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  is_verified BOOLEAN DEFAULT FALSE,
+  email_verification_token UUID,
+  token_expires_at TIMESTAMPTZ
 );

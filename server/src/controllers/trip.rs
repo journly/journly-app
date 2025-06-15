@@ -48,7 +48,7 @@ pub async fn get_trips(
 }
 
 #[derive(Deserialize, Serialize, ToSchema)]
-pub struct CreateTrip {
+pub struct CreateTripBody {
     pub user_id: Uuid,
     pub title: Option<String>,
     pub start_date: Option<NaiveDate>,
@@ -65,7 +65,7 @@ pub struct CreateTrip {
 )]
 pub async fn create_trip(
     authenticated: AuthenticatedUser,
-    trip_data: web::Json<CreateTrip>,
+    trip_data: web::Json<CreateTripBody>,
     state: web::Data<AppState>,
 ) -> AppResult<OkResponse> {
     let mut conn = state.db_connection().await?;

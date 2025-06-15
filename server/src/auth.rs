@@ -28,10 +28,10 @@ pub struct JwtConfig {
     pub algorithm: Algorithm,
 }
 
-pub fn create_access_token(user_id: Uuid, secret: &str, expiration_in_mins: i64) -> String {
+pub fn create_token(user_id: &Uuid, secret: &str, expiration_in_mins: i64) -> String {
     let expiration = Utc::now() + Duration::minutes(expiration_in_mins);
     let claims = Claims {
-        sub: user_id,
+        sub: *user_id,
         exp: expiration.timestamp() as usize,
         iat: Utc::now().timestamp() as usize,
     };

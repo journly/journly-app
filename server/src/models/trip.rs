@@ -1,5 +1,4 @@
 use crate::models::user_trip::UserTrip;
-use crate::schema::trips::owner_id;
 use crate::schema::{documents, expenses, itinerary_items, locations, trips, user_trip, users};
 use chrono::{DateTime, NaiveDate, Utc};
 use diesel::prelude::*;

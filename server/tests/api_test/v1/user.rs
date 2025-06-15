@@ -1,6 +1,6 @@
 use crate::{api_test::util::AuthHeader, spawn_app};
 use journly_server::controllers::user::{
-    CreateUser, GetUserResponse, GetUsersResponse, UpdateInformation,
+    CreateUser, GetUserResponse, GetUsersResponse, UpdateInformationBody,
 };
 use reqwest::{Client, StatusCode};
 use uuid::Uuid;
@@ -165,7 +165,7 @@ pub async fn update_user_username() {
 
     let username = "new_username".to_string();
 
-    let update_information = UpdateInformation {
+    let update_information = UpdateInformationBody {
         username: Some(username.clone()),
         email: None,
     };
@@ -215,7 +215,7 @@ pub async fn update_user_email() {
 
     let email = "newemail@journaly.com".to_string();
 
-    let update_information = UpdateInformation {
+    let update_information = UpdateInformationBody {
         email: Some(email.clone()),
         username: None,
     };

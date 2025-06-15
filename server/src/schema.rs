@@ -163,10 +163,10 @@ diesel::table! {
     refresh_tokens (token) {
         token -> Text,
         user_id -> Nullable<Uuid>,
-        expires_at -> Nullable<Timestamp>,
-        created_at -> Nullable<Timestamp>,
+        expires_at -> Timestamp,
+        created_at -> Timestamp,
         parent_token -> Nullable<Text>,
-        revoked -> Nullable<Bool>,
+        revoked -> Bool,
     }
 }
 

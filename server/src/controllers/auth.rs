@@ -11,10 +11,12 @@ use uuid::Uuid;
 
 use crate::{
     app::AppState,
-    auth::create_access_token,
+    auth::{AuthenticatedUser, create_token},
     models::user::User,
     util::errors::{AppError, AppResult},
 };
+
+use super::helper::OkResponse;
 
 #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
 pub struct LoginCredentials {
@@ -50,7 +52,7 @@ pub struct GetAccessTokenResponse {
 pub async fn get_access_token(
     state: web::Data<AppState>,
 ) -> AppResult<Json<GetAccessTokenResponse>> {
-    let token = create_access_token(Uuid::new_v4(), &state.config.jwt_config.access_secret, 10);
+    let token = create_token(&Uuid::new_v4(), &state.config.jwt_config.access_secret, 10);
 
     Ok(Json(GetAccessTokenResponse {
         access_token: token,
@@ -107,9 +109,9 @@ pub async fn login(
                 let refresh_token_secret = state.config.jwt_config.refresh_secret.clone();
 
                 let access_token =
-                    create_access_token(user.id, &access_token_secret, ACCESS_TOKEN_EXPIRATION);
+                    create_token(&user.id, &access_token_secret, ACCESS_TOKEN_EXPIRATION);
                 let refresh_token =
-                    create_access_token(user.id, &refresh_token_secret, REFRESH_TOKEN_EXPIRATION);
+                    create_token(&user.id, &refresh_token_secret, REFRESH_TOKEN_EXPIRATION);
 
                 return Ok(Json(LoginResponse {
                     access_token,
@@ -122,4 +124,24 @@ pub async fn login(
         Err(NotFound) => Err(AppError::Unauthorized),
         Err(_) => Err(AppError::InternalError),
     }
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct LogoutBody {
+    pub refresh_token: String,
+}
+
+#[utoipa::path(
+    tag=AUTH,
+    post,
+    path="/"
+)]
+pub async fn logout(
+    authenticated: AuthenticatedUser,
+    body: web::Json<LogoutBody>,
+    state: web::Data<AppState>,
+) -> AppResult<OkResponse> {
+    let mut conn = state.db_connection().await?;
+
+    let user_id = authenticated.0;
 }

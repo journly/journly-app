@@ -14,10 +14,10 @@ use argon2::{
 use base64::{Engine, engine::general_purpose};
 use diesel::{ExpressionMethods, result::Error::NotFound};
 use diesel_async::RunQueryDsl;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use utoipa::{ToSchema, openapi::security::Http};
 use uuid::Uuid;
-use regex::Regex;
 
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct GetUsersResponse {
@@ -59,7 +59,7 @@ pub async fn get_users(
 }
 
 #[derive(Deserialize, Serialize, ToSchema)]
-pub struct CreateUser {
+pub struct CreateUserBody {
     pub username: String,
     pub email: String,
     pub password: String,
@@ -79,7 +79,7 @@ fn is_valid_email(email: &str) -> bool {
     )
 )]
 pub async fn create_user(
-    new_user_data: web::Json<CreateUser>,
+    new_user_data: web::Json<CreateUserBody>,
     state: web::Data<AppState>,
 ) -> AppResult<OkResponse> {
     let new_user_data = new_user_data.into_inner();
@@ -187,7 +187,7 @@ pub async fn delete_user(
 }
 
 #[derive(Deserialize, Serialize, ToSchema)]
-pub struct UpdateInformation {
+pub struct UpdateInformationBody {
     #[schema(example = "NewUsername")]
     pub username: Option<String>,
     #[schema(example = "newemail@journly.com")]
@@ -206,7 +206,7 @@ pub async fn update_user(
     authenticated: AuthenticatedUser,
     path: web::Path<Uuid>,
     state: web::Data<AppState>,
-    new_data: web::Json<UpdateInformation>,
+    new_data: web::Json<UpdateInformationBody>,
 ) -> AppResult<OkResponse> {
     let user_id = path.into_inner();
 
