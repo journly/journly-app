@@ -12,10 +12,10 @@ use uuid::Uuid;
 pub struct RefreshToken {
     pub token: String,
     pub user_id: Option<Uuid>,
-    pub expires_at: Option<NaiveDateTime>,
-    pub created_at: Option<NaiveDateTime>,
+    pub expires_at: NaiveDateTime,
+    pub created_at: NaiveDateTime,
     pub parent_token: Option<String>,
-    pub revoked: Option<bool>,
+    pub revoked: bool,
 }
 
 impl RefreshToken {
@@ -43,11 +43,11 @@ impl RefreshToken {
 
         let new_record = RefreshToken {
             token: new_refresh_token_hash.to_string(),
-            user_id: Some(user_id.clone()),
-            expires_at: Some(expires_at.naive_utc()),
-            created_at: Some(created_at.naive_utc()),
+            user_id: Some(*user_id),
+            expires_at: expires_at.naive_utc(),
+            created_at: created_at.naive_utc(),
             parent_token: None,
-            revoked: Some(false),
+            revoked: false,
         };
 
         diesel::insert_into(refresh_tokens::table)
@@ -75,11 +75,11 @@ impl RefreshToken {
 
         let new_record = RefreshToken {
             token: new_refresh_token_hash.to_string(),
-            user_id: Some(user_id.clone()),
-            expires_at: Some(expires_at.naive_utc()),
-            created_at: Some(created_at.naive_utc()),
+            user_id: Some(*user_id),
+            expires_at: expires_at.naive_utc(),
+            created_at: created_at.naive_utc(),
             parent_token: None,
-            revoked: Some(false),
+            revoked: false,
         };
 
         let original_refresh_token = hex::encode(Sha256::digest(refresh_token.as_bytes()));
@@ -94,7 +94,7 @@ impl RefreshToken {
                 diesel::update(refresh_tokens::table)
                     .set((
                         refresh_tokens::parent_token.eq(Some(new_refresh_token_hash)),
-                        refresh_tokens::revoked.eq(Some(true)),
+                        refresh_tokens::revoked.eq(true),
                     ))
                     .filter(refresh_tokens::token.eq(original_refresh_token))
                     .execute(conn)
@@ -107,5 +107,27 @@ impl RefreshToken {
         .await?;
 
         Ok(new_refresh_token)
+    }
+
+    pub async fn revoke_all_user_refresh_tokens(
+        conn: &mut AsyncPgConnection,
+        user_id: &Uuid,
+    ) -> QueryResult<()> {
+        diesel::update(refresh_tokens::table)
+            .set(refresh_tokens::revoked.eq(true))
+            .filter(refresh_tokens::user_id.eq(Some(user_id)))
+            .filter(refresh_tokens::revoked.eq(false))
+            .execute(conn)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn revoke(&self, conn: &mut AsyncPgConnection) -> QueryResult<()> {
+        diesel::update(refresh_tokens::table)
+            .set(refresh_tokens::revoked.eq(true))
+            .filter(refresh_tokens::token.eq(&self.token))
+            .execute(conn)
+            .await?;
+        Ok(())
     }
 }
