@@ -1,10 +1,10 @@
 use actix_web::{
     Error, FromRequest, HttpRequest,
     dev::Payload,
-    error::{ErrorInternalServerError, ErrorUnauthorized},
+    error::{ErrorBadRequest, ErrorInternalServerError, ErrorUnauthorized},
     web::Data,
 };
-use chrono::{Duration, Utc};
+use chrono::{Duration, TimeZone, Utc};
 use futures::future::{Ready, ready};
 use jsonwebtoken::{
     Algorithm, DecodingKey, EncodingKey, Header, TokenData, Validation, decode, encode,
@@ -17,8 +17,8 @@ use crate::app::AppState;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
     pub sub: Uuid, // user ID
-    pub exp: usize,
-    pub iat: usize,
+    pub exp: i64,
+    pub iat: i64,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -32,8 +32,8 @@ pub fn create_token(user_id: &Uuid, secret: &str, expiration_in_mins: i64) -> St
     let expiration = Utc::now() + Duration::minutes(expiration_in_mins);
     let claims = Claims {
         sub: *user_id,
-        exp: expiration.timestamp() as usize,
-        iat: Utc::now().timestamp() as usize,
+        exp: expiration.timestamp(),
+        iat: Utc::now().timestamp(),
     };
 
     encode(
@@ -74,6 +74,17 @@ impl FromRequest for AuthenticatedUser {
             if let Ok(header_str) = header.to_str() {
                 if let Some(token) = header_str.strip_prefix("Bearer ") {
                     if let Ok(token_data) = verify_jwt(token, &config.jwt_config.access_secret) {
+                        let issued_at = Utc.timestamp_opt(token_data.claims.iat, 0).unwrap();
+                        let expiration_time = Utc.timestamp_opt(token_data.claims.exp, 0).unwrap();
+
+                        if expiration_time < Utc::now() {
+                            return ready(Err(ErrorUnauthorized("Token is expired")));
+                        }
+
+                        if issued_at > Utc::now() {
+                            return ready(Err(ErrorUnauthorized("Invalid token")));
+                        }
+
                         return ready(Ok(AuthenticatedUser(token_data.claims.sub)));
                     }
                 }
@@ -90,13 +101,13 @@ mod tests {
 
     use crate::auth::verify_jwt;
 
-    use super::create_access_token;
+    use super::create_token;
 
     #[test]
     fn created_token_can_be_verified_correctly() {
         let secret = "super-secret-token-secret";
 
-        let access_token = create_access_token(Uuid::new_v4(), secret, 1);
+        let access_token = create_token(&Uuid::new_v4(), secret, 1);
 
         assert!(verify_jwt(&access_token, secret).is_ok())
     }
@@ -107,7 +118,7 @@ mod tests {
 
         let another_secret = "fake-secret";
 
-        let access_token = create_access_token(Uuid::new_v4(), another_secret, 1);
+        let access_token = create_token(&Uuid::new_v4(), another_secret, 1);
 
         assert!(verify_jwt(&access_token, secret).is_err())
     }

@@ -4,15 +4,20 @@ use argon2::{
     password_hash::{PasswordHasher, SaltString},
 };
 use base64::{Engine, engine::general_purpose};
-use diesel::result::Error::NotFound;
+use diesel::{QueryDsl, SelectableHelper, result::Error::NotFound};
+use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::{
     app::AppState,
     auth::{AuthenticatedUser, create_token},
-    models::user::User,
+    models::{
+        refresh_tokens::{self, RefreshToken},
+        user::User,
+    },
     util::errors::{AppError, AppResult},
 };
 
@@ -141,7 +146,25 @@ pub async fn logout(
     body: web::Json<LogoutBody>,
     state: web::Data<AppState>,
 ) -> AppResult<OkResponse> {
-    let mut conn = state.db_connection().await?;
+    use crate::schema::refresh_tokens;
 
+    let mut conn = state.db_connection().await?;
     let user_id = authenticated.0;
+    let refresh_token_hash = hex::encode(Sha256::digest(body.refresh_token.as_bytes()));
+
+    let refresh_token: RefreshToken = refresh_tokens::table
+        .find(refresh_token_hash)
+        .select(RefreshToken::as_select())
+        .first(&mut conn)
+        .await
+        .map_err(|_| AppError::Unauthorized)?;
+
+    if refresh_token.user_id != Some(user_id) {
+        return Err(AppError::Unauthorized);
+    }
+
+    match refresh_token.revoke(&mut conn).await {
+        Ok(_) => Ok(OkResponse::default()),
+        Err(_) => Err(AppError::InternalError),
+    }
 }
