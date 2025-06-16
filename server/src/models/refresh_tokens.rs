@@ -1,13 +1,14 @@
 use crate::{auth::create_token, schema::refresh_tokens};
+use bon::Builder;
 use chrono::{Duration, NaiveDateTime, Utc};
-use diesel::{prelude::*, result::Error};
+use diesel::{insert_into, prelude::*};
 use diesel_async::{
     AsyncConnection, AsyncPgConnection, RunQueryDsl, scoped_futures::ScopedFutureExt,
 };
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
-#[derive(Debug, Identifiable, Queryable, Selectable, Insertable)]
+#[derive(Debug, Identifiable, Queryable, Selectable, Insertable, Builder)]
 #[diesel(primary_key(token))]
 pub struct RefreshToken {
     pub token: String,
@@ -20,11 +21,42 @@ pub struct RefreshToken {
 
 impl RefreshToken {
     pub async fn find(conn: &mut AsyncPgConnection, token: &str) -> QueryResult<RefreshToken> {
+        let refresh_token_hash = hex::encode(Sha256::digest(token.as_bytes()));
+
         refresh_tokens::table
-            .find(token)
+            .find(refresh_token_hash)
             .select(RefreshToken::as_select())
             .first(conn)
             .await
+    }
+
+    pub async fn create(
+        conn: &mut AsyncPgConnection,
+        token: &str,
+        user_id: &Uuid,
+        expiration_in_mins: i64,
+    ) -> QueryResult<()> {
+        let refresh_token_hash = hex::encode(Sha256::digest(token.as_bytes()));
+
+        let expires_at = Utc::now() + Duration::minutes(expiration_in_mins);
+
+        let created_at = Utc::now();
+
+        let refresh_token = RefreshToken {
+            token: refresh_token_hash,
+            user_id: Some(*user_id),
+            expires_at: expires_at.naive_utc(),
+            created_at: created_at.naive_utc(),
+            parent_token: None,
+            revoked: false,
+        };
+
+        insert_into(refresh_tokens::table)
+            .values(&refresh_token)
+            .execute(conn)
+            .await?;
+
+        Ok(())
     }
 
     pub async fn issue_new_refresh_token(
@@ -77,16 +109,14 @@ impl RefreshToken {
             user_id: self.user_id,
             expires_at: expires_at.naive_utc(),
             created_at: created_at.naive_utc(),
-            parent_token: None,
+            parent_token: Some(self.token.clone()),
             revoked: false,
         };
 
-        let original_refresh_token = hex::encode(Sha256::digest(self.token.as_bytes()));
-
-        conn.transaction::<(), Error, _>(|conn| {
+        conn.transaction(|conn| {
             async move {
                 diesel::insert_into(refresh_tokens::table)
-                    .values(new_record)
+                    .values(&new_record)
                     .execute(conn)
                     .await?;
 
@@ -95,17 +125,15 @@ impl RefreshToken {
                         refresh_tokens::parent_token.eq(Some(new_refresh_token_hash)),
                         refresh_tokens::revoked.eq(true),
                     ))
-                    .filter(refresh_tokens::token.eq(original_refresh_token))
+                    .filter(refresh_tokens::token.eq(&self.token))
                     .execute(conn)
                     .await?;
 
-                Ok(())
+                Ok(new_refresh_token)
             }
             .scope_boxed()
         })
-        .await?;
-
-        Ok(new_refresh_token)
+        .await
     }
 
     pub async fn revoke_all_user_refresh_tokens(

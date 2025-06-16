@@ -1,5 +1,8 @@
 use actix_web::web::{ServiceConfig, delete, get, post, put, scope};
-use utoipa::OpenApi;
+use utoipa::{
+    Modify, OpenApi,
+    openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme},
+};
 
 use crate::{
     config::Server,
@@ -12,32 +15,52 @@ use crate::{
 };
 
 #[derive(OpenApi)]
-#[openapi(paths(
-    crate::controllers::auth::get_access_token,
-    crate::controllers::auth::get_me,
-    crate::controllers::auth::login,
-    crate::controllers::auth::logout,
-    crate::controllers::auth::refresh,
-    crate::controllers::trip::get_trips,
-    crate::controllers::trip::create_trip,
-    crate::controllers::trip::get_trip,
-    crate::controllers::user::get_users,
-    crate::controllers::user::create_user,
-    crate::controllers::user::get_user,
-    crate::controllers::user::delete_user,
-    crate::controllers::user::update_user,
-))]
+#[openapi(
+    paths(
+        crate::controllers::auth::get_access_token,
+        crate::controllers::auth::get_me,
+        crate::controllers::auth::login,
+        crate::controllers::auth::logout,
+        crate::controllers::auth::refresh,
+        crate::controllers::trip::get_trips,
+        crate::controllers::trip::create_trip,
+        crate::controllers::trip::get_trip,
+        crate::controllers::user::get_users,
+        crate::controllers::user::create_user,
+        crate::controllers::user::get_user,
+        crate::controllers::user::delete_user,
+        crate::controllers::user::update_user,
+    ),
+    modifiers(&SecurityAddon)
+)]
 pub struct ApiDoc;
+
+struct SecurityAddon;
+
+impl Modify for SecurityAddon {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        let components = openapi.components.as_mut().unwrap(); // we can unwrap safely since there already is components registered.
+        components.add_security_scheme(
+            "jwt",
+            SecurityScheme::Http(
+                HttpBuilder::new()
+                    .scheme(HttpAuthScheme::Bearer)
+                    .bearer_format("JWT")
+                    .build(),
+            ),
+        )
+    }
+}
 
 #[rustfmt::skip] // makes formatting more visually pleasing
 pub fn routes(cfg: &mut ServiceConfig, config: Server) {
     cfg.route("/health", get().to(get_health))
         .service(
-            scope("/auth")
-            .route("/login", post().to(login))
-            .route("/logout", post().to(logout))
-            .route("/refresh", post().to(refresh))
-            .route("/me", get().to(get_me))
+            scope("/api/v1/auth")
+                .route("/login", post().to(login))
+                .route("/logout", post().to(logout))
+                .route("/refresh", post().to(refresh))
+                .route("/me", get().to(get_me))
         )
         .service(
             scope("/api/v1/trips")

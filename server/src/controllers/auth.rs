@@ -4,10 +4,8 @@ use argon2::{
     password_hash::{PasswordHasher, SaltString},
 };
 use base64::{Engine, engine::general_purpose};
-use diesel::{QueryDsl, SelectableHelper, result::Error::NotFound};
-use diesel_async::RunQueryDsl;
+use diesel::result::Error::NotFound;
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -70,7 +68,7 @@ pub struct GetMeResponse {
 #[utoipa::path(
     tag = AUTH,
     get,
-    path = "/api/auth/me",
+    path = "/api/v1/auth/me",
     responses(
         (status = 200, description = "Successful response", body = GetMeResponse),
         (status = 404, description = "User not found")
@@ -101,7 +99,7 @@ pub struct LoginResponse {
 #[utoipa::path(
     tag = AUTH,
     post,
-    path = "/api/auth/login",
+    path = "/api/v1/auth/login",
     responses(
         (status = 200, description = "Login was successful", body = LoginResponse)
     ),
@@ -146,10 +144,15 @@ pub async fn login(
                 let refresh_token =
                     create_token(&user.id, &refresh_token_secret, REFRESH_TOKEN_EXPIRATION);
 
-                return Ok(Json(LoginResponse {
-                    access_token,
-                    refresh_token,
-                }));
+                let exp = state.config.jwt_config.refresh_token_expiration;
+
+                return match RefreshToken::create(&mut conn, &refresh_token, &user.id, exp).await {
+                    Ok(_) => Ok(Json(LoginResponse {
+                        access_token,
+                        refresh_token,
+                    })),
+                    Err(_) => Err(AppError::InternalError),
+                };
             }
 
             Err(AppError::Unauthorized)
@@ -167,28 +170,25 @@ pub struct RefreshTokenBody {
 #[utoipa::path(
     tag=AUTH,
     post,
-    path="/api/auth/logout",
+    path="/api/v1/auth/logout",
     responses(
         (status = 200, description = "Logout was successful", body = OkResponse),
         (status = 401, description = "Invalid or missing token"),
         (status = 500, description = "Internal server error"),
     ),
+    security(
+        ("jwt" = [])
+    )
 )]
 pub async fn logout(
     authenticated: AuthenticatedUser,
     body: web::Json<RefreshTokenBody>,
     state: web::Data<AppState>,
 ) -> AppResult<OkResponse> {
-    use crate::schema::refresh_tokens;
-
     let mut conn = state.db_connection().await?;
     let user_id = authenticated.0;
-    let refresh_token_hash = hex::encode(Sha256::digest(body.refresh_token.as_bytes()));
 
-    let refresh_token: RefreshToken = refresh_tokens::table
-        .find(refresh_token_hash)
-        .select(RefreshToken::as_select())
-        .first(&mut conn)
+    let refresh_token = RefreshToken::find(&mut conn, &body.refresh_token)
         .await
         .map_err(|_| AppError::Unauthorized)?;
 
@@ -211,7 +211,7 @@ pub struct RefreshResponse {
 #[utoipa::path(
     tag=AUTH,
     post,
-    path="/api/auth/refresh",
+    path="/api/v1/auth/refresh",
     responses(
         (status = 200, description = "Refresh was succesful", body = RefreshResponse)
     )
@@ -222,15 +222,13 @@ pub async fn refresh(
 ) -> AppResult<Json<RefreshResponse>> {
     let mut conn = state.db_connection().await?;
 
-    use crate::schema::refresh_tokens;
-    let refresh_token_hash = hex::encode(Sha256::digest(body.refresh_token.as_bytes()));
-
-    let refresh_token: RefreshToken = refresh_tokens::table
-        .find(refresh_token_hash)
-        .select(RefreshToken::as_select())
-        .first(&mut conn)
+    let refresh_token = RefreshToken::find(&mut conn, &body.refresh_token)
         .await
         .map_err(|_| AppError::Unauthorized)?;
+
+    if refresh_token.revoked {
+        return Err(AppError::Unauthorized);
+    }
 
     if let Some(user_id) = refresh_token.user_id {
         let secret = &state.config.jwt_config.refresh_secret;
