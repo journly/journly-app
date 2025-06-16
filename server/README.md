@@ -36,7 +36,9 @@ pub async fn test() {
   }
 }
 ```
-This pattern allows us to catch any panics that occur in our test logic so that we can clean up before terminating the test thread. A panic must be called in order for the test to be shown as a failed test case, which is why panic!() is manually called at the end when we check if the test logic produced any errors.
+This pattern allows us to catch any panics that occur in our test logic so that we can clean up before terminating the test thread. 
+
+A panic must be called in order for the test to be shown as a failed test case, which is why `panic!` is manually called at the end when we check if the test logic produced any errors.
 
 ### Running Tests
 To run tests, you first need to build the Postgres container using the Makefile in the project root directory. To do that, run the following command:
