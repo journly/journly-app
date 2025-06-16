@@ -1,3 +1,6 @@
+use std::panic::AssertUnwindSafe;
+
+use futures::FutureExt;
 use journly_server::controllers::{
     auth::{LoginCredentials, LoginResponse, RefreshTokenBody},
     user::CreateUserBody,
@@ -30,229 +33,283 @@ async fn auth_setup(server_addr: &str) {
 #[actix_rt::test]
 pub async fn login_with_valid_credentials_works() {
     let test_app = spawn_app().await;
-    let address = test_app.address.clone();
 
-    auth_setup(&address).await;
+    let result = AssertUnwindSafe(async {
+        let address = test_app.address.clone();
 
-    let client = Client::new();
+        auth_setup(&address).await;
 
-    let credentials = LoginCredentials {
-        email: EMAIL.to_string(),
-        password: PASSWORD.to_string(),
-    };
+        let client = Client::new();
 
-    let response = client
-        .post(format!("{}/auth/login", address))
-        .json(&credentials)
-        .send()
-        .await
-        .expect("Request to POST '/login' failed to resolve");
+        let credentials = LoginCredentials {
+            email: EMAIL.to_string(),
+            password: PASSWORD.to_string(),
+        };
+
+        let response = client
+            .post(format!("{}/auth/login", address))
+            .json(&credentials)
+            .send()
+            .await
+            .expect("Request to POST '/login' failed to resolve");
+
+        assert_eq!(response.status(), StatusCode::OK);
+    })
+    .catch_unwind()
+    .await;
 
     test_app.cleanup().await;
 
-    assert_eq!(response.status(), StatusCode::OK);
+    if result.is_err() {
+        panic!("");
+    }
 }
 
 #[actix_rt::test]
 pub async fn login_with_invalid_credentials_returns_401() {
     let test_app = spawn_app().await;
-    let address = test_app.address.clone();
 
-    auth_setup(&address).await;
+    let result = AssertUnwindSafe(async {
+        let address = test_app.address.clone();
 
-    let client = Client::new();
+        auth_setup(&address).await;
 
-    let wrong_password_credentials = LoginCredentials {
-        email: EMAIL.to_string(),
-        password: "badpassword".to_string(),
-    };
+        let client = Client::new();
 
-    let response = client
-        .post(format!("{}/auth/login", address))
-        .json(&wrong_password_credentials)
-        .send()
-        .await
-        .expect("Request to POST '/login' failed to resolve");
+        let wrong_password_credentials = LoginCredentials {
+            email: EMAIL.to_string(),
+            password: "badpassword".to_string(),
+        };
 
-    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+        let bad_password_response = client
+            .post(format!("{}/auth/login", address))
+            .json(&wrong_password_credentials)
+            .send()
+            .await
+            .expect("Request to POST '/login' failed to resolve");
 
-    let wrong_email_credentials = LoginCredentials {
-        email: "bademail@email.com".to_string(),
-        password: PASSWORD.to_string(),
-    };
+        let wrong_email_credentials = LoginCredentials {
+            email: "bademail@email.com".to_string(),
+            password: PASSWORD.to_string(),
+        };
 
-    let response = client
-        .post(format!("{}/auth/login", address))
-        .json(&wrong_email_credentials)
-        .send()
-        .await
-        .expect("Request to POST '/login' failed to resolve");
+        assert_eq!(bad_password_response.status(), StatusCode::UNAUTHORIZED);
 
-    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+        let bad_email_response = client
+            .post(format!("{}/auth/login", address))
+            .json(&wrong_email_credentials)
+            .send()
+            .await
+            .expect("Request to POST '/login' failed to resolve");
+
+        assert_eq!(bad_email_response.status(), StatusCode::UNAUTHORIZED);
+    })
+    .catch_unwind()
+    .await;
 
     test_app.cleanup().await;
+
+    if result.is_err() {
+        panic!("");
+    }
 }
 
 #[actix_rt::test]
 pub async fn logout_works() {
     let test_app = spawn_app().await;
-    let address = test_app.address.clone();
 
-    auth_setup(&address).await;
+    let result = AssertUnwindSafe(async {
+        let address = test_app.address.clone();
 
-    let client = Client::new();
+        auth_setup(&address).await;
 
-    let credentials = LoginCredentials {
-        email: EMAIL.to_string(),
-        password: PASSWORD.to_string(),
-    };
+        let client = Client::new();
 
-    let response = client
-        .post(format!("{}/auth/login", address))
-        .json(&credentials)
-        .send()
-        .await
-        .expect("Request to POST '/login' failed to resolve");
+        let credentials = LoginCredentials {
+            email: EMAIL.to_string(),
+            password: PASSWORD.to_string(),
+        };
 
-    let response_body = response.text().await.unwrap();
+        let response = client
+            .post(format!("{}/auth/login", address))
+            .json(&credentials)
+            .send()
+            .await
+            .expect("Request to POST '/login' failed to resolve");
 
-    let tokens: LoginResponse =
-        serde_json::from_str(&response_body).expect("Could not parse response body");
+        let response_body = response.text().await.unwrap();
 
-    let logout_req_body = RefreshTokenBody {
-        refresh_token: tokens.refresh_token,
-    };
+        let tokens: LoginResponse =
+            serde_json::from_str(&response_body).expect("Could not parse response body");
 
-    let response = client
-        .post(format!("{}/auth/logout", address))
-        .json(&logout_req_body)
-        .send()
-        .await
-        .expect("Request to POST '/logout' failed to resolve");
+        let logout_req_body = RefreshTokenBody {
+            refresh_token: tokens.refresh_token,
+        };
 
-    assert_eq!(response.status(), StatusCode::OK);
+        let response = client
+            .post(format!("{}/auth/logout", address))
+            .json(&logout_req_body)
+            .send()
+            .await
+            .expect("Request to POST '/logout' failed to resolve");
+
+        assert_eq!(response.status(), StatusCode::OK);
+    })
+    .catch_unwind()
+    .await;
 
     test_app.cleanup().await;
+
+    if result.is_err() {
+        panic!("");
+    }
 }
 
 #[actix_rt::test]
 pub async fn logout_without_tokens_returns_401() {
     let test_app = spawn_app().await;
-    let address = test_app.address.clone();
 
-    auth_setup(&address).await;
+    let result = AssertUnwindSafe(async {
+        let address = test_app.address.clone();
 
-    let client = Client::new();
+        auth_setup(&address).await;
 
-    let credentials = LoginCredentials {
-        email: EMAIL.to_string(),
-        password: PASSWORD.to_string(),
-    };
+        let client = Client::new();
 
-    client
-        .post(format!("{}/auth/login", address))
-        .json(&credentials)
-        .send()
-        .await
-        .expect("Request to POST '/login' failed to resolve");
+        let credentials = LoginCredentials {
+            email: EMAIL.to_string(),
+            password: PASSWORD.to_string(),
+        };
 
-    let response = client
-        .post(format!("{}/auth/logout", address))
-        .send()
-        .await
-        .expect("Request to POST '/logout' failed to resolve");
+        client
+            .post(format!("{}/auth/login", address))
+            .json(&credentials)
+            .send()
+            .await
+            .expect("Request to POST '/login' failed to resolve");
 
-    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+        let response = client
+            .post(format!("{}/auth/logout", address))
+            .send()
+            .await
+            .expect("Request to POST '/logout' failed to resolve");
+
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    })
+    .catch_unwind()
+    .await;
 
     test_app.cleanup().await;
+
+    if result.is_err() {
+        panic!("");
+    }
 }
 
 #[actix_rt::test]
 pub async fn get_access_token_with_refresh_token() {
     let test_app = spawn_app().await;
-    let address = test_app.address.clone();
 
-    auth_setup(&address).await;
+    let result = AssertUnwindSafe(async {
+        let address = test_app.address.clone();
 
-    let client = Client::new();
+        auth_setup(&address).await;
 
-    let credentials = LoginCredentials {
-        email: EMAIL.to_string(),
-        password: PASSWORD.to_string(),
-    };
+        let client = Client::new();
 
-    let response = client
-        .post(format!("{}/auth/login", address))
-        .json(&credentials)
-        .send()
-        .await
-        .expect("Request to POST '/login' failed to resolve");
+        let credentials = LoginCredentials {
+            email: EMAIL.to_string(),
+            password: PASSWORD.to_string(),
+        };
 
-    let response_body = response.text().await.unwrap();
-    let tokens: LoginResponse =
-        serde_json::from_str(&response_body).expect("Could not parse response body");
+        let response = client
+            .post(format!("{}/auth/login", address))
+            .json(&credentials)
+            .send()
+            .await
+            .expect("Request to POST '/login' failed to resolve");
 
-    let refresh_req_body = RefreshTokenBody {
-        refresh_token: tokens.refresh_token,
-    };
+        let response_body = response.text().await.unwrap();
+        let tokens: LoginResponse =
+            serde_json::from_str(&response_body).expect("Could not parse response body");
 
-    let response = client
-        .post(format!("{}/auth/refresh", address))
-        .json(&refresh_req_body)
-        .send()
-        .await
-        .expect("Request to POST '/refresh' failed to resolve");
+        let refresh_req_body = RefreshTokenBody {
+            refresh_token: tokens.refresh_token,
+        };
 
-    assert_eq!(response.status(), StatusCode::OK);
+        let response = client
+            .post(format!("{}/auth/refresh", address))
+            .json(&refresh_req_body)
+            .send()
+            .await
+            .expect("Request to POST '/refresh' failed to resolve");
+
+        assert_eq!(response.status(), StatusCode::OK);
+    })
+    .catch_unwind()
+    .await;
 
     test_app.cleanup().await;
+
+    if result.is_err() {
+        panic!("");
+    }
 }
 
 #[actix_rt::test]
 pub async fn refresh_token_invalidation_works() {
     let test_app = spawn_app().await;
-    let address = test_app.address.clone();
 
-    auth_setup(&address).await;
+    let result = AssertUnwindSafe(async {
+        let address = test_app.address.clone();
 
-    let client = Client::new();
+        auth_setup(&address).await;
 
-    let credentials = LoginCredentials {
-        email: EMAIL.to_string(),
-        password: PASSWORD.to_string(),
-    };
+        let client = Client::new();
 
-    let response = client
-        .post(format!("{}/auth/login", address))
-        .json(&credentials)
-        .send()
-        .await
-        .expect("Request to POST '/login' failed to resolve");
+        let credentials = LoginCredentials {
+            email: EMAIL.to_string(),
+            password: PASSWORD.to_string(),
+        };
 
-    let response_body = response.text().await.unwrap();
+        let response = client
+            .post(format!("{}/auth/login", address))
+            .json(&credentials)
+            .send()
+            .await
+            .expect("Request to POST '/login' failed to resolve");
 
-    let tokens: LoginResponse =
-        serde_json::from_str(&response_body).expect("Could not parse response body");
+        let response_body = response.text().await.unwrap();
 
-    let req_body = RefreshTokenBody {
-        refresh_token: tokens.refresh_token,
-    };
+        let tokens: LoginResponse =
+            serde_json::from_str(&response_body).expect("Could not parse response body");
 
-    client
-        .post(format!("{}/auth/logout", address))
-        .json(&req_body)
-        .send()
-        .await
-        .expect("Request to POST '/logout' failed to resolve");
+        let req_body = RefreshTokenBody {
+            refresh_token: tokens.refresh_token,
+        };
 
-    let response = client
-        .post(format!("{}/auth/refresh", address))
-        .json(&req_body)
-        .send()
-        .await
-        .expect("Request to POST '/refresh' failed to resolve");
+        client
+            .post(format!("{}/auth/logout", address))
+            .json(&req_body)
+            .send()
+            .await
+            .expect("Request to POST '/logout' failed to resolve");
 
-    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+        let response = client
+            .post(format!("{}/auth/refresh", address))
+            .json(&req_body)
+            .send()
+            .await
+            .expect("Request to POST '/refresh' failed to resolve");
+
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    })
+    .catch_unwind()
+    .await;
 
     test_app.cleanup().await;
+
+    if result.is_err() {
+        panic!("");
+    }
 }

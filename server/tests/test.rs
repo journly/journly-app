@@ -48,8 +48,6 @@ pub async fn spawn_app() -> TestApp {
 
     actix_rt::spawn(server);
 
-    eprintln!("TestApp creating db: {db_id}");
-
     TestApp {
         address: format!("http://127.0.0.1:{port}"),
         access_token: create_token(
@@ -85,8 +83,6 @@ impl TestApp {
             .execute(&mut conn)
             .await
             .expect("Could not drop database");
-
-        println!("Dropped test db {}", self.database_id);
     }
 }
 
@@ -188,19 +184,6 @@ async fn load_fixtures(conn: &mut AsyncPgConnection) -> Result<(), diesel::resul
     }
     Ok(())
 }
-
-// CREATE TABLE trips (
-//  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-//  owner_id UUID NOT NULL,
-//  title TEXT,
-//  banner_image TEXT,
-//  start_date DATE,
-//  end_date DATE,
-//  no_collaborators INTEGER NOT NULL DEFAULT 1,
-//  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-//
-//  FOREIGN KEY(owner_id) REFERENCES users(id)
-//);
 
 #[cfg(test)]
 mod api_test;
