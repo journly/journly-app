@@ -19,6 +19,7 @@ pub struct Claims {
     pub sub: Uuid, // user ID
     pub exp: i64,
     pub iat: i64,
+    pub jti: Uuid,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -36,6 +37,7 @@ pub fn create_token(user_id: &Uuid, secret: &str, expiration_in_mins: i64) -> St
         sub: *user_id,
         exp: expiration.timestamp(),
         iat: Utc::now().timestamp(),
+        jti: Uuid::new_v4(),
     };
 
     encode(

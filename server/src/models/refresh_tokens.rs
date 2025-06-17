@@ -121,10 +121,7 @@ impl RefreshToken {
                     .await?;
 
                 diesel::update(refresh_tokens::table)
-                    .set((
-                        refresh_tokens::parent_token.eq(Some(new_refresh_token_hash)),
-                        refresh_tokens::revoked.eq(true),
-                    ))
+                    .set(refresh_tokens::revoked.eq(true))
                     .filter(refresh_tokens::token.eq(&self.token))
                     .execute(conn)
                     .await?;

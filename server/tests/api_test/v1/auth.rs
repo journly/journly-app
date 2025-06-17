@@ -1,3 +1,4 @@
+use crate::{api_test::util::AuthHeader, spawn_app};
 use futures::FutureExt;
 use journly_server::controllers::{
     auth::{LoginCredentials, LoginResponse, RefreshTokenBody},
@@ -5,8 +6,6 @@ use journly_server::controllers::{
 };
 use reqwest::{Client, StatusCode};
 use std::panic::AssertUnwindSafe;
-
-use crate::{api_test::util::AuthHeader, spawn_app};
 
 const USERNAME: &str = "username123";
 const EMAIL: &str = "testuser@email.com";
