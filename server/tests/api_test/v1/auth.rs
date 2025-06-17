@@ -1,11 +1,10 @@
-use std::panic::AssertUnwindSafe;
-
 use futures::FutureExt;
 use journly_server::controllers::{
     auth::{LoginCredentials, LoginResponse, RefreshTokenBody},
     user::CreateUserBody,
 };
 use reqwest::{Client, StatusCode};
+use std::panic::AssertUnwindSafe;
 
 use crate::{api_test::util::AuthHeader, spawn_app};
 
@@ -288,18 +287,21 @@ pub async fn refresh_token_invalidation_works() {
         let tokens: LoginResponse =
             serde_json::from_str(&response_body).expect("Could not parse response body");
 
-        eprintln!("tokens {:?}", tokens);
-
         let req_body = RefreshTokenBody {
             refresh_token: tokens.refresh_token,
         };
 
-        client
+        let auth_header = AuthHeader::new(&tokens.access_token);
+
+        let response = client
             .post(format!("{address}/api/v1/auth/logout"))
             .json(&req_body)
+            .header(auth_header.header_name, auth_header.header_value)
             .send()
             .await
             .expect("Request to POST '/logout' failed to resolve");
+
+        assert_eq!(response.status(), StatusCode::OK);
 
         let response = client
             .post(format!("{address}/api/v1/auth/refresh"))
