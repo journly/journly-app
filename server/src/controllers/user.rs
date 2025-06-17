@@ -29,6 +29,9 @@ pub struct GetUsersResponse {
     path = "/api/v1/users",
     responses(
         (status = 200, description = "Successful Response", body = GetUsersResponse),
+    ),
+    security(
+        ("jwt" = [])
     )
 )]
 pub async fn get_users(
@@ -132,6 +135,9 @@ pub struct GetUserResponse {
     responses(
         (status = 200, description = "Successful Response", body = GetUserResponse),
         (status = 404, description = "User Not Found"),
+    ),
+    security(
+        ("jwt" = [])
     )
 )]
 pub async fn get_user(
@@ -165,6 +171,9 @@ pub async fn get_user(
     path = "/api/v1/users/{user_id}",
     responses(
         (status = 200, description = "Successful Response", body = OkResponse),
+    ),
+    security(
+        ("jwt" = [])
     )
 )]
 pub async fn delete_user(
@@ -199,6 +208,9 @@ pub struct UpdateInformationBody {
     path = "/api/v1/users/{user_id}",
     responses(
         (status = 200, description = "Successful Response", body = OkResponse),
+    ),
+    security(
+        ("jwt" = [])
     )
 )]
 pub async fn update_user(

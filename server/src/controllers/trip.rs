@@ -27,6 +27,9 @@ pub struct GetTripsResponse {
     path = "/api/v1/trips",
     responses(
         (status = 200, description = "Trips were found", body = GetTripsResponse)
+    ),
+    security(
+        ("jwt" = [])
     )
 )]
 pub async fn get_trips(
@@ -61,6 +64,9 @@ pub struct CreateTripBody {
     path = "/api/v1/trips",
     responses(
         (status = 200, description = "Trip was created", body = OkResponse)
+    ),
+    security(
+        ("jwt" = [])
     )
 )]
 pub async fn create_trip(
@@ -99,6 +105,9 @@ pub struct GetTripResponse {
         (status = 200, description = "Trip was found", body = GetTripResponse),
         (status = 401, description = "User unauthorised to get trip"),
         (status = 404, description = "Trip not found")
+    ),
+    security(
+        ("jwt" = [])
     )
 )]
 pub async fn get_trip(
