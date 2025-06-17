@@ -52,7 +52,6 @@ pub async fn get_trip_with_valid_id_returns_trip() {
         let access_token = test_app.access_token.clone();
 
         let trip_id = "c8381024-3f79-4a10-b5fe-06dc24e74bdc";
-
         let client = Client::new();
 
         let auth_header = AuthHeader::new(&access_token);

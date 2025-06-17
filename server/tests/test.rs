@@ -1,4 +1,6 @@
-use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
+use diesel_async::{
+    AsyncConnection, AsyncPgConnection, RunQueryDsl, scoped_futures::ScopedFutureExt,
+};
 use journly_server::{
     app::App,
     auth::create_token,
@@ -40,7 +42,13 @@ pub async fn spawn_app() -> TestApp {
 
     app.run_migrations().await;
     let mut conn = db_pool.clone().get().await.unwrap();
-    load_fixtures(&mut conn).await.unwrap();
+
+    if load_fixtures(&mut conn).await.is_err() {
+        drop_database(&test_app_config.postgres.get_db_url(), &db_id).await;
+
+        panic!("");
+    };
+
     let listener = TcpListener::bind("127.0.0.1:0").expect("Bind failed.");
     let port = listener.local_addr().unwrap().port();
 
@@ -60,33 +68,36 @@ pub async fn spawn_app() -> TestApp {
     }
 }
 
-impl TestApp {
-    pub async fn cleanup(&self) {
-        let pg_url = self.config.postgres.get_db_url();
-        let mut conn = AsyncPgConnection::establish(&pg_url)
-            .await
-            .expect("Could not connect");
+async fn drop_database(db_url: &str, db_id: &str) {
+    let mut conn = AsyncPgConnection::establish(db_url)
+        .await
+        .expect("Could not connect");
 
-        let disconnect_users = format!(
-            "SELECT pg_terminate_backend(pid)
+    let disconnect_users = format!(
+        "SELECT pg_terminate_backend(pid)
             FROM pg_stat_activity
             WHERE datname = '{}';",
-            self.database_id
-        );
+        db_id
+    );
 
-        diesel::sql_query(&disconnect_users)
-            .execute(&mut conn)
-            .await
-            .expect("Could not disconnect");
+    diesel::sql_query(&disconnect_users)
+        .execute(&mut conn)
+        .await
+        .expect("Could not disconnect");
 
-        diesel::sql_query(format!(r#"DROP DATABASE "{}""#, self.database_id))
-            .execute(&mut conn)
-            .await
-            .expect("Could not drop database");
+    diesel::sql_query(format!(r#"DROP DATABASE "{}""#, db_id))
+        .execute(&mut conn)
+        .await
+        .expect("Could not drop database");
+}
+
+impl TestApp {
+    pub async fn cleanup(&self) {
+        drop_database(&self.config.postgres.get_db_url(), &self.database_id).await;
     }
 }
 
-pub async fn configure_database(config: &PgConfig) -> String {
+async fn configure_database(config: &PgConfig) -> String {
     let url = config.get_db_url();
 
     let mut conn = AsyncPgConnection::establish(&url)
@@ -119,7 +130,7 @@ async fn load_fixtures(conn: &mut AsyncPgConnection) -> Result<(), diesel::resul
             email_verification_token,
             token_expires_at
         ) VALUES (
-            '11111111-1111-1111-1111-111111111111'::UUID,
+            '11111111-1111-1111-1111-111111111111',
             'johndoe',
             'johndoe@example.com',
             'hashed_password_123',
@@ -142,7 +153,7 @@ async fn load_fixtures(conn: &mut AsyncPgConnection) -> Result<(), diesel::resul
             email_verification_token,
             token_expires_at
         ) VALUES (
-            '22222222-2222-2222-2222-222222222222'::UUID,
+            '22222222-2222-2222-2222-222222222222',
             'janedoe',
             'janedoe@example.com',
             'hashed_password_456',
@@ -165,7 +176,7 @@ async fn load_fixtures(conn: &mut AsyncPgConnection) -> Result<(), diesel::resul
             email_verification_token,
             token_expires_at
         ) VALUES (
-            '44444444-4444-4444-4444-444444444444'::UUID,
+            '44444444-4444-4444-4444-444444444444',
             'minimaluser',
             'minimal@example.com',
             NULL,
@@ -176,13 +187,47 @@ async fn load_fixtures(conn: &mut AsyncPgConnection) -> Result<(), diesel::resul
             NULL,
             NULL
         );",
-        "INSERT INTO trips VALUES ('c8381024-3f79-4a10-b5fe-06dc24e74bdc'::UUID, '11111111-1111-1111-1111-111111111111'::UUID, 'foo');",
-        "INSERT INTO user_trip VALUES ('11111111-1111-1111-1111-111111111111'::UUID, 'c8381024-3f79-4a10-b5fe-06dc24e74bdc'::UUID);",
+        "INSERT INTO trips (
+            id,
+            owner_id,
+            title
+        ) VALUES (
+            'c8381024-3f79-4a10-b5fe-06dc24e74bdc',
+            '11111111-1111-1111-1111-111111111111',
+            'foo'
+        );",
+        "INSERT INTO user_trip (
+            user_id,
+            trip_id
+        ) VALUES (
+            '11111111-1111-1111-1111-111111111111',
+            'c8381024-3f79-4a10-b5fe-06dc24e74bdc'
+        );",
+        "INSERT INTO budget_planners (
+            trip_id
+        ) VALUES (
+            'c8381024-3f79-4a10-b5fe-06dc24e74bdc'
+        )",
+        "INSERT INTO personal_budgets (
+            trip_id,
+            user_id
+        ) VALUES (
+            'c8381024-3f79-4a10-b5fe-06dc24e74bdc',
+            '11111111-1111-1111-1111-111111111111'
+        )",
     ];
-    for raw in raws {
-        diesel::sql_query(raw).execute(conn).await?;
-    }
-    Ok(())
+
+    conn.transaction(|conn| {
+        async move {
+            for raw in raws {
+                diesel::sql_query(raw).execute(conn).await?;
+            }
+
+            Ok(())
+        }
+        .scope_boxed()
+    })
+    .await
 }
 
 #[cfg(test)]
