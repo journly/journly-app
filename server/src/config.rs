@@ -26,6 +26,7 @@ pub struct Server {
     pub base: BaseConfig,
     pub postgres: PgConfig,
     pub mailgun_smtp: SmtpConfig,
+    pub google_oauth: GoogleOAuthConfig,
     pub jwt_config: JwtConfig,
 }
 
@@ -34,6 +35,13 @@ pub struct SmtpConfig {
     pub smtp_login: Option<String>,
     pub smtp_password: Option<String>,
     pub smtp_server: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct GoogleOAuthConfig {
+    pub client_id: String,
+    pub client_secret: String,
+    pub redirect_url: String,
 }
 
 impl Server {

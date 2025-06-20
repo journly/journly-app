@@ -13,6 +13,7 @@ pub mod config;
 pub mod controllers;
 pub mod db;
 pub mod email;
+pub mod google_oauth;
 pub mod middleware;
 pub mod models;
 pub mod routes;
@@ -50,7 +51,7 @@ pub async fn run(listener: TcpListener, app: Arc<App>) -> Result<Server, std::io
             .wrap(Logger::default())
             .wrap(cors_with_allowed_origins(state.config.clone()))
             .app_data(web::Data::new(state.clone()))
-            .configure(|cfg| routes::routes(cfg, state.config.clone()))
+            .configure(routes::routes)
             .service(SwaggerUi::new("/api-docs/{_:.*}").urls(vec![(
                 Url::new("API", "/api-docs/openapi.json"),
                 ApiDoc::openapi(),

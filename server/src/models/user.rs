@@ -22,10 +22,11 @@ pub struct User {
     pub password_hash: Option<String>,
     pub password_salt: Option<Vec<u8>>,
     pub avatar: Option<String>,
-    pub created_at: Option<DateTime<Utc>>,
-    pub is_verified: Option<bool>,
-    pub email_verification_token: Option<Uuid>,
-    pub token_expires_at: Option<DateTime<Utc>>,
+    pub provider: String,
+    pub role: String,
+    pub verified: bool,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 impl User {

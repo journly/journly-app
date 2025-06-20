@@ -4,20 +4,16 @@ use utoipa::{
     openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme},
 };
 
-use crate::{
-    config::Server,
-    controllers::{
-        auth::{get_access_token, get_me, login, logout, refresh},
-        get_health,
-        trip::{create_trip, get_trip, get_trips},
-        user::{create_user, delete_user, get_user, get_users, update_user},
-    },
+use crate::controllers::{
+    auth::{get_me, login, logout, refresh},
+    get_health,
+    trip::{create_trip, get_trip, get_trips},
+    user::{create_user, delete_user, get_user, get_users, update_user},
 };
 
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        crate::controllers::auth::get_access_token,
         crate::controllers::auth::get_me,
         crate::controllers::auth::login,
         crate::controllers::auth::logout,
@@ -53,7 +49,7 @@ impl Modify for SecurityAddon {
 }
 
 #[rustfmt::skip] // makes formatting more visually pleasing
-pub fn routes(cfg: &mut ServiceConfig, config: Server) {
+pub fn routes(cfg: &mut ServiceConfig ) {
     cfg.route("/health", get().to(get_health))
         .service(
             scope("/api/v1/auth")
@@ -77,10 +73,4 @@ pub fn routes(cfg: &mut ServiceConfig, config: Server) {
                 .route("/{user_id}", put().to(update_user))
         );
 
-    if !config.base.production {
-        cfg.service(
-            scope("/dev")
-            .route("/access-token", get().to(get_access_token))
-        );
-    };
 }

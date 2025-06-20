@@ -235,10 +235,11 @@ diesel::table! {
         password_hash -> Nullable<Text>,
         password_salt -> Nullable<Bytea>,
         avatar -> Nullable<Text>,
-        created_at -> Nullable<Timestamptz>,
-        is_verified -> Nullable<Bool>,
-        email_verification_token -> Nullable<Uuid>,
-        token_expires_at -> Nullable<Timestamptz>,
+        provider -> Text,
+        role -> Text,
+        verified -> Bool,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
     }
 }
 

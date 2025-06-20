@@ -19,6 +19,10 @@ login=""
 password=""
 server=""
 
+[google_oauth]
+client_id=""
+client_secret=""
+
 [jwt_config]
 # secret used to generate/validate access token
 access_secret= "secret-token"

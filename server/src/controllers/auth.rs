@@ -36,30 +36,6 @@ const REFRESH_TOKEN_EXPIRATION: i64 = 10080; // 1 week
 
 const AUTH: &str = "authentication";
 
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
-pub struct GetAccessTokenResponse {
-    pub access_token: String,
-}
-
-#[utoipa::path(
-    tag = "development",
-    post,
-    path = "/api/dev/auth/access-token",
-    description = "",
-    responses(
-        (status = 200, description = "Successful response", body = GetAccessTokenResponse)
-    ),
-)]
-pub async fn get_access_token(
-    state: web::Data<AppState>,
-) -> AppResult<Json<GetAccessTokenResponse>> {
-    let token = create_token(&Uuid::new_v4(), &state.config.jwt_config.access_secret, 10);
-
-    Ok(Json(GetAccessTokenResponse {
-        access_token: token,
-    }))
-}
-
 #[derive(Deserialize, Serialize, ToSchema)]
 pub struct GetMeResponse {
     pub user: EncodableUser,
