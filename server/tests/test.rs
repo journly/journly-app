@@ -43,7 +43,9 @@ pub async fn spawn_app() -> TestApp {
     app.run_migrations().await;
     let mut conn = db_pool.clone().get().await.unwrap();
 
-    if load_fixtures(&mut conn).await.is_err() {
+    if let Err(e) = load_fixtures(&mut conn).await {
+        eprintln!("Error loading fixture: {:?}", e);
+
         drop_database(&test_app_config.postgres.get_db_url(), &db_id).await;
 
         panic!("");
@@ -125,10 +127,7 @@ async fn load_fixtures(conn: &mut AsyncPgConnection) -> Result<(), diesel::resul
             password_hash,
             password_salt,
             avatar,
-            created_at,
-            is_verified,
-            email_verification_token,
-            token_expires_at
+            created_at
         ) VALUES (
             '11111111-1111-1111-1111-111111111111',
             'johndoe',
@@ -136,10 +135,7 @@ async fn load_fixtures(conn: &mut AsyncPgConnection) -> Result<(), diesel::resul
             'hashed_password_123',
             decode('aabbccddeeff', 'hex'),
             'https://example.com/avatars/johndoe.png',
-            '2024-01-01T12:00:00Z',
-            true,
-            NULL,
-            NULL
+            '2024-01-01T12:00:00Z'
         );",
         "INSERT INTO users (
             id,
@@ -148,10 +144,7 @@ async fn load_fixtures(conn: &mut AsyncPgConnection) -> Result<(), diesel::resul
             password_hash,
             password_salt,
             avatar,
-            created_at,
-            is_verified,
-            email_verification_token,
-            token_expires_at
+            created_at
         ) VALUES (
             '22222222-2222-2222-2222-222222222222',
             'janedoe',
@@ -159,10 +152,7 @@ async fn load_fixtures(conn: &mut AsyncPgConnection) -> Result<(), diesel::resul
             'hashed_password_456',
             decode('ffeeddccbbaa', 'hex'),
             NULL,
-            '2024-02-15T09:30:00Z',
-            false,
-            '33333333-3333-3333-3333-333333333333',
-            '2024-02-16T09:30:00Z'
+            '2024-02-15T09:30:00Z'
         );",
         "INSERT INTO users (
             id,
@@ -170,19 +160,11 @@ async fn load_fixtures(conn: &mut AsyncPgConnection) -> Result<(), diesel::resul
             email,
             password_hash,
             password_salt,
-            avatar,
-            created_at,
-            is_verified,
-            email_verification_token,
-            token_expires_at
+            avatar
         ) VALUES (
             '44444444-4444-4444-4444-444444444444',
             'minimaluser',
             'minimal@example.com',
-            NULL,
-            NULL,
-            NULL,
-            NULL,
             NULL,
             NULL,
             NULL

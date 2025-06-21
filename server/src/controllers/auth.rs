@@ -206,6 +206,109 @@ pub async fn login(
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct QueryCode {
+    pub code: String,
+    pub state: String,
+}
+
+// #[utoipa::path(
+//     tag = AUTH,
+//     get,
+//     path = "/api/v1/auth/google",
+//     responses(
+//         (status = 200, description = "Successfully logged in using Google OAuth 2.0", body = LoginResponse)
+//     )
+// )]
+// pub async fn google_oauth(
+//     query: web::Query<QueryCode>,
+//     state: web::Data<AppState>,
+// ) -> AppResult<Json<LoginResponse>> {
+//     let code = &query.code;
+//     let state = &query.state;
+//
+//     if code.is_empty() {
+//         return Err(AppError::Unauthorized);
+//     }
+//
+//     let token_response = request_token(code.as_str(), &data).await;
+//     if token_response.is_err() {
+//         let message = token_response.err().unwrap().to_string();
+//         return Err(AppError::BadGateway);
+//     }
+//
+//     let token_response = token_response.unwrap();
+//     let google_user = get_google_user(&token_response.access_token, &token_response.id_token).await;
+//     if google_user.is_err() {
+//         let message = google_user.err().unwrap().to_string();
+//         return Err(AppError::BadGateway);
+//     }
+//
+//     let google_user = google_user.unwrap();
+//
+//
+//     let mut conn = state.db_connection().await?;
+//
+//     let user_search = diesel
+//
+//     let user_id: String;
+//
+//     if user.is_some() {
+//         let user = user.unwrap();
+//         user_id = user.id.to_owned().unwrap();
+//         user.email = email.to_owned();
+//         user.photo = google_user.picture;
+//         user.updatedAt = Some(Utc::now());
+//     } else {
+//         let datetime = Utc::now();
+//         let id = Uuid::new_v4();
+//         user_id = id.to_owned().to_string();
+//         let user_data = User {
+//             id: Some(id.to_string()),
+//             name: google_user.name,
+//             verified: google_user.verified_email,
+//             email,
+//             provider: "Google".to_string(),
+//             role: "user".to_string(),
+//             password: "".to_string(),
+//             photo: google_user.picture,
+//             createdAt: Some(datetime),
+//             updatedAt: Some(datetime),
+//         };
+//
+//         vec.push(user_data.to_owned());
+//     }
+//
+//     let jwt_secret = data.env.jwt_secret.to_owned();
+//     let now = Utc::now();
+//     let iat = now.timestamp() as usize;
+//     let exp = (now + Duration::minutes(data.env.jwt_max_age)).timestamp() as usize;
+//     let claims: TokenClaims = TokenClaims {
+//         sub: user_id,
+//         exp,
+//         iat,
+//     };
+//
+//     let token = encode(
+//         &Header::default(),
+//         &claims,
+//         &EncodingKey::from_secret(jwt_secret.as_ref()),
+//     )
+//     .unwrap();
+//
+//     let cookie = Cookie::build("token", token)
+//         .path("/")
+//         .max_age(ActixWebDuration::new(60 * data.env.jwt_max_age, 0))
+//         .http_only(true)
+//         .finish();
+//
+//     let frontend_origin = data.env.client_origin.to_owned();
+//     let mut response = HttpResponse::Found();
+//     response.append_header((LOCATION, format!("{}{}", frontend_origin, state)));
+//     response.cookie(cookie);
+//     response.finish()
+// }
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct RefreshTokenBody {
     pub refresh_token: String,
 }

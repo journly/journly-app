@@ -31,7 +31,11 @@ async fn auth_setup(server_addr: &str) {
 pub async fn register_user_with_valid_details_works() {
     let test_app = spawn_app().await;
 
-    let result = AssertUnwindSafe(async {}).catch_unwind().await;
+    let result = AssertUnwindSafe(async {
+        panic!("");
+    })
+    .catch_unwind()
+    .await;
 
     test_app.cleanup().await;
 
@@ -44,7 +48,11 @@ pub async fn register_user_with_valid_details_works() {
 pub async fn register_user_with_invalid_details_returns_400() {
     let test_app = spawn_app().await;
 
-    let result = AssertUnwindSafe(async {}).catch_unwind().await;
+    let result = AssertUnwindSafe(async {
+        panic!("");
+    })
+    .catch_unwind()
+    .await;
 
     test_app.cleanup().await;
 

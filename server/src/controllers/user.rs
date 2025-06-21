@@ -2,19 +2,13 @@ use crate::{
     app::AppState,
     auth::AuthenticatedUser,
     controllers::helper::OkResponse,
-    models::user::{NewUser, User},
+    models::user::User,
     util::errors::{AppError, AppResult},
     views::EncodableUser,
 };
 use actix_web::web::{self, Json};
-use argon2::{
-    Argon2,
-    password_hash::{PasswordHasher, SaltString, rand_core::OsRng},
-};
-use base64::{Engine, engine::general_purpose};
 use diesel::{ExpressionMethods, result::Error::NotFound};
 use diesel_async::RunQueryDsl;
-use regex::Regex;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;

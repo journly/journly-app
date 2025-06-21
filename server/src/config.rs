@@ -19,6 +19,7 @@ pub struct BaseConfig {
     pub ip_address: String,
     pub port: String,
     pub allowed_origins: Vec<String>,
+    pub workers: Option<usize>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
