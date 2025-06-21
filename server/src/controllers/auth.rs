@@ -1,40 +1,101 @@
+use super::helper::OkResponse;
+use crate::{
+    app::AppState,
+    auth::{AuthenticatedUser, create_token},
+    models::{
+        refresh_tokens::RefreshToken,
+        user::{NewUser, User},
+    },
+    util::{
+        auth::is_valid_email,
+        errors::{AppError, AppResult},
+    },
+    views::EncodableUser,
+};
 use actix_web::web::{self, Json};
 use argon2::{
     Argon2,
-    password_hash::{PasswordHasher, SaltString},
+    password_hash::{PasswordHasher, SaltString, rand_core::OsRng},
 };
 use base64::{Engine, engine::general_purpose};
 use diesel::result::Error::NotFound;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
-use uuid::Uuid;
-
-use crate::{
-    app::AppState,
-    auth::{AuthenticatedUser, create_token},
-    models::{refresh_tokens::RefreshToken, user::User},
-    util::errors::{AppError, AppResult},
-    views::EncodableUser,
-};
-
-use super::helper::OkResponse;
-
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
-pub struct LoginCredentials {
-    pub email: String,
-    pub password: String,
-}
-
-pub enum ValidateResult<'a> {
-    Error(&'a str),
-    Found(&'a str),
-}
 
 const ACCESS_TOKEN_EXPIRATION: i64 = 10; // 10 mins
 
 const REFRESH_TOKEN_EXPIRATION: i64 = 10080; // 1 week
 
 const AUTH: &str = "authentication";
+
+pub enum ValidateResult<'a> {
+    Error(&'a str),
+    Found(&'a str),
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct RegisterUserBody {
+    pub username: String,
+    pub email: String,
+    pub password: String,
+}
+
+#[derive(Deserialize, Serialize, ToSchema)]
+pub struct RegisterUserResponse {
+    pub user: EncodableUser,
+}
+
+#[utoipa::path(
+    tag = AUTH,
+    post,
+    path = "/api/v1/auth/register",
+    responses(
+        (status = 200, description = "Successfully registered", body = RegisterUserResponse),
+        (status = 400, description = "Invalid registration details")
+    ),
+)]
+pub async fn register_user(
+    body: web::Json<RegisterUserBody>,
+    state: web::Data<AppState>,
+) -> AppResult<Json<RegisterUserResponse>> {
+    let salt = SaltString::generate(&mut OsRng);
+    let salt_bytes: Vec<u8> = general_purpose::STANDARD_NO_PAD
+        .decode(salt.as_str())
+        .unwrap();
+
+    let argon2 = Argon2::default();
+
+    let password_hash: String;
+    if let Ok(hash) = argon2.hash_password(body.password.as_bytes(), &salt) {
+        password_hash = hash.to_string();
+    } else {
+        return Err(AppError::InternalError);
+    }
+
+    // check email validity
+    if !is_valid_email(&body.email) {
+        return Err(AppError::BadRequest("Malformed email address".to_string()));
+    }
+
+    let new_user = NewUser {
+        username: Some(&body.username),
+        email: Some(&body.email),
+        password_hash: Some(&password_hash),
+        password_salt: Some(&salt_bytes),
+        avatar: None,
+    };
+
+    let mut conn = state.db_connection().await?;
+
+    let result = new_user.insert(&mut conn).await;
+
+    match result {
+        Ok(user) => Ok(Json(RegisterUserResponse {
+            user: EncodableUser::from(user),
+        })),
+        Err(_) => Err(AppError::BadRequest("Email already exists".to_string())),
+    }
+}
 
 #[derive(Deserialize, Serialize, ToSchema)]
 pub struct GetMeResponse {
@@ -64,6 +125,12 @@ pub async fn get_me(
         })),
         Err(_) => Err(AppError::NotFound),
     }
+}
+
+#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+pub struct LoginCredentials {
+    pub email: String,
+    pub password: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]

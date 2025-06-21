@@ -5,15 +5,16 @@ use utoipa::{
 };
 
 use crate::controllers::{
-    auth::{get_me, login, logout, refresh},
+    auth::{get_me, login, logout, refresh, register_user},
     get_health,
     trip::{create_trip, get_trip, get_trips},
-    user::{create_user, delete_user, get_user, get_users, update_user},
+    user::{delete_user, get_user, get_users, update_user},
 };
 
 #[derive(OpenApi)]
 #[openapi(
     paths(
+        crate::controllers::auth::register_user,
         crate::controllers::auth::get_me,
         crate::controllers::auth::login,
         crate::controllers::auth::logout,
@@ -22,7 +23,6 @@ use crate::controllers::{
         crate::controllers::trip::create_trip,
         crate::controllers::trip::get_trip,
         crate::controllers::user::get_users,
-        crate::controllers::user::create_user,
         crate::controllers::user::get_user,
         crate::controllers::user::delete_user,
         crate::controllers::user::update_user,
@@ -56,6 +56,7 @@ pub fn routes(cfg: &mut ServiceConfig ) {
                 .route("/login", post().to(login))
                 .route("/logout", post().to(logout))
                 .route("/refresh", post().to(refresh))
+                .route("/register", post().to(register_user))
                 .route("/me", get().to(get_me))
         )
         .service(
@@ -67,7 +68,6 @@ pub fn routes(cfg: &mut ServiceConfig ) {
         .service(
             scope("/api/v1/users")
                 .route("", get().to(get_users))
-                .route("", post().to(create_user))
                 .route("/{user_id}", get().to(get_user))
                 .route("/{user_id}", delete().to(delete_user))
                 .route("/{user_id}", put().to(update_user))

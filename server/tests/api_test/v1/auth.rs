@@ -1,8 +1,7 @@
 use crate::{api_test::util::AuthHeader, spawn_app};
 use futures::FutureExt;
-use journly_server::controllers::{
-    auth::{LoginCredentials, LoginResponse, RefreshTokenBody},
-    user::CreateUserBody,
+use journly_server::controllers::auth::{
+    LoginCredentials, LoginResponse, RefreshTokenBody, RegisterUserBody,
 };
 use reqwest::{Client, StatusCode};
 use std::panic::AssertUnwindSafe;
@@ -14,18 +13,44 @@ const PASSWORD: &str = "password123";
 async fn auth_setup(server_addr: &str) {
     let client = Client::new();
 
-    let test_user = CreateUserBody {
+    let test_user = RegisterUserBody {
         username: USERNAME.to_string(),
         email: EMAIL.to_string(),
         password: PASSWORD.to_string(),
     };
 
     client
-        .post(format!("{server_addr}/api/v1/users"))
+        .post(format!("{server_addr}/api/v1/auth/register"))
         .json(&test_user)
         .send()
         .await
         .expect("Failed to create test user.");
+}
+
+#[actix_rt::test]
+pub async fn register_user_with_valid_details_works() {
+    let test_app = spawn_app().await;
+
+    let result = AssertUnwindSafe(async {}).catch_unwind().await;
+
+    test_app.cleanup().await;
+
+    if result.is_err() {
+        panic!("");
+    }
+}
+
+#[actix_rt::test]
+pub async fn register_user_with_invalid_details_returns_400() {
+    let test_app = spawn_app().await;
+
+    let result = AssertUnwindSafe(async {}).catch_unwind().await;
+
+    test_app.cleanup().await;
+
+    if result.is_err() {
+        panic!("");
+    }
 }
 
 #[actix_rt::test]

@@ -60,69 +60,6 @@ pub async fn get_users(
     }
 }
 
-#[derive(Deserialize, Serialize, ToSchema)]
-pub struct CreateUserBody {
-    pub username: String,
-    pub email: String,
-    pub password: String,
-}
-
-fn is_valid_email(email: &str) -> bool {
-    let re = Regex::new(r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$").unwrap();
-    re.is_match(email)
-}
-
-#[utoipa::path(
-    tag = "users",
-    post,
-    path = "/api/v1/users",
-    responses(
-        (status = 200, description = "Successful Response", body = OkResponse),
-    )
-)]
-pub async fn create_user(
-    new_user_data: web::Json<CreateUserBody>,
-    state: web::Data<AppState>,
-) -> AppResult<OkResponse> {
-    let new_user_data = new_user_data.into_inner();
-
-    let salt = SaltString::generate(&mut OsRng);
-    let salt_bytes: Vec<u8> = general_purpose::STANDARD_NO_PAD
-        .decode(salt.as_str())
-        .unwrap();
-
-    let argon2 = Argon2::default();
-
-    let password_hash: String;
-    if let Ok(hash) = argon2.hash_password(new_user_data.password.as_bytes(), &salt) {
-        password_hash = hash.to_string();
-    } else {
-        return Err(AppError::InternalError);
-    }
-
-    // check email validity
-    if !is_valid_email(&new_user_data.email) {
-        return Err(AppError::BadRequest("Malformed email address".to_string()));
-    }
-
-    let new_user = NewUser {
-        username: Some(&new_user_data.username),
-        email: Some(&new_user_data.email),
-        password_hash: Some(&password_hash),
-        password_salt: Some(&salt_bytes),
-        avatar: None,
-    };
-
-    let mut conn = state.db_connection().await?;
-
-    let result = new_user.insert(&mut conn).await;
-
-    match result {
-        Ok(_) => Ok(OkResponse::new()),
-        Err(_) => Err(AppError::InternalError),
-    }
-}
-
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct GetUserResponse {
     pub user: EncodableUser,
