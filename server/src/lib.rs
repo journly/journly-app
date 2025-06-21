@@ -44,7 +44,10 @@ fn cors_with_allowed_origins(config: config::Server) -> Cors {
 }
 
 pub async fn run(listener: TcpListener, app: Arc<App>) -> Result<Server, std::io::Error> {
-    let workers = app.config.base.workers;
+    let num_workers = match app.config.base.workers {
+        Some(num) => num,
+        None => std::thread::available_parallelism().unwrap().get(),
+    };
 
     let state = AppState(app);
 
@@ -58,10 +61,10 @@ pub async fn run(listener: TcpListener, app: Arc<App>) -> Result<Server, std::io
                 Url::new("API", "/api-docs/openapi.json"),
                 ApiDoc::openapi(),
             )]))
-    });
-
-    Ok(match workers {
-        Some(num) => server.workers(num).listen(listener)?.run(),
-        None => server.listen(listener)?.run(),
     })
+    .workers(num_workers)
+    .listen(listener)?
+    .run();
+
+    Ok(server)
 }
