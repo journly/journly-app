@@ -60,9 +60,8 @@ pub async fn run(listener: TcpListener, app: Arc<App>) -> Result<Server, std::io
             )]))
     });
 
-    Ok(if let Some(workers) = workers {
-        server.workers(workers).listen(listener)?.run()
-    } else {
-        server.listen(listener)?.run()
+    Ok(match workers {
+        Some(num) => server.workers(num).listen(listener)?.run(),
+        None => server.listen(listener)?.run(),
     })
 }
