@@ -64,6 +64,7 @@ pub async fn spawn_app() -> TestApp {
             &Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap(),
             &access_token_secret,
             10,
+            "admin",
         ),
         database_id: db_id,
         config: test_app_config,
@@ -127,7 +128,8 @@ async fn load_fixtures(conn: &mut AsyncPgConnection) -> Result<(), diesel::resul
             password_hash,
             password_salt,
             avatar,
-            created_at
+            created_at,
+            role
         ) VALUES (
             '11111111-1111-1111-1111-111111111111',
             'johndoe',
@@ -135,7 +137,8 @@ async fn load_fixtures(conn: &mut AsyncPgConnection) -> Result<(), diesel::resul
             'hashed_password_123',
             decode('aabbccddeeff', 'hex'),
             'https://example.com/avatars/johndoe.png',
-            '2024-01-01T12:00:00Z'
+            '2024-01-01T12:00:00Z',
+            'admin'
         );",
         "INSERT INTO users (
             id,

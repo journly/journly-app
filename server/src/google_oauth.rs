@@ -25,7 +25,7 @@ pub struct GoogleUserResult {
 
 pub async fn request_token(
     authorization_code: &str,
-    data: web::Data<AppState>,
+    data: &web::Data<AppState>,
 ) -> Result<OAuthResponse, Box<dyn Error>> {
     let redirect_url = data.config.google_oauth.redirect_url.clone();
     let client_secret = data.config.google_oauth.client_secret.clone();

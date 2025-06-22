@@ -32,7 +32,7 @@ pub async fn register_user_with_valid_details_works() {
     let test_app = spawn_app().await;
 
     let result = AssertUnwindSafe(async {
-        panic!("");
+        auth_setup(&test_app.address).await;
     })
     .catch_unwind()
     .await;
@@ -49,7 +49,39 @@ pub async fn register_user_with_invalid_details_returns_400() {
     let test_app = spawn_app().await;
 
     let result = AssertUnwindSafe(async {
-        panic!("");
+        let client = Client::new();
+
+        let bad_username_user = RegisterUserBody {
+            username: "123d asfd%sfd %|".to_string(),
+            email: EMAIL.to_string(),
+            password: PASSWORD.to_string(),
+        };
+
+        let endpoint = format!("{}/api/v1/auth/register", test_app.address);
+
+        let response = client
+            .post(&endpoint)
+            .json(&bad_username_user)
+            .send()
+            .await
+            .expect("Request to POST '/register' failed to resolve");
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+        let bad_email_user = RegisterUserBody {
+            username: USERNAME.to_string(),
+            email: "12348905".to_string(),
+            password: PASSWORD.to_string(),
+        };
+
+        let response = client
+            .post(endpoint)
+            .json(&bad_email_user)
+            .send()
+            .await
+            .expect("Request to POST '/register' failed to resolve");
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
     })
     .catch_unwind()
     .await;

@@ -23,6 +23,7 @@ pub struct GetUsersResponse {
     path = "/api/v1/users",
     responses(
         (status = 200, description = "Successful Response", body = GetUsersResponse),
+        (status = 403, description = "Insufficient permissions"),
     ),
     security(
         ("jwt" = [])
@@ -32,6 +33,10 @@ pub async fn get_users(
     authenticated: AuthenticatedUser,
     state: web::Data<AppState>,
 ) -> AppResult<Json<GetUsersResponse>> {
+    if !authenticated.is_admin() {
+        return Err(AppError::Forbidden);
+    }
+
     let mut conn = state.db_connection().await?;
 
     let result = User::get_all(&mut conn).await;
@@ -65,7 +70,9 @@ pub struct GetUserResponse {
     path = "/api/v1/users/{user_id}",
     responses(
         (status = 200, description = "Successful Response", body = GetUserResponse),
+        (status = 403, description = "Insufficient permissions"),
         (status = 404, description = "User Not Found"),
+        (status = 500, description = "Internal server error"),
     ),
     security(
         ("jwt" = [])
@@ -76,6 +83,10 @@ pub async fn get_user(
     path: web::Path<Uuid>,
     state: web::Data<AppState>,
 ) -> AppResult<Json<GetUserResponse>> {
+    if !authenticated.is_admin() {
+        return Err(AppError::Forbidden);
+    }
+
     let user_id = path.into_inner();
 
     let mut conn = state.db_connection().await?;
@@ -102,6 +113,9 @@ pub async fn get_user(
     path = "/api/v1/users/{user_id}",
     responses(
         (status = 200, description = "Successful Response", body = OkResponse),
+        (status = 403, description = "Insufficient permissions"),
+        (status = 404, description = "User not found"),
+        (status = 500, description = "Internal server error"),
     ),
     security(
         ("jwt" = [])
@@ -114,13 +128,17 @@ pub async fn delete_user(
 ) -> AppResult<OkResponse> {
     let user_id = path.into_inner();
 
+    if !authenticated.is_admin() && authenticated.user_id != user_id {
+        return Err(AppError::Forbidden);
+    }
+
     let mut conn = state.db_connection().await?;
 
     let result = User::delete(&mut conn, &user_id).await;
 
     match result {
         Ok(_) => Ok(OkResponse::new()),
-        Err(NotFound) => Err(AppError::BadRequest("User not found".to_string())),
+        Err(NotFound) => Err(AppError::NotFound),
         Err(_) => Err(AppError::InternalError),
     }
 }
@@ -139,6 +157,9 @@ pub struct UpdateInformationBody {
     path = "/api/v1/users/{user_id}",
     responses(
         (status = 200, description = "Successful Response", body = OkResponse),
+        (status = 403, description = "Insufficient permissions"),
+        (status = 404, description = "User not found"),
+        (status = 500, description = "Internal server error"),
     ),
     security(
         ("jwt" = [])
@@ -152,6 +173,10 @@ pub async fn update_user(
 ) -> AppResult<OkResponse> {
     let user_id = path.into_inner();
 
+    if !authenticated.is_admin() && authenticated.user_id != user_id {
+        return Err(AppError::Forbidden);
+    }
+
     let mut conn = state.db_connection().await?;
 
     use crate::schema::users::dsl::*;
@@ -164,7 +189,7 @@ pub async fn update_user(
             .await;
 
         if result == Err(NotFound) {
-            return Err(AppError::BadRequest("User not found".to_string()));
+            return Err(AppError::NotFound);
         } else if result.is_err() {
             return Err(AppError::InternalError);
         }
@@ -178,7 +203,7 @@ pub async fn update_user(
             .await;
 
         if result == Err(NotFound) {
-            return Err(AppError::BadRequest("User not found".to_string()));
+            return Err(AppError::NotFound);
         } else if result.is_err() {
             return Err(AppError::InternalError);
         }

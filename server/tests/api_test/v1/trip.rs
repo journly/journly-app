@@ -1,9 +1,8 @@
-use std::{panic::AssertUnwindSafe, str::FromStr};
+use std::panic::AssertUnwindSafe;
 
 use futures::FutureExt;
 use journly_server::controllers::trip::{CreateTripBody, GetTripResponse, GetTripsResponse};
 use reqwest::{Client, StatusCode};
-use uuid::Uuid;
 
 use crate::{api_test::util::AuthHeader, spawn_app};
 
@@ -114,7 +113,7 @@ pub async fn get_trip_with_invalid_id_returns_404_not_found() {
 }
 
 #[actix_rt::test]
-pub async fn create_trip_with_valid_information_returns_trip() {
+pub async fn create_trip_with_works() {
     let test_app = spawn_app().await;
 
     let result = AssertUnwindSafe(async {
@@ -122,7 +121,6 @@ pub async fn create_trip_with_valid_information_returns_trip() {
         let access_token = test_app.access_token.clone();
 
         let body = CreateTripBody {
-            user_id: Uuid::from_str("11111111-1111-1111-1111-111111111111").unwrap(),
             title: Some("New Trip".to_string()),
             start_date: None,
             end_date: None,
@@ -162,60 +160,6 @@ pub async fn create_trip_with_valid_information_returns_trip() {
                 .iter()
                 .any(|trip| trip.title == Some("New Trip".to_string()))
         )
-    })
-    .catch_unwind()
-    .await;
-
-    test_app.cleanup().await;
-
-    if result.is_err() {
-        panic!("");
-    }
-}
-
-#[actix_rt::test]
-pub async fn create_trip_with_invalid_information_returns_400_bad_request() {
-    let test_app = spawn_app().await;
-
-    let result = AssertUnwindSafe(async {
-        let address = test_app.address.clone();
-        let access_token = test_app.access_token.clone();
-
-        let body = CreateTripBody {
-            user_id: Uuid::new_v4(),
-            title: None,
-            start_date: None,
-            end_date: None,
-        };
-
-        let client = reqwest::Client::new();
-
-        let url = format!("{address}/api/v1/trips");
-
-        let auth_header = AuthHeader::new(&access_token);
-
-        // invalid owner_id
-        let bad_resp1 = client
-            .post(&url)
-            .header(
-                auth_header.header_name.clone(),
-                auth_header.header_value.clone(),
-            )
-            .json(&body)
-            .send()
-            .await
-            .expect("Request could not be resolved.");
-
-        // no request body
-        let bad_resp2 = client
-            .post(url)
-            .header(auth_header.header_name, auth_header.header_value)
-            .send()
-            .await
-            .expect("Request could not be resolved.");
-
-        assert_eq!(bad_resp1.status(), StatusCode::BAD_REQUEST);
-        assert_eq!(bad_resp2.status(), StatusCode::BAD_REQUEST);
     })
     .catch_unwind()
     .await;

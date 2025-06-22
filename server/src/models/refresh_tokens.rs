@@ -65,7 +65,7 @@ impl RefreshToken {
         secret: &str,
         expiration_in_mins: i64,
     ) -> QueryResult<String> {
-        let new_refresh_token = create_token(user_id, secret, expiration_in_mins);
+        let new_refresh_token = create_token(user_id, secret, expiration_in_mins, "");
 
         let new_refresh_token_hash = hex::encode(Sha256::digest(new_refresh_token.as_bytes()));
 
@@ -96,7 +96,8 @@ impl RefreshToken {
         secret: &str,
         expiration_in_mins: i64,
     ) -> QueryResult<String> {
-        let new_refresh_token = create_token(&self.user_id.unwrap(), secret, expiration_in_mins);
+        let new_refresh_token =
+            create_token(&self.user_id.unwrap(), secret, expiration_in_mins, "");
 
         let new_refresh_token_hash = hex::encode(Sha256::digest(new_refresh_token.as_bytes()));
 

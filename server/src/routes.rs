@@ -5,7 +5,7 @@ use utoipa::{
 };
 
 use crate::controllers::{
-    auth::{get_me, login, logout, refresh, register_user},
+    auth::{get_me, google_oauth, login, logout, refresh, register_user},
     get_health,
     trip::{create_trip, get_trip, get_trips},
     user::{delete_user, get_user, get_users, update_user},
@@ -57,6 +57,7 @@ pub fn routes(cfg: &mut ServiceConfig ) {
                 .route("/logout", post().to(logout))
                 .route("/refresh", post().to(refresh))
                 .route("/register", post().to(register_user))
+                .route("/google", get().to(google_oauth))
                 .route("/me", get().to(get_me))
         )
         .service(

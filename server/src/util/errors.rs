@@ -15,6 +15,8 @@ pub enum AppError {
     NotFound,
     #[display("bad gateway")]
     BadGateway,
+    #[display("forbidden")]
+    Forbidden,
 }
 
 pub type AppResult<T> = Result<T, AppError>;
@@ -27,6 +29,7 @@ impl ResponseError for AppError {
             Self::Unauthorized => StatusCode::UNAUTHORIZED,
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::BadGateway => StatusCode::BAD_GATEWAY,
+            Self::Forbidden => StatusCode::FORBIDDEN,
         }
     }
 

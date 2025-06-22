@@ -2,17 +2,22 @@ use super::helper::OkResponse;
 use crate::{
     app::AppState,
     auth::{AuthenticatedUser, create_token},
+    google_oauth::{get_google_user, request_token},
     models::{
         refresh_tokens::RefreshToken,
         user::{NewUser, User},
     },
     util::{
-        auth::is_valid_email,
+        auth::{is_valid_email, is_valid_username},
         errors::{AppError, AppResult},
     },
     views::EncodableUser,
 };
-use actix_web::web::{self, Json};
+use actix_web::{
+    HttpResponse,
+    http::header::LOCATION,
+    web::{self, Json},
+};
 use argon2::{
     Argon2,
     password_hash::{PasswordHasher, SaltString, rand_core::OsRng},
@@ -21,10 +26,7 @@ use base64::{Engine, engine::general_purpose};
 use diesel::result::Error::NotFound;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
-
-const ACCESS_TOKEN_EXPIRATION: i64 = 10; // 10 mins
-
-const REFRESH_TOKEN_EXPIRATION: i64 = 10080; // 1 week
+use uuid::Uuid;
 
 const AUTH: &str = "authentication";
 
@@ -72,6 +74,13 @@ pub async fn register_user(
         return Err(AppError::InternalError);
     }
 
+    // check username validity
+    if !is_valid_username(&body.username) {
+        return Err(AppError::BadRequest(
+            "Username cannot contain spaces or non-alphanumeric characters".to_string(),
+        ));
+    }
+
     // check email validity
     if !is_valid_email(&body.email) {
         return Err(AppError::BadRequest("Malformed email address".to_string()));
@@ -83,6 +92,7 @@ pub async fn register_user(
         password_hash: Some(&password_hash),
         password_salt: Some(&salt_bytes),
         avatar: None,
+        provider: Some("local"),
     };
 
     let mut conn = state.db_connection().await?;
@@ -115,7 +125,7 @@ pub async fn get_me(
     authenticated: AuthenticatedUser,
     state: web::Data<AppState>,
 ) -> AppResult<Json<GetMeResponse>> {
-    let user_id = authenticated.0;
+    let user_id = authenticated.user_id;
 
     let mut conn = state.db_connection().await?;
 
@@ -179,17 +189,29 @@ pub async fn login(
             };
 
             if password_hash == user_password_hash.unwrap() {
-                let access_token_secret = state.config.jwt_config.access_secret.clone();
-                let refresh_token_secret = state.config.jwt_config.refresh_secret.clone();
+                let access_token_secret = &state.config.jwt_config.access_secret;
+                let access_token_expiration = state.config.jwt_config.access_token_expiration;
 
-                let access_token =
-                    create_token(&user.id, &access_token_secret, ACCESS_TOKEN_EXPIRATION);
+                let refresh_token_secret = &state.config.jwt_config.refresh_secret;
+                let refresh_token_expiration = state.config.jwt_config.refresh_token_expiration;
+
+                let access_token = create_token(
+                    &user.id,
+                    access_token_secret,
+                    access_token_expiration,
+                    &user.role,
+                );
                 let refresh_token =
-                    create_token(&user.id, &refresh_token_secret, REFRESH_TOKEN_EXPIRATION);
+                    create_token(&user.id, refresh_token_secret, refresh_token_expiration, "");
 
-                let exp = state.config.jwt_config.refresh_token_expiration;
-
-                return match RefreshToken::create(&mut conn, &refresh_token, &user.id, exp).await {
+                return match RefreshToken::create(
+                    &mut conn,
+                    &refresh_token,
+                    &user.id,
+                    refresh_token_expiration,
+                )
+                .await
+                {
                     Ok(_) => Ok(Json(LoginResponse {
                         access_token,
                         refresh_token,
@@ -211,102 +233,121 @@ pub struct QueryCode {
     pub state: String,
 }
 
-// #[utoipa::path(
-//     tag = AUTH,
-//     get,
-//     path = "/api/v1/auth/google",
-//     responses(
-//         (status = 200, description = "Successfully logged in using Google OAuth 2.0", body = LoginResponse)
-//     )
-// )]
-// pub async fn google_oauth(
-//     query: web::Query<QueryCode>,
-//     state: web::Data<AppState>,
-// ) -> AppResult<Json<LoginResponse>> {
-//     let code = &query.code;
-//     let state = &query.state;
-//
-//     if code.is_empty() {
-//         return Err(AppError::Unauthorized);
-//     }
-//
-//     let token_response = request_token(code.as_str(), &data).await;
-//     if token_response.is_err() {
-//         let message = token_response.err().unwrap().to_string();
-//         return Err(AppError::BadGateway);
-//     }
-//
-//     let token_response = token_response.unwrap();
-//     let google_user = get_google_user(&token_response.access_token, &token_response.id_token).await;
-//     if google_user.is_err() {
-//         let message = google_user.err().unwrap().to_string();
-//         return Err(AppError::BadGateway);
-//     }
-//
-//     let google_user = google_user.unwrap();
-//
-//
-//     let mut conn = state.db_connection().await?;
-//
-//     let user_search = diesel
-//
-//     let user_id: String;
-//
-//     if user.is_some() {
-//         let user = user.unwrap();
-//         user_id = user.id.to_owned().unwrap();
-//         user.email = email.to_owned();
-//         user.photo = google_user.picture;
-//         user.updatedAt = Some(Utc::now());
-//     } else {
-//         let datetime = Utc::now();
-//         let id = Uuid::new_v4();
-//         user_id = id.to_owned().to_string();
-//         let user_data = User {
-//             id: Some(id.to_string()),
-//             name: google_user.name,
-//             verified: google_user.verified_email,
-//             email,
-//             provider: "Google".to_string(),
-//             role: "user".to_string(),
-//             password: "".to_string(),
-//             photo: google_user.picture,
-//             createdAt: Some(datetime),
-//             updatedAt: Some(datetime),
-//         };
-//
-//         vec.push(user_data.to_owned());
-//     }
-//
-//     let jwt_secret = data.env.jwt_secret.to_owned();
-//     let now = Utc::now();
-//     let iat = now.timestamp() as usize;
-//     let exp = (now + Duration::minutes(data.env.jwt_max_age)).timestamp() as usize;
-//     let claims: TokenClaims = TokenClaims {
-//         sub: user_id,
-//         exp,
-//         iat,
-//     };
-//
-//     let token = encode(
-//         &Header::default(),
-//         &claims,
-//         &EncodingKey::from_secret(jwt_secret.as_ref()),
-//     )
-//     .unwrap();
-//
-//     let cookie = Cookie::build("token", token)
-//         .path("/")
-//         .max_age(ActixWebDuration::new(60 * data.env.jwt_max_age, 0))
-//         .http_only(true)
-//         .finish();
-//
-//     let frontend_origin = data.env.client_origin.to_owned();
-//     let mut response = HttpResponse::Found();
-//     response.append_header((LOCATION, format!("{}{}", frontend_origin, state)));
-//     response.cookie(cookie);
-//     response.finish()
-// }
+#[utoipa::path(
+    tag = AUTH,
+    get,
+    path = "/api/v1/auth/google",
+    responses(
+        (status = 200, description = "Successfully logged in using Google OAuth 2.0", body = LoginResponse)
+    )
+)]
+pub async fn google_oauth(
+    query: web::Query<QueryCode>,
+    state: web::Data<AppState>,
+) -> AppResult<HttpResponse> {
+    let query_code = &query.code;
+    let query_state = &query.state;
+
+    if query_code.is_empty() {
+        return Err(AppError::Unauthorized);
+    }
+
+    let token_response = request_token(query_code.as_str(), &state).await;
+    if token_response.is_err() {
+        return Err(AppError::BadGateway);
+    }
+
+    let token_response = token_response.unwrap();
+    let google_user = get_google_user(&token_response.access_token, &token_response.id_token).await;
+    if google_user.is_err() {
+        return Err(AppError::BadGateway);
+    }
+
+    let google_user = google_user.unwrap();
+
+    let mut conn = state.db_connection().await?;
+
+    let user_exists = User::find_by_email(&mut conn, &google_user.email).await;
+
+    let user_id: Uuid;
+    let user_role: String;
+
+    match user_exists {
+        Ok(user) => {
+            user_id = user.id;
+
+            user_role = user.role;
+            Ok(())
+        }
+        Err(_) => {
+            let new_user = NewUser {
+                username: Some(&google_user.given_name),
+                email: Some(&google_user.email),
+                password_hash: None,
+                password_salt: None,
+                avatar: None,
+                provider: Some("google"),
+            };
+
+            user_role = "user".to_string();
+
+            match new_user.insert(&mut conn).await {
+                Ok(user) => {
+                    user_id = user.id;
+                    Ok(())
+                }
+                Err(_) => {
+                    // get rid of warning
+                    user_id = Uuid::new_v4();
+                    Err(AppError::InternalError)
+                }
+            }
+        }
+    }?;
+
+    let access_token_secret = &state.config.jwt_config.access_secret;
+    let access_token_expiration = state.config.jwt_config.access_token_expiration;
+
+    let refresh_token_secret = &state.config.jwt_config.refresh_secret;
+    let refresh_token_expiration = state.config.jwt_config.refresh_token_expiration;
+
+    let access_token = create_token(
+        &user_id,
+        access_token_secret,
+        access_token_expiration,
+        &user_role,
+    );
+    let refresh_token = create_token(
+        &user_id,
+        refresh_token_secret,
+        refresh_token_expiration,
+        &user_role,
+    );
+
+    return match RefreshToken::create(
+        &mut conn,
+        &refresh_token,
+        &user_id,
+        refresh_token_expiration,
+    )
+    .await
+    {
+        Ok(_) => {
+            let frontend_origin = &state.config.base.domain_name;
+
+            let response_body = serde_json::to_string(&LoginResponse {
+                access_token,
+                refresh_token,
+            })
+            .unwrap();
+
+            Ok(HttpResponse::Ok()
+                .append_header((LOCATION, format!("{}{}", frontend_origin, query_state)))
+                .body(response_body))
+        }
+        Err(_) => Err(AppError::InternalError),
+    };
+}
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct RefreshTokenBody {
@@ -332,7 +373,7 @@ pub async fn logout(
     state: web::Data<AppState>,
 ) -> AppResult<OkResponse> {
     let mut conn = state.db_connection().await?;
-    let user_id = authenticated.0;
+    let user_id = authenticated.user_id;
 
     let refresh_token = RefreshToken::find(&mut conn, &body.refresh_token)
         .await
@@ -386,7 +427,7 @@ pub async fn refresh(
             .await
         {
             Ok(refresh_token) => {
-                let access_token = create_token(&user_id, secret, access_expiration_time);
+                let access_token = create_token(&user_id, secret, access_expiration_time, "user");
 
                 Ok(Json(RefreshResponse {
                     access_token,

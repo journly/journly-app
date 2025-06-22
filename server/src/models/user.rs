@@ -47,6 +47,7 @@ impl User {
         username: &str,
     ) -> QueryResult<User> {
         users::table
+            .select(User::as_select())
             .filter(users::username.eq(username))
             .first(conn)
             .await
@@ -54,6 +55,7 @@ impl User {
 
     pub async fn find_by_email(conn: &mut AsyncPgConnection, email: &str) -> QueryResult<User> {
         users::table
+            .select(User::as_select())
             .filter(users::email.eq(email))
             .first(conn)
             .await
@@ -84,6 +86,7 @@ pub struct NewUser<'a> {
     pub password_hash: Option<&'a str>,
     pub password_salt: Option<&'a [u8]>,
     pub avatar: Option<&'a str>,
+    pub provider: Option<&'a str>,
 }
 
 impl NewUser<'_> {
