@@ -36,6 +36,10 @@ pub async fn get_trips(
     authenticated: AuthenticatedUser,
     state: web::Data<AppState>,
 ) -> AppResult<Json<GetTripsResponse>> {
+    if authenticated.role != "admin" {
+        return Err(AppError::Unauthorized);
+    }
+
     let mut conn = state.db_connection().await?;
 
     match Trip::get_all(&mut conn).await {
@@ -52,7 +56,6 @@ pub async fn get_trips(
 
 #[derive(Deserialize, Serialize, ToSchema)]
 pub struct CreateTripBody {
-    pub user_id: Uuid,
     pub title: Option<String>,
     pub start_date: Option<NaiveDate>,
     pub end_date: Option<NaiveDate>,
@@ -74,10 +77,12 @@ pub async fn create_trip(
     trip_data: web::Json<CreateTripBody>,
     state: web::Data<AppState>,
 ) -> AppResult<OkResponse> {
+    let user_id = authenticated.user_id;
+
     let mut conn = state.db_connection().await?;
 
     let new_trip = NewTrip {
-        owner_id: &trip_data.user_id,
+        owner_id: &user_id,
         title: trip_data.title.as_deref(),
         start_date: trip_data.start_date.as_ref(),
         end_date: trip_data.end_date.as_ref(),
@@ -119,7 +124,7 @@ pub async fn get_trip(
 
     let mut conn = state.db_connection().await?;
 
-    let user_id = authenticated.0;
+    let user_id = authenticated.user_id;
 
     if !Trip::check_collaborator(&mut conn, &trip_id, &user_id).await {
         return Err(AppError::Unauthorized);

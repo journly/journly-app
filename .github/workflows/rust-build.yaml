@@ -9,17 +9,39 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5431:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           profile: minimal
           override: true
-      
-      - name: Build (Release)
+
+      - name: Wait for PostgreSQL
+        run: |
+          until pg_isready -h localhost -p 5431 -U postgres; do
+            echo "Waiting for postgres..."
+            sleep 1
+          done
+
+      - name: Build and Test
         run: |
           cd server
           cargo test
@@ -29,17 +51,40 @@ jobs:
     name: PR Validation
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5431:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           profile: minimal
           override: true
-      
-      - name: Test
+
+      - name: Wait for PostgreSQL
+        run: |
+          until pg_isready -h localhost -p 5431 -U postgres; do
+            echo "Waiting for postgres..."
+            sleep 1
+          done
+
+      - name: Run Tests
         run: |
           cd server
           cargo test
+

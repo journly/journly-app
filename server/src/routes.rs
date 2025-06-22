@@ -4,20 +4,17 @@ use utoipa::{
     openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme},
 };
 
-use crate::{
-    config::Server,
-    controllers::{
-        auth::{get_access_token, get_me, login, logout, refresh},
-        get_health,
-        trip::{create_trip, get_trip, get_trips},
-        user::{create_user, delete_user, get_user, get_users, update_user},
-    },
+use crate::controllers::{
+    auth::{get_me, google_oauth, login, logout, refresh, register_user},
+    get_health,
+    trip::{create_trip, get_trip, get_trips},
+    user::{delete_user, get_user, get_users, update_user},
 };
 
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        crate::controllers::auth::get_access_token,
+        crate::controllers::auth::register_user,
         crate::controllers::auth::get_me,
         crate::controllers::auth::login,
         crate::controllers::auth::logout,
@@ -26,7 +23,6 @@ use crate::{
         crate::controllers::trip::create_trip,
         crate::controllers::trip::get_trip,
         crate::controllers::user::get_users,
-        crate::controllers::user::create_user,
         crate::controllers::user::get_user,
         crate::controllers::user::delete_user,
         crate::controllers::user::update_user,
@@ -53,13 +49,15 @@ impl Modify for SecurityAddon {
 }
 
 #[rustfmt::skip] // makes formatting more visually pleasing
-pub fn routes(cfg: &mut ServiceConfig, config: Server) {
+pub fn routes(cfg: &mut ServiceConfig ) {
     cfg.route("/health", get().to(get_health))
         .service(
             scope("/api/v1/auth")
                 .route("/login", post().to(login))
                 .route("/logout", post().to(logout))
                 .route("/refresh", post().to(refresh))
+                .route("/register", post().to(register_user))
+                .route("/google", get().to(google_oauth))
                 .route("/me", get().to(get_me))
         )
         .service(
@@ -71,16 +69,9 @@ pub fn routes(cfg: &mut ServiceConfig, config: Server) {
         .service(
             scope("/api/v1/users")
                 .route("", get().to(get_users))
-                .route("", post().to(create_user))
                 .route("/{user_id}", get().to(get_user))
                 .route("/{user_id}", delete().to(delete_user))
                 .route("/{user_id}", put().to(update_user))
         );
 
-    if !config.base.production {
-        cfg.service(
-            scope("/dev")
-            .route("/access-token", get().to(get_access_token))
-        );
-    };
 }

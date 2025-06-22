@@ -14,6 +14,62 @@ git clone https://github.com/journaly-app/journaly-backend.git <DIRECTORY>
 1. Install `docker` and `docker-compose`
 2. Run `docker-compose up -f docker-compose.yaml`
 
+## Configuration
+Configuration can be done through creating a `(CONFIG_FILE_NAME).toml` in the root directory of this project. In `main.rs`, the config struct is built using the `Server::build` function.
+```rust
+    let config = Server::build("config.toml");
+```
+
+This following are properties are required to be set in the coniguration file in order for the server to be runnable:
+```toml
+[base]
+production=false
+domain_name=""
+ip_address=""
+port=0000
+allowed_origins=[""]
+
+[postgres]
+host=""
+user=""
+password=""
+port=0000
+db=""
+
+[mailgun_smtp]
+login=""
+password=""
+server=""
+
+[google_oauth]
+client_id=""
+client_secret=""
+
+[jwt_config]
+access_secret=""
+refresh_secret=""
+algorithm=""
+access_token_expiration=123
+refresh_token_expiration=123
+```
+
+#### JWT Configuration
+**Algorithm** specifies the algorithm used to sign the JWT tokens. Supported algorithms include:
+- HS256 (Default)
+- HS384
+- HS512
+- ES256
+- ES384
+- RS256
+- RS384
+- RS512
+- PS256
+- PS384
+- PS512
+- EdDSA
+
+**Access/refresh token expiration** is in minutes. A good expiration time for access tokens is something short-lived like 5 minutes.
+
 
 ## Testing
 ### Writing Tests
@@ -24,7 +80,7 @@ pub async fn test() {
   let test_app = spawn_app().await;
 
   let result = AssertUnwindSafe(async {
-    // test logic goes here 
+    // test logic goes here
   })
   .catch_unwind()
   .await;
@@ -36,7 +92,7 @@ pub async fn test() {
   }
 }
 ```
-This pattern allows us to catch any panics that occur in our test logic so that we can clean up before terminating the test thread. 
+This pattern allows us to catch any panics that occur in our test logic so that we can clean up before terminating the test thread.
 
 A panic must be called in order for the test to be shown as a failed test case, which is why `panic!` is manually called at the end when we check if the test logic produced any errors.
 

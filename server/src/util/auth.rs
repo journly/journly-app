@@ -1,2 +1,10 @@
+use regex::Regex;
 
+pub fn is_valid_email(email: &str) -> bool {
+    let re = Regex::new(r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$").unwrap();
+    re.is_match(email)
+}
 
+pub fn is_valid_username(s: &str) -> bool {
+    s.chars().all(|c| c.is_alphanumeric())
+}

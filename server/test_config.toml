@@ -4,6 +4,7 @@ domain_name=""
 ip_address=""
 port=0
 allowed_origins=[""]
+workers=1
 
 # Postgres config
 [postgres]
@@ -18,6 +19,11 @@ db="postgres"
 login=""
 password=""
 server=""
+
+[google_oauth]
+client_id=""
+client_secret=""
+redirect_url=""
 
 [jwt_config]
 # secret used to generate/validate access token

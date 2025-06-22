@@ -20,6 +20,7 @@ pub struct Claims {
     pub exp: i64,
     pub iat: i64,
     pub jti: Uuid,
+    pub role: String,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -31,13 +32,14 @@ pub struct JwtConfig {
     pub refresh_token_expiration: i64,
 }
 
-pub fn create_token(user_id: &Uuid, secret: &str, expiration_in_mins: i64) -> String {
+pub fn create_token(user_id: &Uuid, secret: &str, expiration_in_mins: i64, role: &str) -> String {
     let expiration = Utc::now() + Duration::minutes(expiration_in_mins);
     let claims = Claims {
         sub: *user_id,
         exp: expiration.timestamp(),
         iat: Utc::now().timestamp(),
         jti: Uuid::new_v4(),
+        role: role.to_string(),
     };
 
     encode(
@@ -59,7 +61,19 @@ pub fn verify_jwt(
     )
 }
 
-pub struct AuthenticatedUser(pub Uuid); // wrapper for user_id
+pub struct AuthenticatedUser {
+    pub user_id: Uuid,
+    pub role: String,
+}
+
+impl AuthenticatedUser {
+    pub fn is_admin(&self) -> bool {
+        if self.role == "admin" {
+            return true;
+        }
+        false
+    }
+}
 
 impl FromRequest for AuthenticatedUser {
     type Error = Error;
@@ -89,7 +103,10 @@ impl FromRequest for AuthenticatedUser {
                             return ready(Err(ErrorUnauthorized("Invalid token")));
                         }
 
-                        return ready(Ok(AuthenticatedUser(token_data.claims.sub)));
+                        return ready(Ok(AuthenticatedUser {
+                            user_id: token_data.claims.sub,
+                            role: token_data.claims.role,
+                        }));
                     }
                 }
             }
@@ -111,7 +128,7 @@ mod tests {
     fn created_token_can_be_verified_correctly() {
         let secret = "super-secret-token-secret";
 
-        let access_token = create_token(&Uuid::new_v4(), secret, 1);
+        let access_token = create_token(&Uuid::new_v4(), secret, 1, "user");
 
         assert!(verify_jwt(&access_token, secret).is_ok())
     }
@@ -122,7 +139,7 @@ mod tests {
 
         let another_secret = "fake-secret";
 
-        let access_token = create_token(&Uuid::new_v4(), another_secret, 1);
+        let access_token = create_token(&Uuid::new_v4(), another_secret, 1, "user");
 
         assert!(verify_jwt(&access_token, secret).is_err())
     }
