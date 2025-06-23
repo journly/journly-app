@@ -29,7 +29,7 @@ export default function RegisterPage() {
     <div>
       <div className="min-h-screen flex flex-col justify-center items-center px-4">
         <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
-          <h2 className="text-center text-gray-600 text-2xl font-medium">Login</h2>
+          <h2 className="text-center text-gray-600 text-2xl font-medium">Sign Up</h2>
 
           <input
             type="text"
@@ -67,7 +67,7 @@ export default function RegisterPage() {
 
           <div className="text-center text-sm text-gray-500 pt-2">
             Already have an account?{' '}
-            <a href="/register" className="font-semibold text-black hover:underline">
+            <a onClick={() => navigate('/login')} className="font-semibold text-black hover:underline">
               Log in here
             </a>
           </div>

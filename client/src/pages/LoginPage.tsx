@@ -53,7 +53,7 @@ export default function LoginPage() {
 
           <div className="text-center text-sm text-gray-500 pt-2">
             Don’t have an account?{' '}
-            <a href="/register" className="font-semibold text-black hover:underline">
+            <a onClick={() => navigate('/register')} className="font-semibold text-black hover:underline">
               Create a one here
             </a>
           </div>
