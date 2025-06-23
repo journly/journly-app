@@ -120,6 +120,9 @@ pub struct GetMeResponse {
         (status = 200, description = "Successful response", body = GetMeResponse),
         (status = 404, description = "User not found")
     ),
+    security(
+        ("jwt" = [])
+    )
 )]
 pub async fn get_me(
     authenticated: AuthenticatedUser,
@@ -238,7 +241,7 @@ pub struct QueryCode {
     get,
     path = "/api/v1/auth/google",
     responses(
-        (status = 200, description = "Successfully logged in using Google OAuth 2.0", body = LoginResponse)
+        (status = 302, description = "Successfully logged in using Google OAuth 2.0", body = LoginResponse)
     )
 )]
 pub async fn google_oauth(
@@ -254,12 +257,14 @@ pub async fn google_oauth(
 
     let token_response = request_token(query_code.as_str(), &state).await;
     if token_response.is_err() {
+        eprintln!("Token response error");
         return Err(AppError::BadGateway);
     }
 
     let token_response = token_response.unwrap();
     let google_user = get_google_user(&token_response.access_token, &token_response.id_token).await;
     if google_user.is_err() {
+        eprintln!("Google user error");
         return Err(AppError::BadGateway);
     }
 
@@ -333,17 +338,17 @@ pub async fn google_oauth(
     .await
     {
         Ok(_) => {
-            let frontend_origin = &state.config.base.domain_name;
+            let frontend_origin = &state.config.base.frontend_origin;
 
-            let response_body = serde_json::to_string(&LoginResponse {
-                access_token,
-                refresh_token,
-            })
-            .unwrap();
-
-            Ok(HttpResponse::Ok()
-                .append_header((LOCATION, format!("{}{}", frontend_origin, query_state)))
-                .body(response_body))
+            Ok(HttpResponse::Found()
+                .append_header((
+                    LOCATION,
+                    format!(
+                        "{}{}#access_token={}&refresh_token={}",
+                        frontend_origin, query_state, access_token, refresh_token
+                    ),
+                ))
+                .finish())
         }
         Err(_) => Err(AppError::InternalError),
     };

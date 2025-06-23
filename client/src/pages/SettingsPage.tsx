@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   TextField,
   Switch,
@@ -15,10 +15,12 @@ import {
   Key as KeyIcon,
   ArrowLeft as ArrowLeftIcon,
   PencilIcon,
-  MailCheckIcon,
   MailIcon,
+  LogOut as LogOutIcon
 } from "lucide-react";
 import { MenuItem } from "../components/menu/MenuItem";
+import { LogoutConfirmModal } from "../components/LogoutConfirmModal";
+import { useAuth } from "../providers/AuthProvider";
 
 const MENU_STRUCTURE = [
   {
@@ -40,7 +42,7 @@ const MENU_STRUCTURE = [
           <Box component="form" noValidate autoComplete="off" className="max-w-md space-y-6">
             <TextField fullWidth label="Full Name" defaultValue="John Doe" />
           </Box>
-        ),  
+        ),
       },
       {
         key: "invites",
@@ -96,14 +98,22 @@ const MENU_STRUCTURE = [
       },
     ],
   },
+  {
+    key: "logout",
+    label: "Logout",
+    icon: <LogOutIcon />,
+  }
 ];
 
 export default function SettingsPage() {
+  const { logout } = useAuth();
+
   // Start with first main section or first subItem if available
   const firstKey =
     MENU_STRUCTURE[0].subItems?.[0]?.key ?? MENU_STRUCTURE[0].key;
 
   const [activeKey, setActiveKey] = useState(firstKey);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Find active content from menu structure
   let activeContent = null;
@@ -121,45 +131,63 @@ export default function SettingsPage() {
     }
   }
 
+  const handleLogout = async () => {
+    await logout();
+  }
+
+  useEffect(() => {
+    console.log(activeKey)
+  }, [activeKey])
+
   return (
     <div className="flex h-screen bg-gray-50 relative">
-        
+
       <nav className="w-64 bg-white border-r border-gray-200 flex flex-col p-4 overflow-y-auto">
         <h1 className="text-2xl font-semibold text-blue-600 mb-6">Settings</h1>
-        
+
         <div className="flex-1">
-            {MENU_STRUCTURE.map((section) => (
-                <div key={section.key} className="border-b border-gray-200 mb-1">
-                <MenuItem
-                    icon={section.icon}
-                    label={section.label}
-                />
-                {section.subItems && (
-                    <div className="ml-6 mt-2 flex flex-col ">
-                    {section.subItems.map((sub) => (
-                        <MenuItem
-                        key={sub.key}
-                        icon={sub.icon}
-                        label={sub.label}
-                        />
-                    ))}
-                    </div>
-                )}
+          {MENU_STRUCTURE.map((section) => (
+            <div key={section.key} className="border-b border-gray-200 mb-1">
+              <MenuItem
+                icon={section.icon}
+                label={section.label}
+                onClick={section.key == "logout" ? () => setShowLogoutModal(true) : () => setActiveKey(section.key)}
+              />
+              {section.subItems && (
+                <div className="ml-6 mt-2 flex flex-col ">
+                  {section.subItems.map((sub) => (
+                    <MenuItem
+                      key={sub.key}
+                      icon={sub.icon}
+                      label={sub.label}
+                      onClick={() => setActiveKey(sub.key)}
+                    />
+                  ))}
                 </div>
-            ))}
+              )}
+            </div>
+          ))}
         </div>
 
 
         <div className="p-3 border-t border-gray-200">
-            <Button
-                startIcon={<ArrowLeftIcon />}
-                onClick={() => window.history.back()}
-                className="w-full text-left px-3 py-2 border border-gray-200 rounded-md text-sm"
-            >
-                Back
-            </Button>
+          <Button
+            startIcon={<ArrowLeftIcon />}
+            onClick={() => window.history.back()}
+            className="w-full text-left px-3 py-2 border border-gray-200 rounded-md text-sm"
+          >
+            Back
+          </Button>
         </div>
       </nav>
+      <LogoutConfirmModal
+        isOpen={showLogoutModal}
+        onCancel={() => {
+          setShowLogoutModal(false);
+          setActiveKey(firstKey);
+        }}
+        onConfirm={handleLogout}
+      />
 
     </div>
   );
