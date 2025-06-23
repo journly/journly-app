@@ -120,6 +120,9 @@ pub struct GetMeResponse {
         (status = 200, description = "Successful response", body = GetMeResponse),
         (status = 404, description = "User not found")
     ),
+    security(
+        ("jwt" = [])
+    )
 )]
 pub async fn get_me(
     authenticated: AuthenticatedUser,
