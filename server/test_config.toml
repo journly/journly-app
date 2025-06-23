@@ -1,6 +1,7 @@
 [base]
 production=false
 domain_name=""
+frontend_origin=""
 ip_address=""
 port=0
 allowed_origins=[""]
