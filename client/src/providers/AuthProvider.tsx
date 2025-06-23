@@ -17,15 +17,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.getItem('refresh_token') ?? null
   );
 
-  const getAuthApi = () => {
-    console.log(accessToken);
-    return new AuthenticationApi(
+  const getAuthApi = () =>
+    new AuthenticationApi(
       new Configuration({
         basePath: import.meta.env.VITE_API_BASE_URL,
         accessToken: () => accessToken ?? '',
       })
     )
-  };
+    ;
 
   const login = async (creds: LoginCredentials) => {
     const response = await getAuthApi().login(creds);
