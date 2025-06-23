@@ -16,6 +16,7 @@ pub struct PgConfig {
 pub struct BaseConfig {
     pub production: bool,
     pub domain_name: String,
+    pub frontend_origin: String,
     pub ip_address: String,
     pub port: String,
     pub allowed_origins: Vec<String>,

@@ -13,6 +13,7 @@ import { TripProvider } from '../providers/TripProvider';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
+import OAuthCallbackPage from '../pages/oauth/CallbackPage';
 
 
 export default function Router() {
@@ -26,6 +27,7 @@ export default function Router() {
     <Routes>
       <Route path="login" element={<LoginPage />} />
       <Route path="register" element={<RegisterPage />} />
+      <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<DefaultLayout />}>
@@ -46,7 +48,7 @@ export default function Router() {
         <Route path="/settings" element={<SettingsPage />} />
         {/* </Route> */}
       </Route>
-      <Route path="*" element={<Navigate to="/dashboard" />} />
+      <Route path="*" element={<Navigate to="/" />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )

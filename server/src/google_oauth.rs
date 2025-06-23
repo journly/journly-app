@@ -20,7 +20,6 @@ pub struct GoogleUserResult {
     pub given_name: String,
     pub family_name: String,
     pub picture: String,
-    pub locale: String,
 }
 
 pub async fn request_token(
@@ -63,6 +62,8 @@ pub async fn get_google_user(
         .append_pair("access_token", access_token);
 
     let response = client.get(url).bearer_auth(id_token).send().await?;
+
+    eprintln!("get google user response {:?}", response);
 
     if response.status().is_success() {
         let user_info = response.json::<GoogleUserResult>().await?;

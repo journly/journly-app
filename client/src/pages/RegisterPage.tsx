@@ -1,24 +1,45 @@
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { RegisterUserBody, AuthenticationApi, Configuration } from "../api-client";
+import { Navigate, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { RegisterUserBody } from "../api-client";
+import { useAuth } from "../providers/AuthProvider";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
 
-  const apiUrl = import.meta.env.VITE_API_BASE_URL;
-
-  const authApi = new AuthenticationApi(
-    new Configuration({ basePath: apiUrl })
-  );
-
+  const { getAuthApi, checkAuthenticated } = useAuth();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const verify = async () => {
+      try {
+        const ok = await checkAuthenticated();
+        if (!cancelled) setIsAuthenticated(ok);
+      } catch (err) {
+        if (!cancelled) setIsAuthenticated(false);
+      }
+    };
+
+    verify();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [checkAuthenticated]);
+
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await authApi.registerUser({ username, email, password } as RegisterUserBody);
+      await getAuthApi().registerUser({ username, email, password } as RegisterUserBody);
       navigate('/');
     } catch (err) {
       console.error('Register failed', err);

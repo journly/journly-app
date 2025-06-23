@@ -6,7 +6,9 @@ interface AuthContextType {
   refreshToken: string | null;
   checkAuthenticated: () => Promise<boolean>;
   login: (creds: LoginCredentials) => Promise<void>;
+  oAuthLogin: (access_token: string, refresh_token: string) => void;
   logout: () => Promise<void>;
+  getAuthApi: () => AuthenticationApi;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,8 +25,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         basePath: import.meta.env.VITE_API_BASE_URL,
         accessToken: () => accessToken ?? '',
       })
-    )
-    ;
+    );
+
+  const oAuthLogin = (access_token: string, refresh_token: string) => {
+    setAccessToken(access_token);
+    setRefreshToken(refresh_token);
+    localStorage.setItem('refresh_token', refresh_token);
+  }
 
   const login = async (creds: LoginCredentials) => {
     const response = await getAuthApi().login(creds);
@@ -106,8 +113,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         accessToken,
         refreshToken,
         checkAuthenticated,
+        oAuthLogin,
         login,
         logout,
+        getAuthApi
       }}
     >
       {children}
