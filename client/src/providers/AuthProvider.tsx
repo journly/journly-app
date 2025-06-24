@@ -1,5 +1,5 @@
-import { AuthenticationApi, Configuration, LoginCredentials } from '../api-client';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import { AuthenticationApi, Configuration, EncodableUser, LoginCredentials } from '../api-client';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 
 interface AuthContextType {
   accessToken: string | null;
@@ -9,6 +9,7 @@ interface AuthContextType {
   oAuthLogin: (access_token: string, refresh_token: string) => void;
   logout: () => Promise<void>;
   getAuthApi: () => AuthenticationApi;
+  getUser: () => EncodableUser | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,6 +19,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [refreshToken, setRefreshToken] = useState<string | null>(() =>
     localStorage.getItem('refresh_token') ?? null
   );
+  const userRef = useRef<EncodableUser | null>(null);
+
+  const getUser = () => userRef.current;
 
   const getAuthApi = () =>
     new AuthenticationApi(
@@ -77,7 +81,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
-      await getAuthApi().getMe(); // uses current access token
+      let user = await getAuthApi().getMe(); // uses current access token
+
+      userRef.current = user.data.user;
+
       return true;
     } catch (err: any) {
       if (err.response?.status === 401 && refreshToken) {
@@ -116,7 +123,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         oAuthLogin,
         login,
         logout,
-        getAuthApi
+        getAuthApi,
+        getUser
       }}
     >
       {children}

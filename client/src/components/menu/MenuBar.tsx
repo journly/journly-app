@@ -1,16 +1,16 @@
 import { HomeIcon, MapIcon, BookIcon, CompassIcon, SettingsIcon, PlusIcon, ChevronRight, ChevronLeft, SearchIcon, BellIcon, ReceiptIcon, ChartNoAxesColumn, ChartBar, ChartColumnIncreasing } from 'lucide-react';
 import { TripItem } from './TripItem';
 import { MenuItem } from './MenuItem';
-import { Typography, Box, Avatar, List, Drawer, IconButton, Menu } from '@mui/material';
-import { useUser } from '../../providers/UserProvider';
+import { Typography, Box, Avatar, List, IconButton } from '@mui/material';
 import { SearchBar } from '../generic/Search';
 import { useTrips } from '../../providers/TripsProvider';
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import NewTripDialog from '../NewTripDialog';
 import { NotificationPanel } from './NotificationPanel';
+import { useAuth } from '../../providers/AuthProvider';
 export function MenuBar() {
-  const { user } = useUser();
+  const { getUser } = useAuth();
   const { trips } = useTrips();
   const [collapsed, setCollapsed] = useState(false);
   const [openNew, setOpenNew] = useState(false);
@@ -22,9 +22,8 @@ export function MenuBar() {
 
   return (
     <Box
-      className={`transition-all duration-300 ease-in-out ${
-        collapsed ? 'w-14' : 'w-64'
-      } h-screen bg-white border-r border-gray-200`}
+      className={`transition-all duration-300 ease-in-out ${collapsed ? 'w-14' : 'w-64'
+        } h-screen bg-white border-r border-gray-200`}
     >
       {collapsed ? (
         <Box className="flex flex-col items-center py-4 h-full">
@@ -92,19 +91,25 @@ export function MenuBar() {
                 iconColor="text-blue-600"
                 onClick={() => setOpenNew(true)}
               />
-              <NewTripDialog open={openNew} onClose={() => setOpenNew(false)}/>
+              <NewTripDialog open={openNew} onClose={() => setOpenNew(false)} />
             </Box>
           </Box>
           <Box className="p-3 border-t border-gray-200">
-            <MenuItem icon={<BellIcon />} label="Notifications" onClick={() => setOpenNotif(true)}/>
+            <MenuItem icon={<BellIcon />} label="Notifications" onClick={() => setOpenNotif(true)} />
             <MenuItem icon={<SettingsIcon />} label="Settings" link="/settings" />
             <Box className="flex items-center gap-2 px-3 py-2 mt-2">
-              <Avatar className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-medium">
-                {user?.username.charAt(0).toUpperCase() || 'JD'}
-              </Avatar>
+              {getUser()?.avatar ?
+                <Avatar className="w-8 h-8 rounded-full" >
+                  <img src={getUser()?.avatar ?? ""} />
+                </Avatar>
+                :
+                <Avatar className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-medium">
+                  {getUser()?.username.charAt(0).toUpperCase() || 'JD'}
+                </Avatar>
+              }
               <Box className="flex-1">
-                <p className="text-sm font-medium">{user?.username || 'John Doe'}</p>
-                <p className="text-xs text-gray-500">{user?.email || 'john@example.com'}</p>
+                <p className="text-sm font-medium">{getUser()?.username || 'John Doe'}</p>
+                <p className="text-xs text-gray-500">{getUser()?.email || 'john@example.com'}</p>
               </Box>
             </Box>
             <Box className="flex justify-end p-1">
