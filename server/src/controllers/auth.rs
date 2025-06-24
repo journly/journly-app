@@ -290,7 +290,7 @@ pub async fn google_oauth(
                 email: Some(&google_user.email),
                 password_hash: None,
                 password_salt: None,
-                avatar: None,
+                avatar: Some(&google_user.picture),
                 provider: Some("google"),
             };
 
