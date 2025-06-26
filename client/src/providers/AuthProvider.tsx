@@ -1,5 +1,15 @@
+import { jwtDecode } from 'jwt-decode';
 import { AuthenticationApi, Configuration, EncodableUser, LoginCredentials } from '../api-client';
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+
+interface JwtPayload {
+  exp: number;
+}
+
+interface Tokens {
+  access_token: string,
+  refresh_token: string
+}
 
 interface AuthContextType {
   accessToken: string | null;
@@ -20,16 +30,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.getItem('refresh_token') ?? null
   );
   const userRef = useRef<EncodableUser | null>(null);
+  const refreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const getUser = () => userRef.current;
 
-  const getAuthApi = () =>
+  const buildAuthApi = (token: string | null) =>
     new AuthenticationApi(
       new Configuration({
         basePath: import.meta.env.VITE_API_BASE_URL,
-        accessToken: () => accessToken ?? '',
+        accessToken: () => token ?? '',
       })
-    );
+    )
+
+
+  const getAuthApi = () => buildAuthApi(accessToken)
 
   const oAuthLogin = (access_token: string, refresh_token: string) => {
     setAccessToken(access_token);
@@ -39,7 +53,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (creds: LoginCredentials) => {
     const response = await getAuthApi().login(creds);
-    const { access_token, refresh_token } = response.data;
+    const { access_token, refresh_token }: Tokens = response.data;
 
     setAccessToken(access_token);
     setRefreshToken(refresh_token);
@@ -49,22 +63,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     if (refreshToken) {
       await getAuthApi().logout({ refresh_token: refreshToken });
+
+      setAccessToken(null);
+      setRefreshToken(null);
+      localStorage.removeItem('refresh_token');
     }
-    setAccessToken(null);
-    setRefreshToken(null);
-    localStorage.removeItem('refresh_token');
   };
 
-  const refreshAccessToken = async (): Promise<boolean> => {
+  const scheduleTokenRefresh = (access_token: string, refresh_token: string) => {
+    const { exp } = jwtDecode<JwtPayload>(access_token);
+    const expiresInMs = exp * 1000 - Date.now();
+
+    const refreshIn = Math.max(expiresInMs - 60000, 10000);
+
+    if (refreshTimeout.current) {
+      clearTimeout(refreshTimeout.current);
+      refreshTimeout.current = null;
+    }
+
+    refreshTimeout.current = setTimeout(() => {
+      refreshAccessToken(refresh_token);
+    }, refreshIn)
+  }
+
+  const refreshAccessToken = async (refresh: string | null = null): Promise<boolean> => {
     if (!refreshToken) return false;
 
+
     try {
-      const response = await getAuthApi().refresh({ refresh_token: refreshToken });
-      const { access_token, refresh_token } = response.data;
+      const response = await getAuthApi().refresh({ refresh_token: refresh ?? refreshToken });
+      const { access_token, refresh_token }: Tokens = response.data;
+
       setAccessToken(access_token);
       setRefreshToken(refresh_token);
 
       localStorage.setItem('refresh_token', refresh_token);
+
       return true;
     } catch {
       return false;
@@ -78,6 +112,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await logout();
         return false;
       }
+
+      return false;
     }
 
     try {
@@ -109,10 +145,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    if (refreshToken && !accessToken) {
-      refreshAccessToken().catch(() => logout());
+    if (accessToken && refreshToken) {
+      scheduleTokenRefresh(accessToken, refreshToken);
     }
-  }, []);
+
+  }, [accessToken, refreshToken])
+
 
   return (
     <AuthContext.Provider

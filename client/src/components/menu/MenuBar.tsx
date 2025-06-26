@@ -1,11 +1,11 @@
-import { HomeIcon, MapIcon, BookIcon, CompassIcon, SettingsIcon, PlusIcon, ChevronRight, ChevronLeft, SearchIcon, BellIcon, ReceiptIcon, ChartNoAxesColumn, ChartBar, ChartColumnIncreasing } from 'lucide-react';
+import { HomeIcon, MapIcon, BookIcon, CompassIcon, SettingsIcon, PlusIcon, ChevronRight, ChevronLeft, BellIcon, ChartColumnIncreasing } from 'lucide-react';
 import { TripItem } from './TripItem';
 import { MenuItem } from './MenuItem';
 import { Typography, Box, Avatar, List, IconButton } from '@mui/material';
 import { SearchBar } from '../generic/Search';
 import { useTrips } from '../../providers/TripsProvider';
 import { Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import NewTripDialog from '../NewTripDialog';
 import { NotificationPanel } from './NotificationPanel';
 import { useAuth } from '../../providers/AuthProvider';
@@ -96,17 +96,17 @@ export function MenuBar() {
           </Box>
           <Box className="p-3 border-t border-gray-200">
             <MenuItem icon={<BellIcon />} label="Notifications" onClick={() => setOpenNotif(true)} />
-            <MenuItem icon={<SettingsIcon />} label="Settings" link="/settings" />
+            <MenuItem icon={<SettingsIcon />} label="Settings" link="/settings/account" />
             <Box className="flex items-center gap-2 px-3 py-2 mt-2">
-              {getUser()?.avatar ?
-                <Avatar className="w-8 h-8 rounded-full" >
+
+              <Avatar>
+                {getUser()?.avatar ?
                   <img src={getUser()?.avatar ?? ""} />
-                </Avatar>
-                :
-                <Avatar className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-medium">
-                  {getUser()?.username.charAt(0).toUpperCase() || 'JD'}
-                </Avatar>
-              }
+                  :
+                  getUser()?.username.charAt(0).toUpperCase() || 'JD'
+                }
+              </Avatar>
+
               <Box className="flex-1">
                 <p className="text-sm font-medium">{getUser()?.username || 'John Doe'}</p>
                 <p className="text-xs text-gray-500">{getUser()?.email || 'john@example.com'}</p>
