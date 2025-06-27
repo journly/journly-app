@@ -7,6 +7,11 @@ use crate::{
     views::EncodableUser,
 };
 use actix_web::web::{self, Json};
+use argon2::{
+    Argon2,
+    password_hash::{PasswordHasher, SaltString, rand_core::OsRng},
+};
+use base64::{Engine, engine::general_purpose};
 use diesel::{ExpressionMethods, result::Error::NotFound};
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
@@ -159,6 +164,7 @@ pub struct UpdateInformationBody {
         (status = 200, description = "Successful Response", body = OkResponse),
         (status = 403, description = "Insufficient permissions"),
         (status = 404, description = "User not found"),
+        (status = 409, description = "Conflicts with existing resource"),
         (status = 500, description = "Internal server error"),
     ),
     security(
@@ -205,9 +211,106 @@ pub async fn update_user(
         if result == Err(NotFound) {
             return Err(AppError::NotFound);
         } else if result.is_err() {
-            return Err(AppError::InternalError);
+            return Err(AppError::Conflict);
         }
     }
 
     Ok(OkResponse::new())
+}
+
+#[derive(Deserialize, Serialize, ToSchema)]
+pub struct PasswordUpdateRequest {
+    pub current_password: String,
+    pub new_password: String,
+}
+
+#[utoipa::path(
+    tag = "users",
+    put,
+    path = "/api/v1/users/{user_id}/password",
+    request_body = PasswordUpdateRequest,
+    responses(
+        (status = 200, description = "Password updated successfully", body = OkResponse),
+        (status = 403, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("jwt" = []))
+)]
+pub async fn update_user_password(
+    authenticated: AuthenticatedUser,
+    path: web::Path<Uuid>,
+    state: web::Data<AppState>,
+    body: web::Json<PasswordUpdateRequest>,
+) -> AppResult<OkResponse> {
+    let user_id = path.into_inner();
+
+    if authenticated.user_id != user_id {
+        return Err(AppError::Forbidden);
+    }
+
+    let PasswordUpdateRequest {
+        current_password,
+        new_password,
+    } = body.into_inner();
+
+    let mut conn = state.db_connection().await?;
+
+    let result = User::find(&mut conn, &user_id).await;
+
+    if let Ok(user) = result {
+        let user_password_salt = user.password_salt;
+        let user_password_hash = user.password_hash;
+
+        if user_password_hash.is_none() || user_password_salt.is_none() {
+            return Err(AppError::InternalError);
+        }
+
+        let salt = match SaltString::from_b64(
+            &general_purpose::STANDARD_NO_PAD.encode(user_password_salt.unwrap()),
+        ) {
+            Ok(res) => res,
+            _ => return Err(AppError::InternalError),
+        };
+
+        let argon2 = Argon2::default();
+
+        let password_hash = match argon2.hash_password(current_password.as_bytes(), &salt) {
+            Ok(hash) => hash.to_string(),
+            _ => return Err(AppError::InternalError),
+        };
+
+        if password_hash == user_password_hash.unwrap() {
+            use crate::schema::users;
+
+            let salt = SaltString::generate(&mut OsRng);
+            let new_salt_bytes: Vec<u8> = general_purpose::STANDARD_NO_PAD
+                .decode(salt.as_str())
+                .unwrap();
+
+            let argon2 = Argon2::default();
+
+            let new_password_hash: String;
+            if let Ok(hash) = argon2.hash_password(new_password.as_bytes(), &salt) {
+                new_password_hash = hash.to_string();
+            } else {
+                return Err(AppError::InternalError);
+            }
+
+            let update_result = diesel::update(users::table)
+                .filter(users::id.eq(user_id))
+                .set((
+                    users::password_hash.eq(new_password_hash),
+                    users::password_salt.eq(new_salt_bytes),
+                ))
+                .execute(&mut conn)
+                .await;
+
+            return match update_result {
+                Ok(_) => Ok(OkResponse::new()),
+                Err(_) => Err(AppError::InternalError),
+            };
+        }
+    }
+
+    Err(AppError::NotFound)
 }
