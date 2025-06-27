@@ -20,6 +20,8 @@ interface AuthContextType {
   logout: () => Promise<void>;
   getAuthApi: () => AuthenticationApi;
   getUser: () => EncodableUser | null;
+  refreshUser: () => Promise<void>;
+  validatePassword: (password: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -60,6 +62,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('refresh_token', refresh_token);
   };
 
+  const validatePassword = async (password: string) => {
+    if (!userRef.current) return false;
+
+    const credentials: LoginCredentials = {
+      email: userRef.current.email,
+      password
+    }
+
+    try {
+      await getAuthApi().login(credentials)
+
+      console.log("LOGIN PASSED")
+      return true
+    } catch {
+      console.log("LOGIN FAILED")
+      return false
+    }
+  }
+
   const logout = async () => {
     if (refreshToken) {
       await getAuthApi().logout({ refresh_token: refreshToken });
@@ -69,6 +90,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('refresh_token');
     }
   };
+
+  const refreshUser = async () => {
+    try {
+      let user = await getAuthApi().getMe();
+
+      userRef.current = user.data.user;
+    } catch {
+      console.log("Could not refresh user.")
+    }
+  }
 
   const scheduleTokenRefresh = (access_token: string, refresh_token: string) => {
     const { exp } = jwtDecode<JwtPayload>(access_token);
@@ -162,7 +193,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         logout,
         getAuthApi,
-        getUser
+        getUser,
+        refreshUser,
+        validatePassword
       }}
     >
       {children}

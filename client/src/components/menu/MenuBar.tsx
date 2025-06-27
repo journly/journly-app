@@ -9,6 +9,7 @@ import { useState } from 'react';
 import NewTripDialog from '../NewTripDialog';
 import { NotificationPanel } from './NotificationPanel';
 import { useAuth } from '../../providers/AuthProvider';
+
 export function MenuBar() {
   const { getUser } = useAuth();
   const { trips } = useTrips();
