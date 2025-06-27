@@ -1,5 +1,5 @@
 import { Avatar, Box } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Pencil as EditIcon, Undo } from "lucide-react";
 import { SettingsContainer } from "../../components/settings/SettingsContainer";
 import { ChangeEmailModal } from "../../components/settings/ChangeEmailModal";
@@ -19,7 +19,6 @@ export default function MyAccountPage() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
-  const alertTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [alertMessage, setAlertMessage] = useState("");
   const [alertMessageColor, setAlertMessageColor] = useState("")
 
@@ -55,24 +54,10 @@ export default function MyAccountPage() {
     }
   }
 
-  useEffect(() => {
-    if (showAlert) {
-      if (alertTimeoutRef.current) {
-        clearTimeout(alertTimeoutRef.current);
-        alertTimeoutRef.current = null;
-      }
-
-      alertTimeoutRef.current = setTimeout(() => {
-        setShowAlert(false);
-      }, 3000)
-    }
-
-    return () => {
-      if (alertTimeoutRef.current) {
-        clearTimeout(alertTimeoutRef.current)
-      }
-    }
-  }, [showAlert])
+  const onChangePasswordSuccess = () => {
+    triggerAlert("Password successfully updated!", true);
+    setShowPasswordModal(false);
+  }
 
   return (
     <>
@@ -149,9 +134,9 @@ export default function MyAccountPage() {
         </Box>
       </SettingsContainer>
       <ChangeEmailModal onClose={() => setShowEmailModal(false)} isOpen={showEmailModal} onUpdateSuccess={onChangeEmailSuccess} />
-      <ChangePasswordModal onClose={() => setShowPasswordModal(false)} isOpen={showPasswordModal} />
+      <ChangePasswordModal onClose={() => setShowPasswordModal(false)} isOpen={showPasswordModal} onUpdateSuccess={onChangePasswordSuccess} />
       <DeleteAccountModal onClose={() => setShowDeleteAccountModal(false)} isOpen={showDeleteAccountModal} />
-      <AlertDialog visible={showAlert} message={alertMessage} color={alertMessageColor} />
+      <AlertDialog visible={showAlert} message={alertMessage} color={alertMessageColor} toggleVisibility={() => setShowAlert(!showAlert)} />
     </>
   )
 }

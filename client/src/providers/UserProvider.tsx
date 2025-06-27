@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { Configuration, EncodableUser, LoginCredentials, UpdateInformationBody, UsersApi } from "../api-client";
+import { Configuration, EncodableUser, LoginCredentials, PasswordUpdateRequest, UpdateInformationBody, UsersApi } from "../api-client";
 import { useAuth } from "./AuthProvider";
 
 interface UserContextType {
@@ -7,6 +7,7 @@ interface UserContextType {
   fetchUser: () => Promise<void>;
   updateUsername: (newUsername: string) => Promise<boolean>;
   updateEmail: (newEmail: string) => Promise<boolean>;
+  updatePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
   deleteUser: () => Promise<void>;
   validateUserPassword: (password: string) => Promise<boolean>;
 }
@@ -66,6 +67,23 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return await updateUser(updateBody);
   }
 
+  const updatePassword = async (currentPassword: string, newPassword: string) => {
+    if (!user) return false;
+
+    const updateBody: PasswordUpdateRequest = {
+      current_password: currentPassword,
+      new_password: newPassword
+    }
+
+    try {
+      await getUsersApi().updateUserPassword(user.id, updateBody);
+
+      return true
+    } catch {
+      return false
+    }
+  }
+
   const deleteUser = async () => {
     if (!user) return;
 
@@ -103,6 +121,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         fetchUser,
         updateUsername,
         updateEmail,
+        updatePassword,
         deleteUser,
         validateUserPassword
       }}

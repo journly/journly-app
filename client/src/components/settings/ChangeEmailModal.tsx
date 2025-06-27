@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import { ModalContainer } from "./ModalContainer";
 import { AlertDialog } from "./AlertDialog";
 import { useUser } from "../../providers/UserProvider";
@@ -15,7 +15,6 @@ export const ChangeEmailModal: React.FC<ChangeEmailModalProps> = ({ isOpen, onCl
   const [password, setPassword] = useState("");
   const [changeFailed, setChangeFailed] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
-  const failedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const root = document.getElementById('root');
 
@@ -45,25 +44,6 @@ export const ChangeEmailModal: React.FC<ChangeEmailModalProps> = ({ isOpen, onCl
       setChangeFailed(true);
     }
   }
-
-  useEffect(() => {
-    if (changeFailed) {
-      if (failedTimeoutRef.current) {
-        clearTimeout(failedTimeoutRef.current);
-        failedTimeoutRef.current = null;
-      }
-
-      failedTimeoutRef.current = setTimeout(() => {
-        setChangeFailed(false);
-      }, 3000);
-    }
-
-    return (() => {
-      if (failedTimeoutRef.current) {
-        clearTimeout(failedTimeoutRef.current)
-      }
-    })
-  }, [changeFailed])
 
   if (!isOpen) return null;
 
@@ -96,7 +76,7 @@ export const ChangeEmailModal: React.FC<ChangeEmailModalProps> = ({ isOpen, onCl
           </button>
         </div>
       </ModalContainer>
-      <AlertDialog visible={changeFailed} message={alertMessage} color="text-red-500">
+      <AlertDialog visible={changeFailed} message={alertMessage} color="text-red-500" toggleVisibility={() => setChangeFailed(!changeFailed)}>
       </AlertDialog>
     </>
   )

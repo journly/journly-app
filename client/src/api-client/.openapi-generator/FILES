@@ -26,6 +26,7 @@ docs/GetUsersResponse.md
 docs/LoginCredentials.md
 docs/LoginResponse.md
 docs/OkResponse.md
+docs/PasswordUpdateRequest.md
 docs/RefreshResponse.md
 docs/RefreshTokenBody.md
 docs/RegisterUserBody.md
