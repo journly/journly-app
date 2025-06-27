@@ -7,11 +7,11 @@ interface ChangePasswordModalProps {
 }
 
 export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClose }) => {
-  if (!isOpen) return null;
-
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
+
+  if (!isOpen) return null;
 
   return (
     <ModalContainer onClose={onClose}>

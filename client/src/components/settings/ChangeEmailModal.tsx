@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useAuth } from "../../providers/AuthProvider";
 import { ModalContainer } from "./ModalContainer";
-import { Configuration, UsersApi } from "../../api-client";
 import { AlertDialog } from "./AlertDialog";
+import { useUser } from "../../providers/UserProvider";
 
 interface ChangeEmailModalProps {
   isOpen: boolean;
@@ -11,9 +10,7 @@ interface ChangeEmailModalProps {
 }
 
 export const ChangeEmailModal: React.FC<ChangeEmailModalProps> = ({ isOpen, onClose, onUpdateSuccess }) => {
-  if (!isOpen) return null;
-
-  const { getUser, accessToken, validatePassword } = useAuth();
+  const { updateEmail, validateUserPassword } = useUser();
   const [newEmail, setNewEmail] = useState("");
   const [password, setPassword] = useState("");
   const [changeFailed, setChangeFailed] = useState(false);
@@ -25,25 +22,14 @@ export const ChangeEmailModal: React.FC<ChangeEmailModalProps> = ({ isOpen, onCl
   if (!root) return null;
 
   const handleSubmit = async () => {
-    const api = new UsersApi(
-      new Configuration({
-        basePath: import.meta.env.VITE_API_BASE_URL,
-        accessToken: accessToken ?? ""
-      })
-    );
-
-    const userId = getUser()?.id as string;
-
     try {
-      const updateBody = {
-        email: newEmail
-      }
-
-      let res = await validatePassword(password);
+      let res = await validateUserPassword(password);
 
       if (res) {
         try {
-          await api.updateUser(userId, updateBody);
+          let successful = await updateEmail(newEmail);
+
+          if (!successful) throw new Error();
 
           onUpdateSuccess(newEmail);
         } catch {
@@ -78,6 +64,8 @@ export const ChangeEmailModal: React.FC<ChangeEmailModalProps> = ({ isOpen, onCl
       }
     })
   }, [changeFailed])
+
+  if (!isOpen) return null;
 
   return (
     <>
