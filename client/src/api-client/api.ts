@@ -604,6 +604,25 @@ export interface OkResponse {
 /**
  * 
  * @export
+ * @interface PasswordUpdateRequest
+ */
+export interface PasswordUpdateRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof PasswordUpdateRequest
+     */
+    'current_password': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof PasswordUpdateRequest
+     */
+    'new_password': string;
+}
+/**
+ * 
+ * @export
  * @interface RefreshResponse
  */
 export interface RefreshResponse {
@@ -1461,6 +1480,49 @@ export const UsersApiAxiosParamCreator = function (configuration?: Configuration
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @param {string} userId 
+         * @param {PasswordUpdateRequest} passwordUpdateRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateUserPassword: async (userId: string, passwordUpdateRequest: PasswordUpdateRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'userId' is not null or undefined
+            assertParamExists('updateUserPassword', 'userId', userId)
+            // verify required parameter 'passwordUpdateRequest' is not null or undefined
+            assertParamExists('updateUserPassword', 'passwordUpdateRequest', passwordUpdateRequest)
+            const localVarPath = `/api/v1/users/{user_id}/password`
+                .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication jwt required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(passwordUpdateRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -1519,6 +1581,19 @@ export const UsersApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['UsersApi.updateUser']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
+        /**
+         * 
+         * @param {string} userId 
+         * @param {PasswordUpdateRequest} passwordUpdateRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async updateUserPassword(userId: string, passwordUpdateRequest: PasswordUpdateRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<OkResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.updateUserPassword(userId, passwordUpdateRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UsersApi.updateUserPassword']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
     }
 };
 
@@ -1564,6 +1639,16 @@ export const UsersApiFactory = function (configuration?: Configuration, basePath
          */
         updateUser(userId: string, updateInformationBody: UpdateInformationBody, options?: RawAxiosRequestConfig): AxiosPromise<OkResponse> {
             return localVarFp.updateUser(userId, updateInformationBody, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {string} userId 
+         * @param {PasswordUpdateRequest} passwordUpdateRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateUserPassword(userId: string, passwordUpdateRequest: PasswordUpdateRequest, options?: RawAxiosRequestConfig): AxiosPromise<OkResponse> {
+            return localVarFp.updateUserPassword(userId, passwordUpdateRequest, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -1617,6 +1702,18 @@ export class UsersApi extends BaseAPI {
      */
     public updateUser(userId: string, updateInformationBody: UpdateInformationBody, options?: RawAxiosRequestConfig) {
         return UsersApiFp(this.configuration).updateUser(userId, updateInformationBody, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {string} userId 
+     * @param {PasswordUpdateRequest} passwordUpdateRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public updateUserPassword(userId: string, passwordUpdateRequest: PasswordUpdateRequest, options?: RawAxiosRequestConfig) {
+        return UsersApiFp(this.configuration).updateUserPassword(userId, passwordUpdateRequest, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

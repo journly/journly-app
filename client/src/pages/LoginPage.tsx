@@ -43,7 +43,7 @@ export default function LoginPage() {
       await login({ email, password } as LoginCredentials);
       navigate('/');
     } catch (err) {
-      console.error('Login failed', err);
+      return
     }
   };
 

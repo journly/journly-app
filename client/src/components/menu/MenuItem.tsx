@@ -20,8 +20,11 @@ export function MenuItem({
   iconColor,
   onClick
 }: MenuItemProps) {
-  
-  const StyledMenuItem = styled(ButtonBase)<{ active: boolean }>(({ active }) => ({
+
+  const StyledMenuItem = styled(ButtonBase, {
+    shouldForwardProp: (prop) => prop !== 'active'
+  }
+  )<{ active: boolean }>(({ active }) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: "flex-start",
@@ -48,23 +51,23 @@ export function MenuItem({
       to={link}
     >
       {({ isActive }) => (
-      <StyledMenuItem active={link ? isActive : false} onClick={onClick}>
-        <span className={iconColor ?? (link && isActive ? 'text-blue-600' : 'text-gray-500')}>
+        <StyledMenuItem active={link ? isActive : false} onClick={onClick}>
+          <span className={iconColor ?? (link && isActive ? 'text-blue-600' : 'text-gray-500')}>
             {cloneElement(icon, {
-            size: 18
-          })}
+              size: 18
+            })}
           </span>
           {label && (
-          <Box className="flex-1 text-left">
-            <Typography variant="body2" color={textColor}>{label}</Typography>
-            {smallLabel && (
-              <span className="text-xs text-gray-500">
-                {smallLabel}
-              </span>
-            )}
-          </Box>
+            <Box className="flex-1 text-left">
+              <Typography variant="body2" color={textColor}>{label}</Typography>
+              {smallLabel && (
+                <span className="text-xs text-gray-500">
+                  {smallLabel}
+                </span>
+              )}
+            </Box>
           )}
-      </StyledMenuItem>
+        </StyledMenuItem>
       )}
     </NavLink>
   )
