@@ -4,16 +4,17 @@ import { AlertDialog } from "./AlertDialog";
 import { useUser } from "../../providers/UserProvider";
 
 interface ChangeEmailModalProps {
-  isOpen: boolean;
   onClose: () => void;
   onUpdateSuccess: (email: string) => void;
 }
 
-export const ChangeEmailModal: React.FC<ChangeEmailModalProps> = ({ isOpen, onClose, onUpdateSuccess }) => {
+export const ChangeEmailModal: React.FC<ChangeEmailModalProps> = ({ onClose, onUpdateSuccess }) => {
   const { updateEmail, validateUserPassword } = useUser();
   const [newEmail, setNewEmail] = useState("");
+  const [highlightNewEmail, setHighlightNewEmail] = useState(false);
   const [password, setPassword] = useState("");
-  const [changeFailed, setChangeFailed] = useState(false);
+  const [highlightPassword, setHighlightPassword] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
 
   const root = document.getElementById('root');
@@ -21,6 +22,20 @@ export const ChangeEmailModal: React.FC<ChangeEmailModalProps> = ({ isOpen, onCl
   if (!root) return null;
 
   const handleSubmit = async () => {
+    if (!newEmail.length) {
+      setAlertMessage("Email cannot be empty.");
+      setShowAlert(true);
+      setHighlightNewEmail(true);
+      return
+    }
+
+    if (!password.length) {
+      setAlertMessage("Enter your password first.");
+      setShowAlert(true);
+      setHighlightPassword(true);
+      return
+    }
+
     try {
       let res = await validateUserPassword(password);
 
@@ -32,20 +47,19 @@ export const ChangeEmailModal: React.FC<ChangeEmailModalProps> = ({ isOpen, onCl
 
           onUpdateSuccess(newEmail);
         } catch {
-          setChangeFailed(true);
+          setShowAlert(true);
           setAlertMessage("Invalid email.");
         }
       } else {
-        setChangeFailed(true);
+        setShowAlert(true);
+        setHighlightPassword(true);
         setAlertMessage("Password was incorrect.")
       }
 
     } catch {
-      setChangeFailed(true);
+      setShowAlert(true);
     }
   }
-
-  if (!isOpen) return null;
 
   return (
     <>
@@ -57,16 +71,16 @@ export const ChangeEmailModal: React.FC<ChangeEmailModalProps> = ({ isOpen, onCl
             <p className="font-semibold mb-1">Email</p>
             <input
               value={newEmail}
-              onChange={(e) => setNewEmail(e.target.value)}
-              className="border w-80 bg-gray-100 border-gray-200 px-2 py-2 rounded-md"
+              onChange={(e) => { setNewEmail(e.target.value); if (highlightNewEmail) setHighlightNewEmail(false) }}
+              className={"border w-80 bg-gray-100 px-2 py-2 rounded-md " + (highlightNewEmail ? "border-red-500" : "border-gray-200")}
             />
           </div>
           <div>
             <p className="font-semibold mb-1">Password</p>
             <input
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="border w-80 bg-gray-100 border-gray-200 px-2 rounded-md py-2"
+              onChange={(e) => { setPassword(e.target.value); if (highlightPassword) setHighlightPassword(false) }}
+              className={"border w-80 bg-gray-100 px-2 rounded-md py-2 " + (highlightPassword ? "border-red-500" : "border-gray-200")}
               type="password"
             />
           </div>
@@ -76,7 +90,7 @@ export const ChangeEmailModal: React.FC<ChangeEmailModalProps> = ({ isOpen, onCl
           </button>
         </div>
       </ModalContainer>
-      <AlertDialog visible={changeFailed} message={alertMessage} color="text-red-500" toggleVisibility={() => setChangeFailed(!changeFailed)}>
+      <AlertDialog visible={showAlert} message={alertMessage} color="text-red-500" toggleVisibility={() => setShowAlert(!showAlert)}>
       </AlertDialog>
     </>
   )

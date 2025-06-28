@@ -133,9 +133,9 @@ export default function MyAccountPage() {
           </Box>
         </Box>
       </SettingsContainer>
-      <ChangeEmailModal onClose={() => setShowEmailModal(false)} isOpen={showEmailModal} onUpdateSuccess={onChangeEmailSuccess} />
-      <ChangePasswordModal onClose={() => setShowPasswordModal(false)} isOpen={showPasswordModal} onUpdateSuccess={onChangePasswordSuccess} />
-      <DeleteAccountModal onClose={() => setShowDeleteAccountModal(false)} isOpen={showDeleteAccountModal} />
+      {showEmailModal && <ChangeEmailModal onClose={() => setShowEmailModal(false)} onUpdateSuccess={onChangeEmailSuccess} />}
+      {showPasswordModal && <ChangePasswordModal onClose={() => setShowPasswordModal(false)} onUpdateSuccess={onChangePasswordSuccess} />}
+      {showDeleteAccountModal && <DeleteAccountModal onClose={() => setShowDeleteAccountModal(false)} />}
       <AlertDialog visible={showAlert} message={alertMessage} color={alertMessageColor} toggleVisibility={() => setShowAlert(!showAlert)} />
     </>
   )

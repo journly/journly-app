@@ -2,14 +2,11 @@ import { useState } from "react";
 import { ModalContainer } from "./ModalContainer";
 
 interface DeleteAccountModalProps {
-  isOpen: boolean;
   onClose: () => void;
 }
 
-export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({ isOpen, onClose }) => {
+export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({ onClose }) => {
   const [password, setPassword] = useState("");
-
-  if (!isOpen) return null;
 
   return (
     <ModalContainer onClose={onClose}>

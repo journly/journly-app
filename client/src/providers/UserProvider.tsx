@@ -112,8 +112,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
-
-
   return (
     <UserContext.Provider
       value={{
