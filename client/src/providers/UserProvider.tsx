@@ -8,6 +8,7 @@ interface UserContextType {
   updateUsername: (newUsername: string) => Promise<boolean>;
   updateEmail: (newEmail: string) => Promise<boolean>;
   updatePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
+  updateProfilePicture: (file: File) => Promise<boolean>;
   deleteUser: () => Promise<void>;
   validateUserPassword: (password: string) => Promise<boolean>;
 }
@@ -43,7 +44,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       await getUsersApi().updateUser(user.id, data);
-
       fetchUser()
       return true
     } catch {
@@ -78,6 +78,19 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await getUsersApi().updateUserPassword(user.id, updateBody);
 
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  const updateProfilePicture = async (file: File) => {
+    if (!user) return false;
+
+    try {
+      await getUsersApi().changeProfilePicture(user.id, file);
+
+      fetchUser();
       return true
     } catch {
       return false
@@ -120,6 +133,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updateUsername,
         updateEmail,
         updatePassword,
+        updateProfilePicture,
         deleteUser,
         validateUserPassword
       }}

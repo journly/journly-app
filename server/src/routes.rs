@@ -8,7 +8,9 @@ use crate::controllers::{
     auth::{get_me, google_oauth, login, logout, refresh, register_user},
     get_health,
     trip::{create_trip, get_trip, get_trips},
-    user::{delete_user, get_user, get_users, update_user, update_user_password},
+    user::{
+        change_profile_picture, delete_user, get_user, get_users, update_user, update_user_password,
+    },
 };
 
 #[derive(OpenApi)]
@@ -26,7 +28,8 @@ use crate::controllers::{
         crate::controllers::user::get_user,
         crate::controllers::user::delete_user,
         crate::controllers::user::update_user,
-        crate::controllers::user::update_user_password
+        crate::controllers::user::update_user_password,
+        crate::controllers::user::change_profile_picture
     ),
     modifiers(&SecurityAddon)
 )]
@@ -74,5 +77,6 @@ pub fn routes(cfg: &mut ServiceConfig ) {
                 .route("/{user_id}", delete().to(delete_user))
                 .route("/{user_id}", put().to(update_user))
                 .route("/{user_id}/password", put().to(update_user_password))
+                .route("/{user_id}/profile-picture", put().to(change_profile_picture))
         );
 }

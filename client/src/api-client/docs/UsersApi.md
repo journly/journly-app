@@ -4,11 +4,70 @@ All URIs are relative to *http://localhost*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
+|[**changeProfilePicture**](#changeprofilepicture) | **PUT** /api/v1/users/{user_id}/profile-picture | Upload or replace a user\&#39;s profile picture|
 |[**deleteUser**](#deleteuser) | **DELETE** /api/v1/users/{user_id} | |
 |[**getUser**](#getuser) | **GET** /api/v1/users/{user_id} | |
 |[**getUsers**](#getusers) | **GET** /api/v1/users | |
 |[**updateUser**](#updateuser) | **PUT** /api/v1/users/{user_id} | |
 |[**updateUserPassword**](#updateuserpassword) | **PUT** /api/v1/users/{user_id}/password | |
+
+# **changeProfilePicture**
+> OkResponse changeProfilePicture()
+
+
+### Example
+
+```typescript
+import {
+    UsersApi,
+    Configuration
+} from './api';
+
+const configuration = new Configuration();
+const apiInstance = new UsersApi(configuration);
+
+let userId: string; //ID of the user whose profile picture is being changed (default to undefined)
+let file: File; // (default to undefined)
+
+const { status, data } = await apiInstance.changeProfilePicture(
+    userId,
+    file
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **userId** | [**string**] | ID of the user whose profile picture is being changed | defaults to undefined|
+| **file** | [**File**] |  | defaults to undefined|
+
+
+### Return type
+
+**OkResponse**
+
+### Authorization
+
+[jwt](../README.md#jwt)
+
+### HTTP request headers
+
+ - **Content-Type**: multipart/form-data
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Profile picture updated successfully |  -  |
+|**400** | Invalid file |  -  |
+|**403** | Unauthorized |  -  |
+|**404** | User not found |  -  |
+|**409** | Update conflict |  -  |
+|**500** | Internal server error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **deleteUser**
 > OkResponse deleteUser()
