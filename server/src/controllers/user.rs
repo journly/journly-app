@@ -3,9 +3,11 @@ use crate::{
     auth::AuthenticatedUser,
     controllers::helper::OkResponse,
     models::user::User,
+    s3_client::get_file_extension,
     util::errors::{AppError, AppResult},
     views::EncodableUser,
 };
+use actix_multipart::form::{MultipartForm, tempfile::TempFile};
 use actix_web::web::{self, Json};
 use argon2::{
     Argon2,
@@ -228,7 +230,6 @@ pub struct PasswordUpdateRequest {
     tag = "users",
     put,
     path = "/api/v1/users/{user_id}/password",
-    request_body = PasswordUpdateRequest,
     responses(
         (status = 200, description = "Password updated successfully", body = OkResponse),
         (status = 403, description = "Unauthorized"),
@@ -313,4 +314,118 @@ pub async fn update_user_password(
     }
 
     Err(AppError::NotFound)
+}
+
+#[derive(Debug, MultipartForm, ToSchema)]
+pub struct UploadForm {
+    #[multipart(limit = "1MB")]
+    #[schema(value_type = String, format = Binary, content_media_type = "application/octet-stream")]
+    pub file: TempFile,
+}
+
+#[utoipa::path(
+    tag = "users",
+    put,
+    path = "/api/v1/users/{user_id}/profile-picture",
+    summary = "Upload or replace a user's profile picture",
+    params(
+        ("user_id" = Uuid, Path, description = "ID of the user whose profile picture is being changed")
+    ),
+    request_body(
+        content = UploadForm,
+        content_type = "multipart/form-data",
+        description = "Image file to upload as profile picture",
+    ),
+    responses(
+        (status = 200, description = "Profile picture updated successfully", body = OkResponse),
+        (status = 400, description = "Invalid file"),
+        (status = 403, description = "Unauthorized"),
+        (status = 404, description = "User not found"),
+        (status = 409, description = "Update conflict"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("jwt" = []))
+)]
+pub async fn change_profile_picture(
+    authenticated: AuthenticatedUser,
+    path: web::Path<Uuid>,
+    MultipartForm(form): MultipartForm<UploadForm>,
+    state: web::Data<AppState>,
+) -> AppResult<OkResponse> {
+    let user_id = path.into_inner();
+
+    if authenticated.user_id != user_id {
+        return Err(AppError::Forbidden);
+    }
+
+    let mut conn = state.db_connection().await?;
+
+    let result = User::find(&mut conn, &user_id).await;
+
+    match result {
+        Ok(user) => {
+            let file = form.file;
+
+            let content_type = file.content_type.clone();
+
+            if content_type.is_none() {
+                return Err(AppError::BadRequest("Invalid file type.".to_string()));
+            };
+
+            match content_type.unwrap().type_() {
+                mime::IMAGE => {
+                    let key_prefix = "pfp";
+
+                    // upload new pfp
+                    let mut file_ext = get_file_extension(&file);
+
+                    println!("extension {file_ext}");
+
+                    if file_ext == "jpg" {
+                        file_ext = "jpeg".to_string();
+                    }
+
+                    println!("extension now {file_ext}");
+
+                    if file_ext != "png" && file_ext != "jpeg" && file_ext != "webp" {
+                        return Err(AppError::BadRequest("Invalid file type.".to_string()));
+                    }
+
+                    let profile_picture_url = state
+                        .s3
+                        .upload(&file, key_prefix, &format!("image/{}", file_ext))
+                        .await;
+
+                    use crate::schema::users::dsl::*;
+
+                    let result = diesel::update(users)
+                        .filter(id.eq(user_id))
+                        .set(avatar.eq(profile_picture_url))
+                        .execute(&mut conn)
+                        .await;
+
+                    if result == Err(NotFound) {
+                        return Err(AppError::NotFound);
+                    } else if result.is_err() {
+                        return Err(AppError::Conflict);
+                    }
+
+                    // delete old pfp
+                    if user.avatar.is_some() {
+                        let key = state.s3.get_key_from_url(&user.avatar.unwrap());
+
+                        state.s3.delete_file(&key).await;
+                    }
+
+                    Ok(OkResponse::new())
+                }
+                shit => {
+                    println!("here {shit}");
+
+                    Err(AppError::BadRequest("Invalid file type.".to_string()))
+                }
+            }
+        }
+        Err(_) => Err(AppError::NotFound),
+    }
 }

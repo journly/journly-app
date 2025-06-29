@@ -4,7 +4,7 @@ use bon::Builder;
 use derive_more::Deref;
 use diesel_async::{AsyncPgConnection, pooled_connection::deadpool::Pool};
 
-use crate::{config::Server, db, email::Emails, util::errors::AppError};
+use crate::{config::Server, db, email::Emails, s3_client::S3Client, util::errors::AppError};
 
 pub type PoolResult =
     Result<diesel_async::pooled_connection::deadpool::Object<AsyncPgConnection>, AppError>;
@@ -13,6 +13,7 @@ pub type PoolResult =
 pub struct App {
     pub database: Pool<AsyncPgConnection>,
     pub emails: Emails,
+    pub s3: S3Client,
     pub config: Server,
 }
 

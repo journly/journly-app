@@ -90,8 +90,7 @@ export const ChangeEmailModal: React.FC<ChangeEmailModalProps> = ({ onClose, onU
           </button>
         </div>
       </ModalContainer>
-      <AlertDialog visible={showAlert} message={alertMessage} color="text-red-500" toggleVisibility={() => setShowAlert(!showAlert)}>
-      </AlertDialog>
+      <AlertDialog visible={showAlert} message={alertMessage} color="text-red-500" toggleVisibility={() => setShowAlert(!showAlert)} />
     </>
   )
 }

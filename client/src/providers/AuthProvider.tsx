@@ -55,7 +55,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('refresh_token', refresh_token);
   };
 
-
   const logout = async () => {
     if (refreshToken) {
       await getAuthApi().logout({ refresh_token: refreshToken });
@@ -85,7 +84,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshAccessToken = async (refresh: string | null = null): Promise<boolean> => {
     if (!refreshToken) return false;
-
 
     try {
       const response = await getAuthApi().refresh({ refresh_token: refresh ?? refreshToken });

@@ -7,6 +7,7 @@ import { ChangePasswordModal } from "../../components/settings/ChangePasswordMod
 import { DeleteAccountModal } from "../../components/settings/DeleteAccountModal";
 import { AlertDialog } from "../../components/settings/AlertDialog";
 import { useUser } from "../../providers/UserProvider";
+import { ProfilePictureModal } from "../../components/settings/ProfilePictureModal";
 
 const errorAlertColor = "text-red-500";
 const successAlertColor = "text-green-500";
@@ -21,6 +22,7 @@ export default function MyAccountPage() {
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const [alertMessageColor, setAlertMessageColor] = useState("")
+  const [showProfilePictureModal, setShowProfilePictureModal] = useState(false);
 
   const triggerAlert = (message: string, success: boolean) => {
     setShowAlert(true);
@@ -28,7 +30,7 @@ export default function MyAccountPage() {
     setAlertMessageColor(success ? successAlertColor : errorAlertColor);
   }
 
-  const onChangeEmailSuccess = (newEmail: string) => {
+  const onChangeEmail = (newEmail: string) => {
     setEmail(newEmail);
     triggerAlert("Email successfully updated!", true);
 
@@ -54,9 +56,14 @@ export default function MyAccountPage() {
     }
   }
 
-  const onChangePasswordSuccess = () => {
+  const onChangePassword = () => {
     triggerAlert("Password successfully updated!", true);
     setShowPasswordModal(false);
+  }
+
+  const onChangeProfilePicture = () => {
+    triggerAlert("Profile picture successfully updated!", true);
+    setShowProfilePictureModal(false);
   }
 
   return (
@@ -66,7 +73,10 @@ export default function MyAccountPage() {
           <h3 className="border-b border-gray-200 text-gray-500 font-semibold text-lg">Account</h3>
           <Box className="flex flex-row gap-6 items-center">
             <Box className="relative">
-              <Box className="absolute z-10 opacity-0 hover:opacity-30 bg-gray-200 w-full h-full rounded-full flex justify-center items-center cursor-pointer" >
+              <Box
+                className="absolute z-10 opacity-0 hover:opacity-30 bg-gray-200 w-full h-full rounded-full flex justify-center items-center cursor-pointer"
+                onClick={() => setShowProfilePictureModal(true)}
+              >
                 <EditIcon />
               </Box>
               <Avatar sx={{ width: 60, height: 60 }}>
@@ -133,8 +143,9 @@ export default function MyAccountPage() {
           </Box>
         </Box>
       </SettingsContainer>
-      {showEmailModal && <ChangeEmailModal onClose={() => setShowEmailModal(false)} onUpdateSuccess={onChangeEmailSuccess} />}
-      {showPasswordModal && <ChangePasswordModal onClose={() => setShowPasswordModal(false)} onUpdateSuccess={onChangePasswordSuccess} />}
+      {showProfilePictureModal && <ProfilePictureModal onClose={() => setShowProfilePictureModal(false)} onUpdateSuccess={onChangeProfilePicture} />}
+      {showEmailModal && <ChangeEmailModal onClose={() => setShowEmailModal(false)} onUpdateSuccess={onChangeEmail} />}
+      {showPasswordModal && <ChangePasswordModal onClose={() => setShowPasswordModal(false)} onUpdateSuccess={onChangePassword} />}
       {showDeleteAccountModal && <DeleteAccountModal onClose={() => setShowDeleteAccountModal(false)} />}
       <AlertDialog visible={showAlert} message={alertMessage} color={alertMessageColor} toggleVisibility={() => setShowAlert(!showAlert)} />
     </>

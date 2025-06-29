@@ -30,6 +30,7 @@ pub struct Server {
     pub mailgun_smtp: SmtpConfig,
     pub google_oauth: GoogleOAuthConfig,
     pub jwt_config: JwtConfig,
+    pub s3_config: S3Config,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -44,6 +45,15 @@ pub struct GoogleOAuthConfig {
     pub client_id: String,
     pub client_secret: String,
     pub redirect_url: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct S3Config {
+    pub bucket_name: String,
+    pub account_id: String,
+    pub access_key_id: String,
+    pub access_key_secret: String,
+    pub base_url: String,
 }
 
 impl Server {
