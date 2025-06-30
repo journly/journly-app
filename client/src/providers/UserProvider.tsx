@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { Configuration, EncodableUser, LoginCredentials, PasswordUpdateRequest, UpdateInformationBody, UsersApi } from "../api-client";
 import { useAuth } from "./AuthProvider";
 
@@ -16,8 +16,9 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { accessToken, getAuthApi, logout } = useAuth();
+  const { accessToken, getAuthApi, logout, userId } = useAuth();
   const [user, setUser] = useState<EncodableUser | null>(null);
+  const userIdRef = useRef<string | null>(null);
 
   const getUsersApi = () =>
     new UsersApi(
@@ -34,10 +35,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   useEffect(() => {
-    if (!user && accessToken) {
+    if (userIdRef.current != userId) {
       fetchUser();
     }
-  }, [accessToken])
+  }, [userId])
 
   const updateUser = async (data: UpdateInformationBody) => {
     if (!user) return false;
