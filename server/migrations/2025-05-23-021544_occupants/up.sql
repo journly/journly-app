@@ -1,12 +1,6 @@
 CREATE TABLE occupants (
-  accommodation_id UUID NOT NULL,
-  user_id UUID NOT NULL,
+  accommodation_id UUID NOT NULL REFERENCES accommodations(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 
-  PRIMARY KEY (accommodation_id, user_id),
-  FOREIGN KEY (accommodation_id)
-    REFERENCES accommodations(id)
-    ON DELETE CASCADE,
-  FOREIGN KEY (user_id)
-    REFERENCES users(id)
-    ON DELETE CASCADE
+  PRIMARY KEY (accommodation_id, user_id)
 );

@@ -44,6 +44,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const getAuthApi = () => buildAuthApi(accessToken)
 
   const oAuthLogin = (access_token: string, refresh_token: string) => {
+    const { sub } = jwtDecode<JwtPayload>(access_token);
+
+    setUserId(sub);
     setAccessToken(access_token);
     setRefreshToken(refresh_token);
     localStorage.setItem('refresh_token', refresh_token);
@@ -62,7 +65,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     if (refreshToken) {
-      await getAuthApi().logout({ refresh_token: refreshToken });
+      try {
+        await getAuthApi().logout({ refresh_token: refreshToken });
+      } catch {
+        console.log("account does not exist.")
+      }
 
       setUserId(null);
       setAccessToken(null);

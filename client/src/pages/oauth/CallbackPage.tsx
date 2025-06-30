@@ -12,14 +12,11 @@ export default function OAuthCallbackPage() {
     const refreshToken = hash.get('refresh_token');
 
 
-    if (accessToken == null || refreshToken == null) {
-      console.log("gay")
-    }
-    else {
+    if (accessToken && refreshToken) {
       oAuthLogin(accessToken, refreshToken);
-      navigate("/");
     }
+    navigate("/");
   }, [])
 
-  return <>hi</>
+  return <>You're not supposed to see this...</>
 }

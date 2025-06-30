@@ -1,16 +1,8 @@
 CREATE TABLE accommodations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  trip_id UUID NOT NULL,
+  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
   check_in_datetime TIMESTAMPTZ,
   check_out_datetime TIMESTAMPTZ,
-  location UUID,
-  from_document UUID,
-
-  FOREIGN KEY (trip_id)
-    REFERENCES trips(id)
-    ON DELETE CASCADE,
-  FOREIGN KEY (location)
-    REFERENCES locations(id),
-  FOREIGN KEY (from_document)
-    REFERENCES documents(id)
-);
+  location UUID REFERENCES locations(id),
+  from_document UUID REFERENCES documents(id)
+;
