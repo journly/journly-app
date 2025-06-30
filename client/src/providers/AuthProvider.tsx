@@ -3,6 +3,7 @@ import { AuthenticationApi, Configuration, LoginCredentials } from '../api-clien
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 
 interface JwtPayload {
+  sub: string;
   exp: number;
 }
 
@@ -14,6 +15,7 @@ interface Tokens {
 interface AuthContextType {
   accessToken: string | null;
   refreshToken: string | null;
+  userId: string | null;
   checkAuthenticated: () => Promise<boolean>;
   login: (creds: LoginCredentials) => Promise<void>;
   oAuthLogin: (access_token: string, refresh_token: string) => void;
@@ -28,6 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [refreshToken, setRefreshToken] = useState<string | null>(() =>
     localStorage.getItem('refresh_token') ?? null
   );
+  const [userId, setUserId] = useState<string | null>(null);
   const refreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const buildAuthApi = (token: string | null) =>
@@ -49,7 +52,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (creds: LoginCredentials) => {
     const response = await getAuthApi().login(creds);
     const { access_token, refresh_token }: Tokens = response.data;
+    const { sub } = jwtDecode<JwtPayload>(access_token);
 
+    setUserId(sub);
     setAccessToken(access_token);
     setRefreshToken(refresh_token);
     localStorage.setItem('refresh_token', refresh_token);
@@ -59,6 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (refreshToken) {
       await getAuthApi().logout({ refresh_token: refreshToken });
 
+      setUserId(null);
       setAccessToken(null);
       setRefreshToken(null);
       localStorage.removeItem('refresh_token');
@@ -88,9 +94,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response = await getAuthApi().refresh({ refresh_token: refresh ?? refreshToken });
       const { access_token, refresh_token }: Tokens = response.data;
+      const { sub } = jwtDecode<JwtPayload>(access_token);
 
       setAccessToken(access_token);
       setRefreshToken(refresh_token);
+      setUserId(sub);
 
       localStorage.setItem('refresh_token', refresh_token);
 
@@ -123,6 +131,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (refreshed) {
           try {
             await getAuthApi().getMe();
+
             return true;
           } catch {
             await logout();
@@ -154,6 +163,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         refreshToken,
         checkAuthenticated,
         oAuthLogin,
+        userId,
         login,
         logout,
         getAuthApi,
