@@ -9,7 +9,7 @@ interface UserContextType {
   updateEmail: (newEmail: string) => Promise<boolean>;
   updatePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
   updateProfilePicture: (file: File) => Promise<boolean>;
-  deleteUser: () => Promise<void>;
+  deleteUser: () => Promise<boolean>;
   validateUserPassword: (password: string) => Promise<boolean>;
 }
 
@@ -99,14 +99,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const deleteUser = async () => {
-    if (!user) return;
+    if (!user) return false;
 
     try {
       await getUsersApi().deleteUser(user.id);
 
-      await logout();
+      return true;
     } catch {
-      console.log("Failed to delete user.")
+      return false;
     }
   }
 

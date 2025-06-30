@@ -8,6 +8,7 @@ import { DeleteAccountModal } from "../../components/settings/DeleteAccountModal
 import { AlertDialog } from "../../components/settings/AlertDialog";
 import { useUser } from "../../providers/UserProvider";
 import { ProfilePictureModal } from "../../components/settings/ProfilePictureModal";
+import { OnDeleteAccountModal } from "../../components/settings/OnDeleteAccountModal";
 
 const errorAlertColor = "text-red-500";
 const successAlertColor = "text-green-500";
@@ -23,6 +24,7 @@ export default function MyAccountPage() {
   const [alertMessage, setAlertMessage] = useState("");
   const [alertMessageColor, setAlertMessageColor] = useState("")
   const [showProfilePictureModal, setShowProfilePictureModal] = useState(false);
+  const [accountDeleted, setAccountDeleted] = useState(false);
 
   const triggerAlert = (message: string, success: boolean) => {
     setShowAlert(true);
@@ -64,6 +66,11 @@ export default function MyAccountPage() {
   const onChangeProfilePicture = () => {
     triggerAlert("Profile picture successfully updated!", true);
     setShowProfilePictureModal(false);
+  }
+
+  const onDeleteAccount = () => {
+    setShowDeleteAccountModal(false);
+    setAccountDeleted(true);
   }
 
   return (
@@ -146,8 +153,9 @@ export default function MyAccountPage() {
       {showProfilePictureModal && <ProfilePictureModal onClose={() => setShowProfilePictureModal(false)} onUpdateSuccess={onChangeProfilePicture} />}
       {showEmailModal && <ChangeEmailModal onClose={() => setShowEmailModal(false)} onUpdateSuccess={onChangeEmail} />}
       {showPasswordModal && <ChangePasswordModal onClose={() => setShowPasswordModal(false)} onUpdateSuccess={onChangePassword} />}
-      {showDeleteAccountModal && <DeleteAccountModal onClose={() => setShowDeleteAccountModal(false)} />}
+      {showDeleteAccountModal && <DeleteAccountModal onClose={() => setShowDeleteAccountModal(false)} onUpdateSuccess={onDeleteAccount} />}
       <AlertDialog visible={showAlert} message={alertMessage} color={alertMessageColor} toggleVisibility={() => setShowAlert(!showAlert)} />
+      <OnDeleteAccountModal isOpen={accountDeleted} />
     </>
   )
 }
