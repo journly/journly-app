@@ -37,6 +37,7 @@ pub async fn spawn_app() -> TestApp {
     let app = Arc::new(App {
         database: db_pool.clone(),
         emails,
+        s3: None,
         config,
     });
 

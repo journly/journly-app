@@ -19,19 +19,13 @@ async fn main() -> std::io::Result<()> {
 
     let emails = Emails::from_config(&config);
 
-    let s3_config = S3Client::build_config(&config.s3_config).await;
-
-    let s3 = S3Client::new(
-        &s3_config,
-        &config.s3_config.bucket_name,
-        &config.s3_config.base_url,
-    );
+    let s3 = S3Client::from_config(&config).await;
 
     let app = Arc::new(App {
         database,
         emails,
         config,
-        s3,
+        s3: Some(s3),
     });
 
     app.run_migrations().await;

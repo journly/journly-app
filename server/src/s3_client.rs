@@ -1,13 +1,12 @@
 use std::{path::Path, sync::Arc};
 
 use actix_multipart::form::tempfile::TempFile;
-use aws_config::SdkConfig;
 use aws_sdk_s3::{self as s3, primitives::ByteStream};
 use s3::Client;
 use tokio::io::AsyncReadExt;
 use uuid::Uuid;
 
-use crate::config::S3Config;
+use crate::config::Server;
 
 pub fn get_file_extension(file: &TempFile) -> String {
     Path::new(&file.file_name.as_deref().unwrap())
@@ -25,22 +24,10 @@ pub struct S3Client {
 }
 
 impl S3Client {
-    pub fn new(config: &SdkConfig, bucket_name: &str, base_url: &str) -> Self {
-        let client = s3::Client::new(config);
+    pub async fn from_config(config: &Server) -> Self {
+        let s3_config = config.s3_config.clone().expect("Missing S3 Config");
 
-        S3Client {
-            s3: Arc::new(client),
-            bucket_name: bucket_name.to_string(),
-            base_url: base_url.to_string(),
-        }
-    }
-
-    pub fn url(&self, key: &str) -> String {
-        format!("{}/{}", self.base_url, key)
-    }
-
-    pub async fn build_config(s3_config: &S3Config) -> SdkConfig {
-        aws_config::from_env()
+        let client_config = aws_config::from_env()
             .endpoint_url(format!(
                 "https://{}.r2.cloudflarestorage.com",
                 s3_config.account_id
@@ -54,7 +41,19 @@ impl S3Client {
             ))
             .region("auto")
             .load()
-            .await
+            .await;
+
+        let client = s3::Client::new(&client_config);
+
+        S3Client {
+            s3: Arc::new(client),
+            bucket_name: s3_config.bucket_name.to_string(),
+            base_url: s3_config.base_url.to_string(),
+        }
+    }
+
+    pub fn url(&self, key: &str) -> String {
+        format!("{}/{}", self.base_url, key)
     }
 
     pub async fn upload(&self, file: &TempFile, key_prefix: &str, content_type: &str) -> String {

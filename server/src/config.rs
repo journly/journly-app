@@ -27,10 +27,10 @@ pub struct BaseConfig {
 pub struct Server {
     pub base: BaseConfig,
     pub postgres: PgConfig,
-    pub mailgun_smtp: SmtpConfig,
-    pub google_oauth: GoogleOAuthConfig,
+    pub mailgun_smtp: Option<SmtpConfig>,
+    pub google_oauth: Option<GoogleOAuthConfig>,
     pub jwt_config: JwtConfig,
-    pub s3_config: S3Config,
+    pub s3_config: Option<S3Config>,
 }
 
 #[derive(Clone, Debug, Deserialize)]

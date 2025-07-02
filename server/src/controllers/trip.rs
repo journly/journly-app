@@ -77,7 +77,7 @@ pub async fn create_trip(
     trip_data: web::Json<CreateTripBody>,
     state: web::Data<AppState>,
 ) -> AppResult<OkResponse> {
-    let user_id = authenticated.user_id;
+    let user_id = authenticated.user.id;
 
     let mut conn = state.db_connection().await?;
 
@@ -124,7 +124,7 @@ pub async fn get_trip(
 
     let mut conn = state.db_connection().await?;
 
-    let user_id = authenticated.user_id;
+    let user_id = authenticated.user.id;
 
     if !Trip::check_collaborator(&mut conn, &trip_id, &user_id).await {
         return Err(AppError::Unauthorized);

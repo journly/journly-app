@@ -228,6 +228,14 @@ diesel::table! {
 }
 
 diesel::table! {
+    user_verification_codes (email) {
+        email -> Text,
+        verification_code -> Int4,
+        expires_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
     users (id) {
         id -> Uuid,
         username -> Text,
@@ -300,5 +308,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     user_journal,
     user_map,
     user_trip,
+    user_verification_codes,
     users,
 );

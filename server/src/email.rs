@@ -25,9 +25,14 @@ const DEFAULT_FROM: &str = "noreply@myjournly.com";
 
 impl Emails {
     pub fn from_config(config: &config::Server) -> Self {
-        let login = config.mailgun_smtp.smtp_login.clone();
-        let password = config.mailgun_smtp.smtp_password.clone();
-        let server = config.mailgun_smtp.smtp_server.clone();
+        let smtp_config = config
+            .mailgun_smtp
+            .clone()
+            .expect("Mailgun SMTP config missing");
+
+        let login = smtp_config.smtp_login;
+        let password = smtp_config.smtp_password;
+        let server = smtp_config.smtp_server;
 
         let from = login.as_deref().unwrap_or(DEFAULT_FROM).parse().unwrap();
 
