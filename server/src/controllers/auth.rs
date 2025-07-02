@@ -126,18 +126,11 @@ pub struct GetMeResponse {
 )]
 pub async fn get_me(
     authenticated: AuthenticatedUser,
-    state: web::Data<AppState>,
+    _: web::Data<AppState>,
 ) -> AppResult<Json<GetMeResponse>> {
-    let user_id = authenticated.user_id;
-
-    let mut conn = state.db_connection().await?;
-
-    match User::find(&mut conn, &user_id).await {
-        Ok(user) => Ok(Json(GetMeResponse {
-            user: EncodableUser::from(user),
-        })),
-        Err(_) => Err(AppError::NotFound),
-    }
+    Ok(Json(GetMeResponse {
+        user: EncodableUser::from(authenticated.user),
+    }))
 }
 
 #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
@@ -378,7 +371,7 @@ pub async fn logout(
     state: web::Data<AppState>,
 ) -> AppResult<OkResponse> {
     let mut conn = state.db_connection().await?;
-    let user_id = authenticated.user_id;
+    let user_id = authenticated.user.id;
 
     let refresh_token = RefreshToken::find(&mut conn, &body.refresh_token)
         .await

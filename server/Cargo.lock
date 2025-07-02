@@ -2574,6 +2574,7 @@ dependencies = [
  "dotenvy",
  "env_logger",
  "futures",
+ "futures-util",
  "hex",
  "hmac",
  "infer",

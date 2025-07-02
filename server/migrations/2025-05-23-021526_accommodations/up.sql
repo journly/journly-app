@@ -5,4 +5,4 @@ CREATE TABLE accommodations (
   check_out_datetime TIMESTAMPTZ,
   location UUID REFERENCES locations(id),
   from_document UUID REFERENCES documents(id)
-;
+);

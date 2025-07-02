@@ -13,7 +13,7 @@ pub type PoolResult =
 pub struct App {
     pub database: Pool<AsyncPgConnection>,
     pub emails: Emails,
-    pub s3: S3Client,
+    pub s3: Option<S3Client>,
     pub config: Server,
 }
 

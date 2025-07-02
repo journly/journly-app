@@ -1,5 +1,5 @@
 use super::trip::Trip;
-use crate::schema::{trips, user_trip, users};
+use crate::schema::{trips, user_trip, user_verification_codes, users};
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
@@ -107,4 +107,11 @@ impl From<User> for LoggedUser {
     fn from(value: User) -> Self {
         Self { id: value.id }
     }
+}
+
+#[derive(Debug, Selectable, Queryable)]
+pub struct UserVerificationCode {
+    pub email: String,
+    pub verification_code: i32,
+    pub expires_at: DateTime<Utc>,
 }
