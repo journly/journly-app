@@ -68,8 +68,6 @@ pub async fn get_google_user(
 
     let response = client.get(url).bearer_auth(id_token).send().await?;
 
-    eprintln!("get google user response {:?}", response);
-
     if response.status().is_success() {
         let user_info = response.json::<GoogleUserResult>().await?;
         Ok(user_info)

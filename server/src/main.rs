@@ -23,7 +23,7 @@ async fn main() -> std::io::Result<()> {
 
     let app = Arc::new(App {
         database,
-        emails,
+        emails: Some(emails),
         config,
         s3: Some(s3),
     });

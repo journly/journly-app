@@ -1,9 +1,4 @@
-use actix_web::{
-    Error, FromRequest, HttpRequest,
-    dev::Payload,
-    error::{ErrorInternalServerError, ErrorNotFound, ErrorUnauthorized},
-    web::Data,
-};
+use actix_web::{FromRequest, HttpRequest, dev::Payload, web::Data};
 use chrono::{Duration, TimeZone, Utc};
 use jsonwebtoken::{
     Algorithm, DecodingKey, EncodingKey, Header, TokenData, Validation, decode, encode,
@@ -12,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::future::ready;
 use uuid::Uuid;
 
-use crate::{app::AppState, models::user::User};
+use crate::{app::AppState, models::user::User, util::errors::AppError};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
@@ -76,13 +71,11 @@ impl AuthenticatedUser {
 }
 
 impl FromRequest for AuthenticatedUser {
-    type Error = Error;
+    type Error = AppError;
     type Future = futures_util::future::LocalBoxFuture<'static, Result<Self, Self::Error>>;
 
     fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
-        let server_error = Box::pin(ready(Err(ErrorInternalServerError(
-            "Internal server error",
-        ))));
+        let server_error = Box::pin(ready(Err(AppError::InternalError)));
 
         let state = match req.app_data::<Data<AppState>>() {
             Some(s) => s.clone(),
@@ -91,8 +84,7 @@ impl FromRequest for AuthenticatedUser {
 
         let config = state.config.clone();
 
-        let unauthorized_error =
-            Box::pin(ready(Err(ErrorUnauthorized("Invalid or missing token"))));
+        let unauthorized_error = Box::pin(ready(Err(AppError::Unauthorized)));
 
         let header = match req.headers().get("Authorization") {
             Some(header) => header.to_str().unwrap(),
@@ -110,11 +102,11 @@ impl FromRequest for AuthenticatedUser {
                 let expiration_time = Utc.timestamp_opt(token_data.claims.exp, 0).unwrap();
 
                 if expiration_time < Utc::now() {
-                    return Err(ErrorUnauthorized("Token is expired"));
+                    return Err(AppError::Unauthorized);
                 }
 
                 if issued_at > Utc::now() {
-                    return Err(ErrorUnauthorized("Invalid token"));
+                    return Err(AppError::Unauthorized);
                 }
 
                 match state.db_connection().await {
@@ -122,14 +114,25 @@ impl FromRequest for AuthenticatedUser {
                         let result = User::find(&mut conn, &token_data.claims.sub).await;
 
                         match result {
-                            Ok(user) => Ok(AuthenticatedUser {
-                                user,
-                                role: token_data.claims.role,
-                            }),
-                            Err(_) => Err(ErrorNotFound("User not found")),
+                            Ok(user) => {
+                                if user.verified || state.emails.is_none() {
+                                    Ok(AuthenticatedUser {
+                                        user,
+                                        role: token_data.claims.role,
+                                    })
+                                } else {
+                                    let frontend_origin = &state.config.base.frontend_origin;
+
+                                    Err(AppError::UnverifiedUser(format!(
+                                        "{}/{}",
+                                        frontend_origin, "verify"
+                                    )))
+                                }
+                            }
+                            Err(_) => Err(AppError::NotFound),
                         }
                     }
-                    Err(_) => Err(ErrorInternalServerError("Internal server error")),
+                    Err(_) => Err(AppError::InternalError),
                 }
             });
         }

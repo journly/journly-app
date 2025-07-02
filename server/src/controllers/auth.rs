@@ -5,7 +5,7 @@ use crate::{
     google_oauth::{get_google_user, request_token},
     models::{
         refresh_tokens::RefreshToken,
-        user::{NewUser, User},
+        user::{NewUser, User, UserVerificationCode, VerificationEmail},
     },
     util::{
         auth::{is_valid_email, is_valid_username},
@@ -100,9 +100,24 @@ pub async fn register_user(
     let result = new_user.insert(&mut conn).await;
 
     match result {
-        Ok(user) => Ok(Json(RegisterUserResponse {
-            user: EncodableUser::from(user),
-        })),
+        Ok(user) => {
+            if let Some(emails) = &state.emails {
+                let verification_code = UserVerificationCode::generate(&mut conn, &user.email)
+                    .await
+                    .map_err(|_| AppError::InternalError)?;
+
+                let verification_email = VerificationEmail {
+                    username: &user.username,
+                    verification_code: &verification_code,
+                };
+
+                let _ = emails.send(&user.email, verification_email).await;
+            }
+
+            Ok(Json(RegisterUserResponse {
+                user: EncodableUser::from(user),
+            }))
+        }
         Err(_) => Err(AppError::BadRequest("Email already exists".to_string())),
     }
 }
@@ -250,14 +265,12 @@ pub async fn google_oauth(
 
     let token_response = request_token(query_code.as_str(), &state).await;
     if token_response.is_err() {
-        eprintln!("Token response error");
         return Err(AppError::BadGateway);
     }
 
     let token_response = token_response.unwrap();
     let google_user = get_google_user(&token_response.access_token, &token_response.id_token).await;
     if google_user.is_err() {
-        eprintln!("Google user error");
         return Err(AppError::BadGateway);
     }
 

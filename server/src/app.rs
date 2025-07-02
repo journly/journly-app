@@ -12,7 +12,7 @@ pub type PoolResult =
 #[derive(Builder)]
 pub struct App {
     pub database: Pool<AsyncPgConnection>,
-    pub emails: Emails,
+    pub emails: Option<Emails>,
     pub s3: Option<S3Client>,
     pub config: Server,
 }

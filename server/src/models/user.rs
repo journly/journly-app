@@ -1,8 +1,12 @@
 use super::trip::Trip;
-use crate::schema::{trips, user_trip, user_verification_codes, users};
-use chrono::{DateTime, Utc};
+use crate::{
+    email::Email,
+    schema::{trips, user_trip, user_verification_codes, users},
+};
+use chrono::{DateTime, Duration, Utc};
 use diesel::prelude::*;
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -109,9 +113,74 @@ impl From<User> for LoggedUser {
     }
 }
 
-#[derive(Debug, Selectable, Queryable)]
+#[derive(Debug, Selectable, Queryable, Insertable)]
 pub struct UserVerificationCode {
     pub email: String,
     pub verification_code: i32,
     pub expires_at: DateTime<Utc>,
+}
+
+impl UserVerificationCode {
+    pub async fn generate(conn: &mut AsyncPgConnection, email: &str) -> QueryResult<i32> {
+        Self::delete_existing(conn, email).await;
+
+        let verification_code = rand::rng().random_range(100000..1000000);
+        let expires_at = Utc::now() + Duration::minutes(30);
+
+        let new_verification = UserVerificationCode {
+            email: email.to_string(),
+            verification_code,
+            expires_at,
+        };
+
+        diesel::insert_into(user_verification_codes::table)
+            .values(new_verification)
+            .execute(conn)
+            .await?;
+
+        Ok(verification_code)
+    }
+
+    async fn delete_existing(conn: &mut AsyncPgConnection, email: &str) {
+        let _ = diesel::delete(user_verification_codes::table)
+            .filter(user_verification_codes::email.eq(email))
+            .execute(conn)
+            .await;
+    }
+
+    pub async fn find(
+        conn: &mut AsyncPgConnection,
+        email: &str,
+    ) -> QueryResult<UserVerificationCode> {
+        user_verification_codes::table
+            .select(UserVerificationCode::as_select())
+            .find(email)
+            .first(conn)
+            .await
+    }
+}
+
+pub struct VerificationEmail<'a> {
+    pub username: &'a str,
+    pub verification_code: &'a i32,
+}
+
+impl Email for VerificationEmail<'_> {
+    fn subject(&self) -> String {
+        "Verify Your Journly Account".to_string()
+    }
+
+    fn body(&self) -> String {
+        format!(
+            "Hi {},\n\n\
+            Welcome to Journly — we're excited to have you on board!\n\n\
+            To verify your email, please enter this code in the app:\n\n\
+            {}\n\n\
+            This code will expire in 30 minutes.\n\n\
+            If you didn’t sign up for Journly, you can ignore this message.\n\n\
+            Thanks,\n\
+            The Journly Team",
+            self.username, self.verification_code
+        )
+    }
 }
