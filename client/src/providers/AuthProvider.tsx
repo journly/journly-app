@@ -1,5 +1,5 @@
 import { jwtDecode } from 'jwt-decode';
-import { AuthenticationApi, Configuration, LoginCredentials } from '../api-client';
+import { AuthenticationApi, Configuration, ErrorResponse, LoginCredentials, ResendVerificationBody, VerificationBody } from '../api-client';
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 
 interface JwtPayload {
@@ -12,14 +12,22 @@ interface Tokens {
   refresh_token: string
 }
 
+export enum AuthStatus {
+  Authenticated = 'Authenticated',
+  Unauthenticated = 'Unauthenticated',
+  Unverified = 'Unverified'
+}
+
 interface AuthContextType {
   accessToken: string | null;
   refreshToken: string | null;
   userId: string | null;
-  checkAuthenticated: () => Promise<boolean>;
+  checkAuthenticated: () => Promise<AuthStatus>;
   login: (creds: LoginCredentials) => Promise<void>;
   oAuthLogin: (access_token: string, refresh_token: string) => void;
   logout: () => Promise<void>;
+  resendVerificationCode: () => Promise<void>;
+  verifyEmail: (code: number) => Promise<boolean>;
   getAuthApi: () => AuthenticationApi;
 }
 
@@ -31,6 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.getItem('refresh_token') ?? null
   );
   const [userId, setUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const refreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const buildAuthApi = (token: string | null) =>
@@ -58,6 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { sub } = jwtDecode<JwtPayload>(access_token);
 
     setUserId(sub);
+    setUserEmail(creds.email);
     setAccessToken(access_token);
     setRefreshToken(refresh_token);
     localStorage.setItem('refresh_token', refresh_token);
@@ -115,23 +125,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const checkAuthenticated = async (): Promise<boolean> => {
-    if (!refreshToken) return false;
+  const checkAuthenticated = async (): Promise<AuthStatus> => {
+    if (!refreshToken) return AuthStatus.Unauthenticated;
 
     if (!accessToken && refreshToken) {
       const refreshed = await refreshAccessToken();
       if (!refreshed) {
         await logout();
-        return false;
+        return AuthStatus.Unauthenticated;
       }
 
-      return false;
+      return AuthStatus.Unauthenticated;
     }
 
     try {
       await getAuthApi().getMe();
 
-      return true;
+      return AuthStatus.Authenticated;
     } catch (err: any) {
       if (err.response?.status === 401 && refreshToken) {
         const refreshed = await refreshAccessToken();
@@ -139,21 +149,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           try {
             await getAuthApi().getMe();
 
-            return true;
-          } catch {
+            return AuthStatus.Authenticated;
+          } catch (e: any) {
+            if (err.response?.status === 403 && (err.response?.data as ErrorResponse).error == 'unverified_user') {
+              return AuthStatus.Unverified;
+            }
+
             await logout();
-            return false;
+            return AuthStatus.Unauthenticated;
           }
         } else {
           await logout();
-          return false;
+          return AuthStatus.Unauthenticated;
         }
+      } else if (err.response?.status === 403 && (err.response?.data as ErrorResponse).error == 'unverified_user') {
+        return AuthStatus.Unverified
       } else {
         await logout();
-        return false;
+        return AuthStatus.Unauthenticated;
       }
     }
   };
+
+  const resendVerificationCode = async (): Promise<void> => {
+    try {
+      const body: ResendVerificationBody = {
+        email: userEmail ?? ''
+      }
+
+      await getAuthApi().resendVerificationCode(body)
+    } catch (err: any) {
+      console.log("failed to resend verification code")
+    }
+  }
+
+  const verifyEmail = async (code: number): Promise<boolean> => {
+    try {
+      const body: VerificationBody = {
+        email: userEmail ?? '',
+        verification_code: code
+      }
+
+      console.log(userEmail);
+
+      await getAuthApi().verifyUserEmail(body)
+
+      return true
+    } catch (err: any) {
+      return false
+    }
+  }
 
   useEffect(() => {
     if (accessToken && refreshToken) {
@@ -173,6 +218,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         userId,
         login,
         logout,
+        resendVerificationCode,
+        verifyEmail,
         getAuthApi,
       }}
     >

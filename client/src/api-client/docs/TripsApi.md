@@ -56,6 +56,7 @@ const { status, data } = await apiInstance.createTrip(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Trip was created |  -  |
+|**400** | Bad request |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -108,6 +109,7 @@ const { status, data } = await apiInstance.getTrip(
 |**200** | Trip was found |  -  |
 |**401** | User unauthorised to get trip |  -  |
 |**404** | Trip not found |  -  |
+|**500** | Internal error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -151,6 +153,8 @@ This endpoint does not have any parameters.
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Trips were found |  -  |
+|**404** | Trip not found |  -  |
+|**500** | Internal error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

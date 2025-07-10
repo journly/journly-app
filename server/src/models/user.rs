@@ -90,6 +90,7 @@ pub struct NewUser<'a> {
     pub password_hash: Option<&'a str>,
     pub password_salt: Option<&'a [u8]>,
     pub avatar: Option<&'a str>,
+    pub verified: Option<bool>,
     pub provider: Option<&'a str>,
 }
 

@@ -121,12 +121,9 @@ impl FromRequest for AuthenticatedUser {
                                         role: token_data.claims.role,
                                     })
                                 } else {
-                                    let frontend_origin = &state.config.base.frontend_origin;
-
-                                    Err(AppError::UnverifiedUser(format!(
-                                        "{}/{}",
-                                        frontend_origin, "verify"
-                                    )))
+                                    Err(AppError::UnverifiedUser(
+                                        "User has not verified their email.".to_string(),
+                                    ))
                                 }
                             }
                             Err(_) => Err(AppError::NotFound),

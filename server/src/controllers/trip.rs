@@ -10,7 +10,7 @@ use crate::{
     app::AppState,
     auth::AuthenticatedUser,
     models::trip::{NewTrip, Trip},
-    util::errors::{AppError, AppResult},
+    util::errors::{AppError, AppResult, ErrorResponse},
     views::{EncodableTripData, EncodableTripOverview},
 };
 
@@ -26,7 +26,9 @@ pub struct GetTripsResponse {
     get,
     path = "/api/v1/trips",
     responses(
-        (status = 200, description = "Trips were found", body = GetTripsResponse)
+        (status = 200, description = "Trips were found", body = GetTripsResponse),
+        (status = 404, description = "Trip not found", body = ErrorResponse),
+        (status = 500, description = "Internal error", body = ErrorResponse)
     ),
     security(
         ("jwt" = [])
@@ -66,7 +68,8 @@ pub struct CreateTripBody {
     post,
     path = "/api/v1/trips",
     responses(
-        (status = 200, description = "Trip was created", body = OkResponse)
+        (status = 200, description = "Trip was created", body = OkResponse),
+        (status = 400, description = "Bad request", body = ErrorResponse)
     ),
     security(
         ("jwt" = [])
@@ -108,8 +111,9 @@ pub struct GetTripResponse {
     path = "/api/v1/trips/{trip_id}",
     responses(
         (status = 200, description = "Trip was found", body = GetTripResponse),
-        (status = 401, description = "User unauthorised to get trip"),
-        (status = 404, description = "Trip not found")
+        (status = 401, description = "User unauthorised to get trip", body = ErrorResponse),
+        (status = 404, description = "Trip not found", body = ErrorResponse),
+        (status = 500, description = "Internal error", body = ErrorResponse)
     ),
     security(
         ("jwt" = [])

@@ -5,7 +5,10 @@ use utoipa::{
 };
 
 use crate::controllers::{
-    auth::{get_me, google_oauth, login, logout, refresh, register_user},
+    auth::{
+        get_me, google_oauth, login, logout, refresh, register_user, resend_verification_code,
+        verify_user_email,
+    },
     get_health,
     trip::{create_trip, get_trip, get_trips},
     user::{
@@ -20,7 +23,9 @@ use crate::controllers::{
         crate::controllers::auth::get_me,
         crate::controllers::auth::login,
         crate::controllers::auth::logout,
+        crate::controllers::auth::resend_verification_code,
         crate::controllers::auth::refresh,
+        crate::controllers::auth::verify_user_email,
         crate::controllers::trip::get_trips,
         crate::controllers::trip::create_trip,
         crate::controllers::trip::get_trip,
@@ -63,6 +68,8 @@ pub fn routes(cfg: &mut ServiceConfig ) {
                 .route("/register", post().to(register_user))
                 .route("/google", get().to(google_oauth))
                 .route("/me", get().to(get_me))
+                .route("/resend-verification", post().to(resend_verification_code))
+                .route("/verify-email", post().to(verify_user_email))
         )
         .service(
             scope("/api/v1/trips")

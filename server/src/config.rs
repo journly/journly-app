@@ -35,9 +35,9 @@ pub struct Server {
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct SmtpConfig {
-    pub smtp_login: Option<String>,
-    pub smtp_password: Option<String>,
-    pub smtp_server: Option<String>,
+    pub login: Option<String>,
+    pub password: Option<String>,
+    pub server: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize)]

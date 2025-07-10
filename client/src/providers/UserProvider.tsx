@@ -16,7 +16,7 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { accessToken, getAuthApi, logout, userId } = useAuth();
+  const { accessToken, getAuthApi, userId } = useAuth();
   const [user, setUser] = useState<EncodableUser | null>(null);
   const userIdRef = useRef<string | null>(null);
 

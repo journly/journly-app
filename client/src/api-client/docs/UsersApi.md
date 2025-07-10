@@ -62,7 +62,8 @@ const { status, data } = await apiInstance.changeProfilePicture(
 |-------------|-------------|------------------|
 |**200** | Profile picture updated successfully |  -  |
 |**400** | Invalid file |  -  |
-|**403** | Unauthorized |  -  |
+|**401** | Unauthorized |  -  |
+|**403** | Insufficient permissions |  -  |
 |**404** | User not found |  -  |
 |**409** | Update conflict |  -  |
 |**500** | Internal server error |  -  |
@@ -116,6 +117,7 @@ const { status, data } = await apiInstance.deleteUser(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Successful Response |  -  |
+|**401** | Unauthorized |  -  |
 |**403** | Insufficient permissions |  -  |
 |**404** | User not found |  -  |
 |**500** | Internal server error |  -  |
@@ -169,6 +171,7 @@ const { status, data } = await apiInstance.getUser(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Successful Response |  -  |
+|**401** | Unauthorized |  -  |
 |**403** | Insufficient permissions |  -  |
 |**404** | User Not Found |  -  |
 |**500** | Internal server error |  -  |
@@ -215,6 +218,7 @@ This endpoint does not have any parameters.
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Successful Response |  -  |
+|**401** | Unauthorized |  -  |
 |**403** | Insufficient permissions |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -270,6 +274,7 @@ const { status, data } = await apiInstance.updateUser(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Successful Response |  -  |
+|**401** | Unauthorized |  -  |
 |**403** | Insufficient permissions |  -  |
 |**404** | User not found |  -  |
 |**409** | Conflicts with existing resource |  -  |
@@ -328,7 +333,8 @@ const { status, data } = await apiInstance.updateUserPassword(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Password updated successfully |  -  |
-|**403** | Unauthorized |  -  |
+|**401** | Unauthorized |  -  |
+|**403** | Insufficient permissions |  -  |
 |**500** | Internal server error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

@@ -1,34 +1,41 @@
 use std::fmt::Debug;
 
-use actix_web::{
-    HttpResponse, ResponseError,
-    http::{StatusCode, header::LOCATION},
-};
-use derive_more::{Display, Error, From};
+use actix_web::{HttpResponse, ResponseError, http::StatusCode};
+use derive_more::{Display, Error};
+use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
-#[derive(Debug, Display, Error, From)]
+#[derive(Debug, Display, Error)]
 pub enum AppError {
-    #[display("internal error")]
+    #[display("internal_error")]
     InternalError,
-    #[display("bad request: {_0}")]
+    #[display("bad_request")]
     #[error(ignore)]
     BadRequest(String),
     #[display("unauthorized")]
     Unauthorized,
     NotFound,
-    #[display("bad gateway")]
+    #[display("bad_gateway")]
     BadGateway,
     #[display("forbidden")]
-    Forbidden,
+    #[error(ignore)]
+    Forbidden(String),
     #[display("conflict")]
     Conflict,
-    #[display("unverified user")]
+    #[display("unverified_user")]
     #[error(ignore)]
-    #[from(ignore)]
     UnverifiedUser(String),
 }
 
 pub type AppResult<T> = Result<T, AppError>;
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct ErrorResponse {
+    #[schema(example = "internal_error")]
+    error: String,
+    #[schema(example = "Internal server error.")]
+    message: String,
+}
 
 impl ResponseError for AppError {
     fn status_code(&self) -> StatusCode {
@@ -38,18 +45,48 @@ impl ResponseError for AppError {
             Self::Unauthorized => StatusCode::UNAUTHORIZED,
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::BadGateway => StatusCode::BAD_GATEWAY,
-            Self::Forbidden => StatusCode::FORBIDDEN,
+            Self::Forbidden(_) => StatusCode::FORBIDDEN,
             Self::Conflict => StatusCode::CONFLICT,
-            Self::UnverifiedUser(_) => StatusCode::SEE_OTHER,
+            Self::UnverifiedUser(_) => StatusCode::FORBIDDEN,
         }
     }
 
     fn error_response(&self) -> HttpResponse {
         match self {
-            Self::UnverifiedUser(link) => HttpResponse::Found()
-                .append_header((LOCATION, link.clone()))
-                .finish(),
-            _ => HttpResponse::build(self.status_code()).body(self.to_string()),
+            Self::InternalError => HttpResponse::build(self.status_code()).json(ErrorResponse {
+                error: self.to_string(),
+                message: "Internal server error.".to_string(),
+            }),
+            Self::BadRequest(msg) => HttpResponse::build(self.status_code()).json(ErrorResponse {
+                error: self.to_string(),
+                message: msg.clone(),
+            }),
+            Self::Unauthorized => HttpResponse::build(self.status_code()).json(ErrorResponse {
+                error: self.to_string(),
+                message: "Unauthorized access.".to_string(),
+            }),
+            Self::NotFound => HttpResponse::build(self.status_code()).json(ErrorResponse {
+                error: self.to_string(),
+                message: "Resource not found.".to_string(),
+            }),
+            Self::BadGateway => HttpResponse::build(self.status_code()).json(ErrorResponse {
+                error: self.to_string(),
+                message: "Bad gateway.".to_string(),
+            }),
+            Self::Forbidden(msg) => HttpResponse::build(self.status_code()).json(ErrorResponse {
+                error: self.to_string(),
+                message: msg.clone(),
+            }),
+            Self::Conflict => HttpResponse::build(self.status_code()).json(ErrorResponse {
+                error: self.to_string(),
+                message: "Conflict occurred.".to_string(),
+            }),
+            Self::UnverifiedUser(msg) => {
+                HttpResponse::build(self.status_code()).json(ErrorResponse {
+                    error: self.to_string(),
+                    message: msg.clone(),
+                })
+            }
         }
     }
 }

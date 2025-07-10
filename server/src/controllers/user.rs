@@ -4,7 +4,7 @@ use crate::{
     controllers::helper::OkResponse,
     models::user::User,
     s3_client::get_file_extension,
-    util::errors::{AppError, AppResult},
+    util::errors::{AppError, AppResult, ErrorResponse},
     views::EncodableUser,
 };
 use actix_multipart::form::{MultipartForm, tempfile::TempFile};
@@ -30,7 +30,8 @@ pub struct GetUsersResponse {
     path = "/api/v1/users",
     responses(
         (status = 200, description = "Successful Response", body = GetUsersResponse),
-        (status = 403, description = "Insufficient permissions"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 403, description = "Insufficient permissions", body = ErrorResponse)
     ),
     security(
         ("jwt" = [])
@@ -41,7 +42,7 @@ pub async fn get_users(
     state: web::Data<AppState>,
 ) -> AppResult<Json<GetUsersResponse>> {
     if !authenticated.is_admin() {
-        return Err(AppError::Forbidden);
+        return Err(AppError::Forbidden("Insufficient permissions.".to_string()));
     }
 
     let mut conn = state.db_connection().await?;
@@ -77,9 +78,10 @@ pub struct GetUserResponse {
     path = "/api/v1/users/{user_id}",
     responses(
         (status = 200, description = "Successful Response", body = GetUserResponse),
-        (status = 403, description = "Insufficient permissions"),
-        (status = 404, description = "User Not Found"),
-        (status = 500, description = "Internal server error"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 403, description = "Insufficient permissions", body = ErrorResponse),
+        (status = 404, description = "User Not Found", body = ErrorResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse),
     ),
     security(
         ("jwt" = [])
@@ -91,7 +93,7 @@ pub async fn get_user(
     state: web::Data<AppState>,
 ) -> AppResult<Json<GetUserResponse>> {
     if !authenticated.is_admin() {
-        return Err(AppError::Forbidden);
+        return Err(AppError::Forbidden("Insufficient permissions".to_string()));
     }
 
     let user_id = path.into_inner();
@@ -120,9 +122,10 @@ pub async fn get_user(
     path = "/api/v1/users/{user_id}",
     responses(
         (status = 200, description = "Successful Response", body = OkResponse),
-        (status = 403, description = "Insufficient permissions"),
-        (status = 404, description = "User not found"),
-        (status = 500, description = "Internal server error"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 403, description = "Insufficient permissions", body = ErrorResponse),
+        (status = 404, description = "User not found", body = ErrorResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse),
     ),
     security(
         ("jwt" = [])
@@ -136,7 +139,7 @@ pub async fn delete_user(
     let user_id = path.into_inner();
 
     if !authenticated.is_admin() && authenticated.user.id != user_id {
-        return Err(AppError::Forbidden);
+        return Err(AppError::Forbidden("Insufficient permissions".to_string()));
     }
 
     let mut conn = state.db_connection().await?;
@@ -164,10 +167,11 @@ pub struct UpdateInformationBody {
     path = "/api/v1/users/{user_id}",
     responses(
         (status = 200, description = "Successful Response", body = OkResponse),
-        (status = 403, description = "Insufficient permissions"),
-        (status = 404, description = "User not found"),
-        (status = 409, description = "Conflicts with existing resource"),
-        (status = 500, description = "Internal server error"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 403, description = "Insufficient permissions", body = ErrorResponse),
+        (status = 404, description = "User not found", body = ErrorResponse),
+        (status = 409, description = "Conflicts with existing resource", body = ErrorResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse),
     ),
     security(
         ("jwt" = [])
@@ -182,7 +186,7 @@ pub async fn update_user(
     let user_id = path.into_inner();
 
     if !authenticated.is_admin() && authenticated.user.id != user_id {
-        return Err(AppError::Forbidden);
+        return Err(AppError::Forbidden("Insufficient permissions".to_string()));
     }
 
     let mut conn = state.db_connection().await?;
@@ -232,8 +236,9 @@ pub struct PasswordUpdateRequest {
     path = "/api/v1/users/{user_id}/password",
     responses(
         (status = 200, description = "Password updated successfully", body = OkResponse),
-        (status = 403, description = "Unauthorized"),
-        (status = 500, description = "Internal server error"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 403, description = "Insufficient permissions", body = ErrorResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse),
     ),
     security(("jwt" = []))
 )]
@@ -247,7 +252,7 @@ pub async fn update_user_password(
     let user = authenticated.user;
 
     if user.id != user_id {
-        return Err(AppError::Forbidden);
+        return Err(AppError::Forbidden("Insufficient permissions".to_string()));
     }
 
     let PasswordUpdateRequest {
@@ -335,11 +340,12 @@ pub struct UploadForm {
     ),
     responses(
         (status = 200, description = "Profile picture updated successfully", body = OkResponse),
-        (status = 400, description = "Invalid file"),
-        (status = 403, description = "Unauthorized"),
-        (status = 404, description = "User not found"),
-        (status = 409, description = "Update conflict"),
-        (status = 500, description = "Internal server error"),
+        (status = 400, description = "Invalid file", body = ErrorResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 403, description = "Insufficient permissions", body = ErrorResponse),
+        (status = 404, description = "User not found", body = ErrorResponse),
+        (status = 409, description = "Update conflict", body = ErrorResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse),
     ),
     security(("jwt" = []))
 )]
@@ -353,7 +359,7 @@ pub async fn change_profile_picture(
     let user = authenticated.user;
 
     if user.id != user_id {
-        return Err(AppError::Forbidden);
+        return Err(AppError::Forbidden("Insufficient permissions".to_string()));
     }
 
     let s3_client = match &state.s3 {
