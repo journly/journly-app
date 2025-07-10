@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { Configuration, EncodableUser, LoginCredentials, PasswordUpdateRequest, UpdateInformationBody, UsersApi } from "../api-client";
 import { useAuth } from "./AuthProvider";
 
@@ -8,15 +8,17 @@ interface UserContextType {
   updateUsername: (newUsername: string) => Promise<boolean>;
   updateEmail: (newEmail: string) => Promise<boolean>;
   updatePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
-  deleteUser: () => Promise<void>;
+  updateProfilePicture: (file: File) => Promise<boolean>;
+  deleteUser: () => Promise<boolean>;
   validateUserPassword: (password: string) => Promise<boolean>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { accessToken, getAuthApi, logout } = useAuth();
+  const { accessToken, getAuthApi, userId } = useAuth();
   const [user, setUser] = useState<EncodableUser | null>(null);
+  const userIdRef = useRef<string | null>(null);
 
   const getUsersApi = () =>
     new UsersApi(
@@ -33,17 +35,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   useEffect(() => {
-    if (!user && accessToken) {
+    if (userIdRef.current != userId) {
       fetchUser();
     }
-  }, [accessToken])
+  }, [userId])
 
   const updateUser = async (data: UpdateInformationBody) => {
     if (!user) return false;
 
     try {
       await getUsersApi().updateUser(user.id, data);
-
       fetchUser()
       return true
     } catch {
@@ -84,15 +85,28 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
+  const updateProfilePicture = async (file: File) => {
+    if (!user) return false;
+
+    try {
+      await getUsersApi().changeProfilePicture(user.id, file);
+
+      fetchUser();
+      return true
+    } catch {
+      return false
+    }
+  }
+
   const deleteUser = async () => {
-    if (!user) return;
+    if (!user) return false;
 
     try {
       await getUsersApi().deleteUser(user.id);
 
-      await logout();
+      return true;
     } catch {
-      console.log("Failed to delete user.")
+      return false;
     }
   }
 
@@ -120,6 +134,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updateUsername,
         updateEmail,
         updatePassword,
+        updateProfilePicture,
         deleteUser,
         validateUserPassword
       }}

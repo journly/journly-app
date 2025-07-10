@@ -1,18 +1,13 @@
-use actix_web::{
-    Error, FromRequest, HttpRequest,
-    dev::Payload,
-    error::{ErrorInternalServerError, ErrorUnauthorized},
-    web::Data,
-};
+use actix_web::{FromRequest, HttpRequest, dev::Payload, web::Data};
 use chrono::{Duration, TimeZone, Utc};
-use futures::future::{Ready, ready};
 use jsonwebtoken::{
     Algorithm, DecodingKey, EncodingKey, Header, TokenData, Validation, decode, encode,
 };
 use serde::{Deserialize, Serialize};
+use std::future::ready;
 use uuid::Uuid;
 
-use crate::app::AppState;
+use crate::{app::AppState, models::user::User, util::errors::AppError};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
@@ -62,7 +57,7 @@ pub fn verify_jwt(
 }
 
 pub struct AuthenticatedUser {
-    pub user_id: Uuid,
+    pub user: User,
     pub role: String,
 }
 
@@ -76,43 +71,70 @@ impl AuthenticatedUser {
 }
 
 impl FromRequest for AuthenticatedUser {
-    type Error = Error;
-    type Future = Ready<Result<Self, Self::Error>>;
+    type Error = AppError;
+    type Future = futures_util::future::LocalBoxFuture<'static, Result<Self, Self::Error>>;
 
     fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
-        let state = req.app_data::<Data<AppState>>();
+        let server_error = Box::pin(ready(Err(AppError::InternalError)));
 
-        if state.is_none() {
-            return ready(Err(ErrorInternalServerError("Internal error")));
-        }
+        let state = match req.app_data::<Data<AppState>>() {
+            Some(s) => s.clone(),
+            None => return server_error,
+        };
 
-        let config = state.unwrap().config.clone();
+        let config = state.config.clone();
 
-        if let Some(header) = req.headers().get("Authorization") {
-            if let Ok(header_str) = header.to_str() {
-                if let Some(token) = header_str.strip_prefix("Bearer ") {
-                    if let Ok(token_data) = verify_jwt(token, &config.jwt_config.access_secret) {
-                        let issued_at = Utc.timestamp_opt(token_data.claims.iat, 0).unwrap();
-                        let expiration_time = Utc.timestamp_opt(token_data.claims.exp, 0).unwrap();
+        let unauthorized_error = Box::pin(ready(Err(AppError::Unauthorized)));
 
-                        if expiration_time < Utc::now() {
-                            return ready(Err(ErrorUnauthorized("Token is expired")));
-                        }
+        let header = match req.headers().get("Authorization") {
+            Some(header) => header.to_str().unwrap(),
+            None => return unauthorized_error,
+        };
 
-                        if issued_at > Utc::now() {
-                            return ready(Err(ErrorUnauthorized("Invalid token")));
-                        }
+        let token = match header.strip_prefix("Bearer ") {
+            Some(token) => token,
+            None => return unauthorized_error,
+        };
 
-                        return ready(Ok(AuthenticatedUser {
-                            user_id: token_data.claims.sub,
-                            role: token_data.claims.role,
-                        }));
-                    }
+        if let Ok(token_data) = verify_jwt(token, &config.jwt_config.access_secret) {
+            return Box::pin(async move {
+                let issued_at = Utc.timestamp_opt(token_data.claims.iat, 0).unwrap();
+                let expiration_time = Utc.timestamp_opt(token_data.claims.exp, 0).unwrap();
+
+                if expiration_time < Utc::now() {
+                    return Err(AppError::Unauthorized);
                 }
-            }
+
+                if issued_at > Utc::now() {
+                    return Err(AppError::Unauthorized);
+                }
+
+                match state.db_connection().await {
+                    Ok(mut conn) => {
+                        let result = User::find(&mut conn, &token_data.claims.sub).await;
+
+                        match result {
+                            Ok(user) => {
+                                if user.verified || state.emails.is_none() {
+                                    Ok(AuthenticatedUser {
+                                        user,
+                                        role: token_data.claims.role,
+                                    })
+                                } else {
+                                    Err(AppError::UnverifiedUser(
+                                        "User has not verified their email.".to_string(),
+                                    ))
+                                }
+                            }
+                            Err(_) => Err(AppError::NotFound),
+                        }
+                    }
+                    Err(_) => Err(AppError::InternalError),
+                }
+            });
         }
 
-        ready(Err(ErrorUnauthorized("Invalid or missing token")))
+        unauthorized_error
     }
 }
 

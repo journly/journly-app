@@ -9,6 +9,8 @@ All URIs are relative to *http://localhost*
 |[**logout**](#logout) | **POST** /api/v1/auth/logout | |
 |[**refresh**](#refresh) | **POST** /api/v1/auth/refresh | |
 |[**registerUser**](#registeruser) | **POST** /api/v1/auth/register | |
+|[**resendVerificationCode**](#resendverificationcode) | **POST** /api/v1/auth/resend-verification | |
+|[**verifyUserEmail**](#verifyuseremail) | **POST** /api/v1/auth/verify-email | |
 
 # **getMe**
 > GetMeResponse getMe()
@@ -102,6 +104,8 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Login was successful |  -  |
+|**401** | Unauthorized |  -  |
+|**500** | Internal error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -206,6 +210,8 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Refresh was succesful |  -  |
+|**401** | Unauthorized |  -  |
+|**500** | Internal error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -258,6 +264,115 @@ No authorization required
 |-------------|-------------|------------------|
 |**200** | Successfully registered |  -  |
 |**400** | Invalid registration details |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **resendVerificationCode**
+> OkResponse resendVerificationCode(resendVerificationBody)
+
+
+### Example
+
+```typescript
+import {
+    AuthenticationApi,
+    Configuration,
+    ResendVerificationBody
+} from './api';
+
+const configuration = new Configuration();
+const apiInstance = new AuthenticationApi(configuration);
+
+let resendVerificationBody: ResendVerificationBody; //
+
+const { status, data } = await apiInstance.resendVerificationCode(
+    resendVerificationBody
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **resendVerificationBody** | **ResendVerificationBody**|  | |
+
+
+### Return type
+
+**OkResponse**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Verification code resent |  -  |
+|**400** | Invalid request |  -  |
+|**404** | User not found |  -  |
+|**409** | User already verified |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **verifyUserEmail**
+> OkResponse verifyUserEmail(verificationBody)
+
+
+### Example
+
+```typescript
+import {
+    AuthenticationApi,
+    Configuration,
+    VerificationBody
+} from './api';
+
+const configuration = new Configuration();
+const apiInstance = new AuthenticationApi(configuration);
+
+let verificationBody: VerificationBody; //
+
+const { status, data } = await apiInstance.verifyUserEmail(
+    verificationBody
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **verificationBody** | **VerificationBody**|  | |
+
+
+### Return type
+
+**OkResponse**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Email successfully verified |  -  |
+|**400** | Invalid request |  -  |
+|**403** | Verification code is incorrect or expired |  -  |
+|**404** | User not found |  -  |
+|**409** | User already verified |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

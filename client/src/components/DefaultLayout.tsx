@@ -7,7 +7,7 @@ export default function DefaultLayout() {
     <Box className="flex h-screen w-full bg-gray-50">
       <MenuBar />
       <Box className="flex-1 overflow-auto">
-          <Outlet />
+        <Outlet />
       </Box>
     </Box>
   );

@@ -1,6 +1,7 @@
 use journly_server::app::App;
 use journly_server::db::get_connection_pool;
 use journly_server::email::Emails;
+use journly_server::s3_client::S3Client;
 use journly_server::{config::Server, run};
 use log::info;
 use std::net::TcpListener;
@@ -18,10 +19,13 @@ async fn main() -> std::io::Result<()> {
 
     let emails = Emails::from_config(&config);
 
+    let s3 = S3Client::from_config(&config).await;
+
     let app = Arc::new(App {
         database,
-        emails,
+        emails: Some(emails),
         config,
+        s3: Some(s3),
     });
 
     app.run_migrations().await;

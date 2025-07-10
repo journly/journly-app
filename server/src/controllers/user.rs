@@ -3,9 +3,11 @@ use crate::{
     auth::AuthenticatedUser,
     controllers::helper::OkResponse,
     models::user::User,
-    util::errors::{AppError, AppResult},
+    s3_client::get_file_extension,
+    util::errors::{AppError, AppResult, ErrorResponse},
     views::EncodableUser,
 };
+use actix_multipart::form::{MultipartForm, tempfile::TempFile};
 use actix_web::web::{self, Json};
 use argon2::{
     Argon2,
@@ -28,7 +30,8 @@ pub struct GetUsersResponse {
     path = "/api/v1/users",
     responses(
         (status = 200, description = "Successful Response", body = GetUsersResponse),
-        (status = 403, description = "Insufficient permissions"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 403, description = "Insufficient permissions", body = ErrorResponse)
     ),
     security(
         ("jwt" = [])
@@ -39,7 +42,7 @@ pub async fn get_users(
     state: web::Data<AppState>,
 ) -> AppResult<Json<GetUsersResponse>> {
     if !authenticated.is_admin() {
-        return Err(AppError::Forbidden);
+        return Err(AppError::Forbidden("Insufficient permissions.".to_string()));
     }
 
     let mut conn = state.db_connection().await?;
@@ -75,9 +78,10 @@ pub struct GetUserResponse {
     path = "/api/v1/users/{user_id}",
     responses(
         (status = 200, description = "Successful Response", body = GetUserResponse),
-        (status = 403, description = "Insufficient permissions"),
-        (status = 404, description = "User Not Found"),
-        (status = 500, description = "Internal server error"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 403, description = "Insufficient permissions", body = ErrorResponse),
+        (status = 404, description = "User Not Found", body = ErrorResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse),
     ),
     security(
         ("jwt" = [])
@@ -89,7 +93,7 @@ pub async fn get_user(
     state: web::Data<AppState>,
 ) -> AppResult<Json<GetUserResponse>> {
     if !authenticated.is_admin() {
-        return Err(AppError::Forbidden);
+        return Err(AppError::Forbidden("Insufficient permissions".to_string()));
     }
 
     let user_id = path.into_inner();
@@ -118,9 +122,10 @@ pub async fn get_user(
     path = "/api/v1/users/{user_id}",
     responses(
         (status = 200, description = "Successful Response", body = OkResponse),
-        (status = 403, description = "Insufficient permissions"),
-        (status = 404, description = "User not found"),
-        (status = 500, description = "Internal server error"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 403, description = "Insufficient permissions", body = ErrorResponse),
+        (status = 404, description = "User not found", body = ErrorResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse),
     ),
     security(
         ("jwt" = [])
@@ -133,8 +138,8 @@ pub async fn delete_user(
 ) -> AppResult<OkResponse> {
     let user_id = path.into_inner();
 
-    if !authenticated.is_admin() && authenticated.user_id != user_id {
-        return Err(AppError::Forbidden);
+    if !authenticated.is_admin() && authenticated.user.id != user_id {
+        return Err(AppError::Forbidden("Insufficient permissions".to_string()));
     }
 
     let mut conn = state.db_connection().await?;
@@ -162,10 +167,11 @@ pub struct UpdateInformationBody {
     path = "/api/v1/users/{user_id}",
     responses(
         (status = 200, description = "Successful Response", body = OkResponse),
-        (status = 403, description = "Insufficient permissions"),
-        (status = 404, description = "User not found"),
-        (status = 409, description = "Conflicts with existing resource"),
-        (status = 500, description = "Internal server error"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 403, description = "Insufficient permissions", body = ErrorResponse),
+        (status = 404, description = "User not found", body = ErrorResponse),
+        (status = 409, description = "Conflicts with existing resource", body = ErrorResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse),
     ),
     security(
         ("jwt" = [])
@@ -179,8 +185,8 @@ pub async fn update_user(
 ) -> AppResult<OkResponse> {
     let user_id = path.into_inner();
 
-    if !authenticated.is_admin() && authenticated.user_id != user_id {
-        return Err(AppError::Forbidden);
+    if !authenticated.is_admin() && authenticated.user.id != user_id {
+        return Err(AppError::Forbidden("Insufficient permissions".to_string()));
     }
 
     let mut conn = state.db_connection().await?;
@@ -228,11 +234,11 @@ pub struct PasswordUpdateRequest {
     tag = "users",
     put,
     path = "/api/v1/users/{user_id}/password",
-    request_body = PasswordUpdateRequest,
     responses(
         (status = 200, description = "Password updated successfully", body = OkResponse),
-        (status = 403, description = "Unauthorized"),
-        (status = 500, description = "Internal server error"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 403, description = "Insufficient permissions", body = ErrorResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse),
     ),
     security(("jwt" = []))
 )]
@@ -243,9 +249,10 @@ pub async fn update_user_password(
     body: web::Json<PasswordUpdateRequest>,
 ) -> AppResult<OkResponse> {
     let user_id = path.into_inner();
+    let user = authenticated.user;
 
-    if authenticated.user_id != user_id {
-        return Err(AppError::Forbidden);
+    if user.id != user_id {
+        return Err(AppError::Forbidden("Insufficient permissions".to_string()));
     }
 
     let PasswordUpdateRequest {
@@ -255,62 +262,171 @@ pub async fn update_user_password(
 
     let mut conn = state.db_connection().await?;
 
-    let result = User::find(&mut conn, &user_id).await;
+    let user_password_salt = user.password_salt;
+    let user_password_hash = user.password_hash;
 
-    if let Ok(user) = result {
-        let user_password_salt = user.password_salt;
-        let user_password_hash = user.password_hash;
+    if user_password_hash.is_none() || user_password_salt.is_none() {
+        return Err(AppError::InternalError);
+    }
 
-        if user_password_hash.is_none() || user_password_salt.is_none() {
-            return Err(AppError::InternalError);
-        }
+    let salt = match SaltString::from_b64(
+        &general_purpose::STANDARD_NO_PAD.encode(user_password_salt.unwrap()),
+    ) {
+        Ok(res) => res,
+        _ => return Err(AppError::InternalError),
+    };
 
-        let salt = match SaltString::from_b64(
-            &general_purpose::STANDARD_NO_PAD.encode(user_password_salt.unwrap()),
-        ) {
-            Ok(res) => res,
-            _ => return Err(AppError::InternalError),
-        };
+    let argon2 = Argon2::default();
+
+    let password_hash = match argon2.hash_password(current_password.as_bytes(), &salt) {
+        Ok(hash) => hash.to_string(),
+        _ => return Err(AppError::InternalError),
+    };
+
+    if password_hash == user_password_hash.unwrap() {
+        use crate::schema::users;
+
+        let salt = SaltString::generate(&mut OsRng);
+        let new_salt_bytes: Vec<u8> = general_purpose::STANDARD_NO_PAD
+            .decode(salt.as_str())
+            .unwrap();
 
         let argon2 = Argon2::default();
 
-        let password_hash = match argon2.hash_password(current_password.as_bytes(), &salt) {
-            Ok(hash) => hash.to_string(),
-            _ => return Err(AppError::InternalError),
-        };
-
-        if password_hash == user_password_hash.unwrap() {
-            use crate::schema::users;
-
-            let salt = SaltString::generate(&mut OsRng);
-            let new_salt_bytes: Vec<u8> = general_purpose::STANDARD_NO_PAD
-                .decode(salt.as_str())
-                .unwrap();
-
-            let argon2 = Argon2::default();
-
-            let new_password_hash: String;
-            if let Ok(hash) = argon2.hash_password(new_password.as_bytes(), &salt) {
-                new_password_hash = hash.to_string();
-            } else {
-                return Err(AppError::InternalError);
-            }
-
-            let update_result = diesel::update(users::table)
-                .filter(users::id.eq(user_id))
-                .set((
-                    users::password_hash.eq(new_password_hash),
-                    users::password_salt.eq(new_salt_bytes),
-                ))
-                .execute(&mut conn)
-                .await;
-
-            return match update_result {
-                Ok(_) => Ok(OkResponse::new()),
-                Err(_) => Err(AppError::InternalError),
-            };
+        let new_password_hash: String;
+        if let Ok(hash) = argon2.hash_password(new_password.as_bytes(), &salt) {
+            new_password_hash = hash.to_string();
+        } else {
+            return Err(AppError::InternalError);
         }
+
+        let update_result = diesel::update(users::table)
+            .filter(users::id.eq(user_id))
+            .set((
+                users::password_hash.eq(new_password_hash),
+                users::password_salt.eq(new_salt_bytes),
+            ))
+            .execute(&mut conn)
+            .await;
+
+        return match update_result {
+            Ok(_) => Ok(OkResponse::new()),
+            Err(_) => Err(AppError::InternalError),
+        };
     }
 
     Err(AppError::NotFound)
+}
+
+#[derive(Debug, MultipartForm, ToSchema)]
+pub struct UploadForm {
+    #[multipart(limit = "1MB")]
+    #[schema(value_type = String, format = Binary, content_media_type = "application/octet-stream")]
+    pub file: TempFile,
+}
+
+#[utoipa::path(
+    tag = "users",
+    put,
+    path = "/api/v1/users/{user_id}/profile-picture",
+    summary = "Upload or replace a user's profile picture",
+    params(
+        ("user_id" = Uuid, Path, description = "ID of the user whose profile picture is being changed")
+    ),
+    request_body(
+        content = UploadForm,
+        content_type = "multipart/form-data",
+        description = "Image file to upload as profile picture",
+    ),
+    responses(
+        (status = 200, description = "Profile picture updated successfully", body = OkResponse),
+        (status = 400, description = "Invalid file", body = ErrorResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 403, description = "Insufficient permissions", body = ErrorResponse),
+        (status = 404, description = "User not found", body = ErrorResponse),
+        (status = 409, description = "Update conflict", body = ErrorResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse),
+    ),
+    security(("jwt" = []))
+)]
+pub async fn change_profile_picture(
+    authenticated: AuthenticatedUser,
+    path: web::Path<Uuid>,
+    MultipartForm(form): MultipartForm<UploadForm>,
+    state: web::Data<AppState>,
+) -> AppResult<OkResponse> {
+    let user_id = path.into_inner();
+    let user = authenticated.user;
+
+    if user.id != user_id {
+        return Err(AppError::Forbidden("Insufficient permissions".to_string()));
+    }
+
+    let s3_client = match &state.s3 {
+        Some(s3) => s3,
+        None => return Err(AppError::InternalError),
+    };
+
+    let mut conn = state.db_connection().await?;
+
+    let file = form.file;
+
+    let content_type = file.content_type.clone();
+
+    if content_type.is_none() {
+        return Err(AppError::BadRequest("Invalid file type.".to_string()));
+    };
+
+    match content_type.unwrap().type_() {
+        mime::IMAGE => {
+            let key_prefix = "pfp";
+
+            // upload new pfp
+            let mut file_ext = get_file_extension(&file);
+
+            println!("extension {file_ext}");
+
+            if file_ext == "jpg" {
+                file_ext = "jpeg".to_string();
+            }
+
+            println!("extension now {file_ext}");
+
+            if file_ext != "png" && file_ext != "jpeg" && file_ext != "webp" {
+                return Err(AppError::BadRequest("Invalid file type.".to_string()));
+            }
+
+            let profile_picture_url = s3_client
+                .upload(&file, key_prefix, &format!("image/{}", file_ext))
+                .await;
+
+            use crate::schema::users::dsl::*;
+
+            let result = diesel::update(users)
+                .filter(id.eq(user_id))
+                .set(avatar.eq(profile_picture_url))
+                .execute(&mut conn)
+                .await;
+
+            if result == Err(NotFound) {
+                return Err(AppError::NotFound);
+            } else if result.is_err() {
+                return Err(AppError::Conflict);
+            }
+
+            // delete old pfp
+            if user.avatar.is_some() {
+                let key = s3_client.get_key_from_url(&user.avatar.unwrap());
+
+                s3_client.delete_file(&key).await;
+            }
+
+            Ok(OkResponse::new())
+        }
+        shit => {
+            println!("here {shit}");
+
+            Err(AppError::BadRequest("Invalid file type.".to_string()))
+        }
+    }
 }

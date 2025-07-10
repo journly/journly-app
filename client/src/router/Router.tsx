@@ -16,6 +16,7 @@ import SettingsLayout from '../components/settings/SettingsLayout';
 import MyAccountPage from '../pages/settings/MyAccountPage';
 import NotificationSettingsPage from '../pages/settings/NotificationSettingsPage';
 import PreferencesPage from '../pages/settings/PreferencesPage';
+import { VerifyPage } from '../pages/VerifyPage';
 
 
 export default function Router() {
@@ -30,6 +31,7 @@ export default function Router() {
       <Route path="login" element={<LoginPage />} />
       <Route path="register" element={<RegisterPage />} />
       <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
+      <Route path="verify" element={<VerifyPage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<DefaultLayout />}>

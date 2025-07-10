@@ -5,11 +5,11 @@ use crate::{
     google_oauth::{get_google_user, request_token},
     models::{
         refresh_tokens::RefreshToken,
-        user::{NewUser, User},
+        user::{NewUser, User, UserVerificationCode, VerificationEmail},
     },
     util::{
         auth::{is_valid_email, is_valid_username},
-        errors::{AppError, AppResult},
+        errors::{AppError, AppResult, ErrorResponse},
     },
     views::EncodableUser,
 };
@@ -23,7 +23,8 @@ use argon2::{
     password_hash::{PasswordHasher, SaltString, rand_core::OsRng},
 };
 use base64::{Engine, engine::general_purpose};
-use diesel::result::Error::NotFound;
+use diesel::{ExpressionMethods, result::Error::NotFound};
+use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -53,7 +54,7 @@ pub struct RegisterUserResponse {
     path = "/api/v1/auth/register",
     responses(
         (status = 200, description = "Successfully registered", body = RegisterUserResponse),
-        (status = 400, description = "Invalid registration details")
+        (status = 400, description = "Invalid registration details", body = ErrorResponse)
     ),
 )]
 pub async fn register_user(
@@ -81,6 +82,8 @@ pub async fn register_user(
         ));
     }
 
+    let email = body.email.trim().to_lowercase();
+
     // check email validity
     if !is_valid_email(&body.email) {
         return Err(AppError::BadRequest("Malformed email address".to_string()));
@@ -88,9 +91,10 @@ pub async fn register_user(
 
     let new_user = NewUser {
         username: Some(&body.username),
-        email: Some(&body.email),
+        email: Some(&email),
         password_hash: Some(&password_hash),
         password_salt: Some(&salt_bytes),
+        verified: None,
         avatar: None,
         provider: Some("local"),
     };
@@ -100,10 +104,151 @@ pub async fn register_user(
     let result = new_user.insert(&mut conn).await;
 
     match result {
-        Ok(user) => Ok(Json(RegisterUserResponse {
-            user: EncodableUser::from(user),
-        })),
+        Ok(user) => {
+            if let Some(emails) = &state.emails {
+                let verification_code = UserVerificationCode::generate(&mut conn, &user.email)
+                    .await
+                    .map_err(|_| AppError::InternalError)?;
+
+                let verification_email = VerificationEmail {
+                    username: &user.username,
+                    verification_code: &verification_code,
+                };
+
+                match emails.send(&user.email, verification_email).await {
+                    Ok(_) => println!("email sent successfully."),
+                    Err(e) => println!("email failed to send: {:?}", e),
+                }
+            }
+
+            Ok(Json(RegisterUserResponse {
+                user: EncodableUser::from(user),
+            }))
+        }
         Err(_) => Err(AppError::BadRequest("Email already exists".to_string())),
+    }
+}
+
+#[derive(Deserialize, ToSchema)]
+pub struct ResendVerificationBody {
+    pub email: String,
+}
+
+#[utoipa::path(
+    tag = AUTH,
+    post,
+    path = "/api/v1/auth/resend-verification",
+    responses(
+        (status = 200, description = "Verification code resent", body = OkResponse),
+        (status = 400, description = "Invalid request", body = ErrorResponse),
+        (status = 404, description = "User not found", body = ErrorResponse),
+        (status = 409, description = "User already verified", body = ErrorResponse)
+    )
+)]
+pub async fn resend_verification_code(
+    body: web::Json<ResendVerificationBody>,
+    state: web::Data<AppState>,
+) -> AppResult<OkResponse> {
+    let email = body.email.trim().to_lowercase();
+
+    if !is_valid_email(&email) {
+        return Err(AppError::BadRequest("Malformed email address".to_string()));
+    }
+
+    let mut conn = state.db_connection().await?;
+
+    // Fetch user
+    let user = match User::find_by_email(&mut conn, &email).await {
+        Ok(user) => user,
+        Err(_) => return Err(AppError::NotFound),
+    };
+
+    if user.verified {
+        return Err(AppError::Conflict); // 409 already verified
+    }
+
+    if let Some(emails) = &state.emails {
+        let verification_code = UserVerificationCode::generate(&mut conn, &user.email)
+            .await
+            .map_err(|_| AppError::InternalError)?;
+
+        let verification_email = VerificationEmail {
+            username: &user.username,
+            verification_code: &verification_code,
+        };
+
+        match emails.send(&user.email, verification_email).await {
+            Ok(_) => println!("email sent successfully."),
+            Err(e) => println!("email failed to send: {:?}", e),
+        }
+    }
+
+    Ok(OkResponse::new())
+}
+
+#[derive(Deserialize, ToSchema)]
+pub struct VerificationBody {
+    pub email: String,
+    pub verification_code: i32,
+}
+
+#[utoipa::path(
+    tag = AUTH,
+    post,
+    path = "/api/v1/auth/verify-email",
+    responses(
+        (status = 200, description = "Email successfully verified", body = OkResponse),
+        (status = 400, description = "Invalid request", body = ErrorResponse),
+        (status = 403, description = "Verification code is incorrect or expired", body = ErrorResponse),
+        (status = 404, description = "User not found", body = ErrorResponse),
+        (status = 409, description = "User already verified", body = ErrorResponse),
+    )
+)]
+pub async fn verify_user_email(
+    body: web::Json<VerificationBody>,
+    state: web::Data<AppState>,
+) -> AppResult<OkResponse> {
+    let email = body.email.trim().to_lowercase();
+    let verification_code = body.verification_code;
+
+    let forbidden_err_msg = "Verification code is incorrect or has expired".to_string();
+
+    if !is_valid_email(&email) {
+        return Err(AppError::BadRequest("Malformed email address".to_string()));
+    }
+
+    let mut conn = state.db_connection().await?;
+
+    // Fetch user
+    let user = match User::find_by_email(&mut conn, &email).await {
+        Ok(user) => user,
+        Err(_) => return Err(AppError::NotFound),
+    };
+
+    if user.verified {
+        return Err(AppError::Conflict); // 409 already verified
+    }
+
+    match UserVerificationCode::find(&mut conn, &email).await {
+        Ok(verification_obj) => {
+            if verification_obj.verification_code != verification_code {
+                return Err(AppError::Forbidden(forbidden_err_msg));
+            };
+
+            use crate::schema::users::dsl::*;
+
+            let result = diesel::update(users)
+                .filter(id.eq(user.id))
+                .set(verified.eq(true))
+                .execute(&mut conn)
+                .await;
+
+            match result {
+                Ok(_) => Ok(OkResponse::new()),
+                _ => Err(AppError::InternalError),
+            }
+        }
+        Err(_) => Err(AppError::Forbidden(forbidden_err_msg)),
     }
 }
 
@@ -118,7 +263,7 @@ pub struct GetMeResponse {
     path = "/api/v1/auth/me",
     responses(
         (status = 200, description = "Successful response", body = GetMeResponse),
-        (status = 404, description = "User not found")
+        (status = 404, description = "User not found", body = ErrorResponse)
     ),
     security(
         ("jwt" = [])
@@ -126,18 +271,11 @@ pub struct GetMeResponse {
 )]
 pub async fn get_me(
     authenticated: AuthenticatedUser,
-    state: web::Data<AppState>,
+    _: web::Data<AppState>,
 ) -> AppResult<Json<GetMeResponse>> {
-    let user_id = authenticated.user_id;
-
-    let mut conn = state.db_connection().await?;
-
-    match User::find(&mut conn, &user_id).await {
-        Ok(user) => Ok(Json(GetMeResponse {
-            user: EncodableUser::from(user),
-        })),
-        Err(_) => Err(AppError::NotFound),
-    }
+    Ok(Json(GetMeResponse {
+        user: EncodableUser::from(authenticated.user),
+    }))
 }
 
 #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
@@ -157,7 +295,9 @@ pub struct LoginResponse {
     post,
     path = "/api/v1/auth/login",
     responses(
-        (status = 200, description = "Login was successful", body = LoginResponse)
+        (status = 200, description = "Login was successful", body = LoginResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 500, description = "Internal error", body = ErrorResponse)
     ),
 )]
 pub async fn login(
@@ -166,7 +306,9 @@ pub async fn login(
 ) -> AppResult<Json<LoginResponse>> {
     let mut conn = state.db_connection().await?;
 
-    let result = User::find_by_email(&mut conn, &credentials.email).await;
+    let email = credentials.email.trim().to_lowercase();
+
+    let result = User::find_by_email(&mut conn, &email).await;
 
     match result {
         Ok(user) => {
@@ -241,7 +383,10 @@ pub struct QueryCode {
     get,
     path = "/api/v1/auth/google",
     responses(
-        (status = 302, description = "Successfully logged in using Google OAuth 2.0", body = LoginResponse)
+        (status = 302, description = "Successfully logged in using Google OAuth 2.0"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 500, description = "Internal error", body = ErrorResponse),
+        (status = 502, description = "Google OAuth error", body = ErrorResponse)
     )
 )]
 pub async fn google_oauth(
@@ -257,14 +402,12 @@ pub async fn google_oauth(
 
     let token_response = request_token(query_code.as_str(), &state).await;
     if token_response.is_err() {
-        eprintln!("Token response error");
         return Err(AppError::BadGateway);
     }
 
     let token_response = token_response.unwrap();
     let google_user = get_google_user(&token_response.access_token, &token_response.id_token).await;
     if google_user.is_err() {
-        eprintln!("Google user error");
         return Err(AppError::BadGateway);
     }
 
@@ -290,6 +433,7 @@ pub async fn google_oauth(
                 email: Some(&google_user.email),
                 password_hash: None,
                 password_salt: None,
+                verified: Some(true),
                 avatar: Some(&google_user.picture),
                 provider: Some("google"),
             };
@@ -365,8 +509,8 @@ pub struct RefreshTokenBody {
     path="/api/v1/auth/logout",
     responses(
         (status = 200, description = "Logout was successful", body = OkResponse),
-        (status = 401, description = "Invalid or missing token"),
-        (status = 500, description = "Internal server error"),
+        (status = 401, description = "Invalid or missing token", body = ErrorResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse),
     ),
     security(
         ("jwt" = [])
@@ -378,7 +522,7 @@ pub async fn logout(
     state: web::Data<AppState>,
 ) -> AppResult<OkResponse> {
     let mut conn = state.db_connection().await?;
-    let user_id = authenticated.user_id;
+    let user_id = authenticated.user.id;
 
     let refresh_token = RefreshToken::find(&mut conn, &body.refresh_token)
         .await
@@ -405,7 +549,9 @@ pub struct RefreshResponse {
     post,
     path="/api/v1/auth/refresh",
     responses(
-        (status = 200, description = "Refresh was succesful", body = RefreshResponse)
+        (status = 200, description = "Refresh was succesful", body = RefreshResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 500, description = "Internal error", body = ErrorResponse)
     )
 )]
 pub async fn refresh(

@@ -5,10 +5,15 @@ use utoipa::{
 };
 
 use crate::controllers::{
-    auth::{get_me, google_oauth, login, logout, refresh, register_user},
+    auth::{
+        get_me, google_oauth, login, logout, refresh, register_user, resend_verification_code,
+        verify_user_email,
+    },
     get_health,
     trip::{create_trip, get_trip, get_trips},
-    user::{delete_user, get_user, get_users, update_user, update_user_password},
+    user::{
+        change_profile_picture, delete_user, get_user, get_users, update_user, update_user_password,
+    },
 };
 
 #[derive(OpenApi)]
@@ -18,7 +23,9 @@ use crate::controllers::{
         crate::controllers::auth::get_me,
         crate::controllers::auth::login,
         crate::controllers::auth::logout,
+        crate::controllers::auth::resend_verification_code,
         crate::controllers::auth::refresh,
+        crate::controllers::auth::verify_user_email,
         crate::controllers::trip::get_trips,
         crate::controllers::trip::create_trip,
         crate::controllers::trip::get_trip,
@@ -26,7 +33,8 @@ use crate::controllers::{
         crate::controllers::user::get_user,
         crate::controllers::user::delete_user,
         crate::controllers::user::update_user,
-        crate::controllers::user::update_user_password
+        crate::controllers::user::update_user_password,
+        crate::controllers::user::change_profile_picture
     ),
     modifiers(&SecurityAddon)
 )]
@@ -60,6 +68,8 @@ pub fn routes(cfg: &mut ServiceConfig ) {
                 .route("/register", post().to(register_user))
                 .route("/google", get().to(google_oauth))
                 .route("/me", get().to(get_me))
+                .route("/resend-verification", post().to(resend_verification_code))
+                .route("/verify-email", post().to(verify_user_email))
         )
         .service(
             scope("/api/v1/trips")
@@ -74,5 +84,6 @@ pub fn routes(cfg: &mut ServiceConfig ) {
                 .route("/{user_id}", delete().to(delete_user))
                 .route("/{user_id}", put().to(update_user))
                 .route("/{user_id}/password", put().to(update_user_password))
+                .route("/{user_id}/profile-picture", put().to(change_profile_picture))
         );
 }

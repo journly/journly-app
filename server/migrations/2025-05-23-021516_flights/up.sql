@@ -1,20 +1,10 @@
 CREATE TABLE flights (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  trip_id UUID NOT NULL,
+  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
   flight_code TEXT,
   departure_datetime TIMESTAMPTZ,
   arrival_datetime TIMESTAMPTZ,
-  departure_location UUID,
-  arrival_location UUID,
-  from_document UUID,
-
-  FOREIGN KEY (trip_id)
-    REFERENCES trips(id)
-    ON DELETE CASCADE,
-  FOREIGN KEY (departure_location)
-    REFERENCES locations(id),
-  FOREIGN KEY (arrival_location)
-    REFERENCES locations(id),
-  FOREIGN KEY (from_document)
-    REFERENCES documents(id)
+  departure_location UUID REFERENCES locations(id),
+  arrival_location UUID REFERENCES locations(id),
+  from_document UUID REFERENCES documents(id)
 );

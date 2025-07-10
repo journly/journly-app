@@ -1,5 +1,5 @@
 import { Navigate, useNavigate } from "react-router-dom";
-import { useAuth } from "../providers/AuthProvider";
+import { AuthStatus, useAuth } from "../providers/AuthProvider";
 import { useEffect, useState } from "react";
 import { LoginCredentials } from "../api-client";
 import GoogleIcon from "../assets/icons8-google.svg";
@@ -12,18 +12,17 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [authStatus, setAuthStatus] = useState<AuthStatus | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     const verify = async () => {
-      try {
-        const ok = await checkAuthenticated();
-        if (!cancelled) setIsAuthenticated(ok);
-      } catch (err) {
-        if (!cancelled) setIsAuthenticated(false);
-      }
+      const res = await checkAuthenticated();
+
+      console.log(res)
+
+      if (!cancelled) setAuthStatus(res);
     };
 
     verify();
@@ -33,8 +32,12 @@ export default function LoginPage() {
     };
   }, [checkAuthenticated]);
 
-  if (isAuthenticated) {
+  if (authStatus == AuthStatus.Authenticated) {
     return <Navigate to="/" replace />;
+  }
+
+  if (authStatus == AuthStatus.Unverified) {
+    return <Navigate to="/verify" replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -93,7 +96,7 @@ export default function LoginPage() {
 
           <div className="text-center text-sm text-gray-500 pt-2">
             Don’t have an account?{' '}
-            <a onClick={() => navigate('/register')} className="font-semibold text-black hover:underline">
+            <a onClick={() => navigate('/register')} className="font-semibold text-black hover:underline cursor-pointer">
               Create a one here
             </a>
           </div>
