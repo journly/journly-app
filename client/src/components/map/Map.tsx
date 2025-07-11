@@ -20,8 +20,8 @@ export const Map: React.FC = () => {
   }, []);
 
   return (
-    <div className="w-full h-full overflow-hidden">
-      <div ref={mapContainerRef} className="w-full h-full" />
+    <div className="w-screen h-full mx-[-50px] overflow-hidden">
+      <div ref={mapContainerRef} className="w-full h-full overflow-hidden" />
     </div>
   );
 };
