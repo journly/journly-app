@@ -7,6 +7,7 @@ import App  from './App';
 import { UserProvider } from './providers/UserProvider';
 import { TripsProvider } from './providers/TripsProvider';
 import { BrowserRouter } from 'react-router-dom';
+import { AuthProvider } from './providers/AuthProvider';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -16,11 +17,13 @@ root.render(
   <React.StrictMode>
     <BrowserRouter>
       <ThemeProvider theme={theme}>
+        <AuthProvider>
           <UserProvider>
             <TripsProvider>
               <App />
             </TripsProvider>
           </UserProvider>
+        </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>
   </React.StrictMode>

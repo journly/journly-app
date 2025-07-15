@@ -24,20 +24,20 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<EncodableUser | null>(null);
 
 //TODO: Fetch user data from API and set it in state
-    useEffect(() => {
-       const fetchUserData = async () => {
-            try {
-                const response = await userApi.getUser({
-                    userId: 'current', // Replace with actual user ID or logic to get current user ID
-                });
-                if (response) {
-                    setUser(response.user as EncodableUser);
-                }
-            } catch (error) {
-                console.error('Error fetching user data:', error);
-            }
-        }
-    }, []);
+    // useEffect(() => {
+    //    const fetchUserData = async () => {
+    //         try {
+    //             const response = await userApi.getUser({
+    //                 userId: 'current', // Replace with actual user ID or logic to get current user ID
+    //             });
+    //             if (response) {
+    //                 setUser(response.user as EncodableUser);
+    //             }
+    //         } catch (error) {
+    //             console.error('Error fetching user data:', error);
+    //         }
+    //     }
+    // }, []);
   
 
   return (

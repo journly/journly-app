@@ -1,6 +1,7 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 import { useUser, User } from "./UserProvider";
 import { DateTime } from 'luxon';
+import { TripsApi } from "../api-client";
 
 export interface travelDates {
     startDate: DateTime;
@@ -20,23 +21,41 @@ interface TripsContextType {
     updateTrips: () => void;
 }
 
+const tripsApi = new TripsApi();
 
 const TripsContext = createContext<TripsContextType | undefined>(undefined);
 
 export const TripsProvider = ({ children }: { children: ReactNode }) => {
     const [trips, setTrips] = useState<Trip[]>([]);
-    const { user } = useUser();
+    const mounted = false
 
-    const fetchTrips = () => {
-        fetch("/api/trips")
-        .then((res) => res.json())
-        .then((data) => setTrips(data))
-        .catch((err) => console.error("Failed to fetch trips:", err));
-    };
+    const fetchTrips = async () => {
+        await tripsApi.getTrips(
+            
+        ).then((response) => {
+            if (response && response.data) {
+                const fetchedTrips = response.data.trips.map((trip: any) => ({
+                    id: trip.id,
+                    title: trip.title,
+                    travelDates: {
+                        startDate: DateTime.fromISO(trip.travelDates.startDate),
+                        endDate: DateTime.fromISO(trip.travelDates.endDate)
+                    },
+                    locations: trip.locations || [],
+                    users: trip.users || []
+                }));
+                console.log("trips", response.data.trips)
+                setTrips(fetchedTrips);
+            }
+        })
+    }
 
-    // useEffect(() => {
-    //     fetchTrips();
-    // }, []);
+
+    useEffect(() => {
+        if (mounted) {
+            fetchTrips();
+        }
+    }, [mounted]);
 
     return (
         <TripsContext.Provider value={{ trips, updateTrips: fetchTrips }}>

@@ -4,6 +4,7 @@ import Section from "../generic/Section.tsx";
 import { CalendarDaysIcon, DollarSign, DotIcon, House, MapIcon, MapPinIcon, Plus, SparklesIcon, Users } from "lucide-react";
 import DialogWrapper from "../generic/DialogWrapper.tsx";
 import { useState } from "react";
+import TravelAssistance from "../generic/TravelAssistance.tsx";
 
 const InfoBox = ({title, icon, information}: { title: string; icon: any; information: string }) => (
     <Box className="flex flex-col gap-1 pt-5 row-span-1">
@@ -39,9 +40,9 @@ const Overview = () =>{
     
     return (
         <>
-        <Box className="grid grid-cols-3 md:grid-cols-5 gap-4 ">
+        <Box className="grid grid-cols-5 md:grid-cols-7 gap-4 ">
 
-            <Section additionalStyle="col-span-2 md:col-span-3 mt-0" >
+            <Section additionalStyle="col-span-4 md:col-span-5 mt-0" >
                 <Box className="flex items-center gap-2 mt-0">
                     <Typography variant="h5" fontWeight={500} fontSize={20} className="text-gray-900">
                         Trip Overview
@@ -123,8 +124,8 @@ const Overview = () =>{
                 />
             </Section>
         </Box>
-        <Box className="grid grid-cols-3 md:grid-cols-5 gap-4 mt-4">
-            <Section additionalStyle="col-span-2 md:col-span-3" >
+        <Box className="grid grid-cols-5 md:grid-cols-7 gap-4 mt-4">
+            <Section additionalStyle="col-span-4 md:col-span-5" >
                 <Box className="flex justify-between gap-2 m-0 mb-2">
                     <Typography variant="h5" fontWeight={500} fontSize={20} className="text-gray-900">
                         Notes
@@ -170,21 +171,12 @@ const Overview = () =>{
                 />
             </Section>
             <Section additionalStyle="col-span-1 md:col-span-2">
-                <Box className="m-0 mb-2">
-                    <Box className="flex items-center gap-2 m-0 mb-2">
-                        <SparklesIcon className="h-5 w-5 text-red-400" />
-                        <Typography variant="h5" fontWeight={500} fontSize={20} className="text-gray-900 mb-2">
-                            Trip Assistant
-                        </Typography>
-                    </Box>
-                    <Box className="p-2 mb-2 flex gap-2 bg-gray-100 rounded-md">
-                        <List className="flex-1">
-                            <Typography variant="body2" fontWeight={400} className="text-gray-600">
-                                Need help planning your trip? Ask our AI assistant for suggestions!
-                            </Typography>
-                        </List>
-                    </Box>
-                </Box>
+                <TravelAssistance
+                    iconColor="text-red-400"
+                    refresh={() => {
+                        // Logic to refresh the assistant recommendations
+                    }}
+                />
             </Section>
             </Box>
         </>

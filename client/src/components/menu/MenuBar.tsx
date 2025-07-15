@@ -11,13 +11,15 @@ import NewTripDialog from '../NewTripDialog';
 import { NotificationPanel } from './NotificationPanel';
 export function MenuBar() {
   const { user } = useUser();
-  const { trips } = useTrips();
+  const { trips, updateTrips } = useTrips();
   const [collapsed, setCollapsed] = useState(false);
   const [openNew, setOpenNew] = useState(false);
   const [openNotif, setOpenNotif] = useState(false);
 
   const toggleCollapse = () => {
     setCollapsed((prev) => !prev);
+    updateTrips(); // Refresh trips when collapsing/expanding
+    console.log(trips)
   };
 
   return (

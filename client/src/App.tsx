@@ -8,9 +8,7 @@ import { AuthProvider } from './providers/AuthProvider';
  */
 const App: React.FC = () => {
   return (
-    <AuthProvider>
       <Router />
-    </AuthProvider>
   )
 }
 
