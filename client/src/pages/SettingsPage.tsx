@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { ReactElement, useEffect, useState } from "react";
 import {
   TextField,
   Switch,
@@ -22,7 +22,15 @@ import { MenuItem } from "../components/menu/MenuItem";
 import { LogoutConfirmModal } from "../components/LogoutConfirmModal";
 import { useAuth } from "../providers/AuthProvider";
 
-const MENU_STRUCTURE = [
+interface MenuItem {
+  key: string;
+  label: string;
+  icon: ReactElement,
+  content?: ReactElement,
+  subItems?: MenuItem[]
+}
+
+const MENU_STRUCTURE: MenuItem[] = [
   {
     key: "profile",
     label: "Profile",
@@ -42,7 +50,7 @@ const MENU_STRUCTURE = [
           <Box component="form" noValidate autoComplete="off" className="max-w-md space-y-6">
             <TextField fullWidth label="Full Name" defaultValue="John Doe" />
           </Box>
-        ),
+        )
       },
       {
         key: "invites",
@@ -52,7 +60,7 @@ const MENU_STRUCTURE = [
           <Box className="max-w-md space-y-6">
             <p className="text-gray-600">You have no pending invites.</p>
           </Box>
-        ),
+        )
       }
     ],
   },
@@ -60,6 +68,7 @@ const MENU_STRUCTURE = [
     key: "account",
     label: "Account",
     icon: <SettingsIcon />,
+    content: <></>,
     subItems: [
       {
         key: "notifications",
@@ -70,7 +79,7 @@ const MENU_STRUCTURE = [
             control={<Switch defaultChecked color="primary" />}
             label="Enable notifications"
           />
-        ),
+        )
       },
     ],
   },
@@ -78,6 +87,7 @@ const MENU_STRUCTURE = [
     key: "security",
     label: "Security",
     icon: <LockIcon />,
+    content: <></>,
     subItems: [
       {
         key: "darkMode",
@@ -88,13 +98,15 @@ const MENU_STRUCTURE = [
             control={<Switch defaultChecked color="primary" />}
             label="Enable dark mode"
           />
-        ),
+        )
+
       },
       {
         key: "changePassword",
         label: "Change Password",
         icon: <KeyIcon />,
         content: <TextField fullWidth label="New Password" type="password" />,
+        subItems: []
       },
     ],
   },
@@ -113,22 +125,12 @@ export default function SettingsPage() {
     MENU_STRUCTURE[0].subItems?.[0]?.key ?? MENU_STRUCTURE[0].key;
 
   const [activeKey, setActiveKey] = useState(firstKey);
+  const [settingsContent, setSettingsContent] = useState<ReactElement | null>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  // Find active content from menu structure
-  let activeContent = null;
-  for (const section of MENU_STRUCTURE) {
-    if (section.key === activeKey) {
-      activeContent = section.content;
-      break;
-    }
-    if (section.subItems) {
-      const sub = section.subItems.find((item) => item.key === activeKey);
-      if (sub) {
-        activeContent = sub.content;
-        break;
-      }
-    }
+  const handleSettingTabClick = (tab: MenuItem) => {
+    setActiveKey(tab.key);
+    setSettingsContent(tab.content ?? null);
   }
 
   const handleLogout = async () => {
@@ -154,14 +156,16 @@ export default function SettingsPage() {
                 onClick={section.key == "logout" ? () => setShowLogoutModal(true) : () => setActiveKey(section.key)}
               />
               {section.subItems && (
-                <div className="ml-6 mt-2 flex flex-col ">
+                <div className={"ml-6 mt-2 flex flex-col "}>
                   {section.subItems.map((sub) => (
-                    <MenuItem
-                      key={sub.key}
-                      icon={sub.icon}
-                      label={sub.label}
-                      onClick={() => setActiveKey(sub.key)}
-                    />
+                    <div className="">
+                      <MenuItem
+                        key={sub.key}
+                        icon={sub.icon}
+                        label={sub.label}
+                        onClick={() => handleSettingTabClick(sub)}
+                      />
+                    </div>
                   ))}
                 </div>
               )}
@@ -188,6 +192,7 @@ export default function SettingsPage() {
         }}
         onConfirm={handleLogout}
       />
+      {settingsContent}
 
     </div>
   );

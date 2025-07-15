@@ -32,11 +32,10 @@ pub async fn spawn_app() -> TestApp {
 
     let db_pool = get_connection_pool(&config).await;
 
-    let emails = Emails::new_in_memory();
-
     let app = Arc::new(App {
         database: db_pool.clone(),
-        emails,
+        emails: None,
+        s3: None,
         config,
     });
 

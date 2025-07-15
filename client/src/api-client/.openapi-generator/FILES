@@ -17,6 +17,7 @@ docs/EncodableTripData.md
 docs/EncodableTripOverview.md
 docs/EncodableUser.md
 docs/EncodableUserPreview.md
+docs/ErrorResponse.md
 docs/GetMeResponse.md
 docs/GetTripResponse.md
 docs/GetTripsResponse.md
@@ -25,12 +26,15 @@ docs/GetUsersResponse.md
 docs/LoginCredentials.md
 docs/LoginResponse.md
 docs/OkResponse.md
+docs/PasswordUpdateRequest.md
 docs/RefreshResponse.md
 docs/RefreshTokenBody.md
 docs/RegisterUserBody.md
 docs/RegisterUserResponse.md
+docs/ResendVerificationBody.md
 docs/TripsApi.md
 docs/UpdateInformationBody.md
 docs/UsersApi.md
+docs/VerificationBody.md
 git_push.sh
 index.ts

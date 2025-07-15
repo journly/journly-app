@@ -1,26 +1,30 @@
 import { Navigate, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { RegisterUserBody } from "../api-client";
-import { useAuth } from "../providers/AuthProvider";
+import { LoginCredentials, RegisterUserBody } from "../api-client";
+import { AuthStatus, useAuth } from "../providers/AuthProvider";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
 
-  const { getAuthApi, checkAuthenticated } = useAuth();
+  const { getAuthApi, checkAuthenticated, login } = useAuth();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [authStatus, setAuthStatus] = useState<AuthStatus | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     const verify = async () => {
       try {
-        const ok = await checkAuthenticated();
-        if (!cancelled) setIsAuthenticated(ok);
+        const res = await checkAuthenticated();
+
+        console.log(res)
+        console.log(cancelled)
+
+        if (!cancelled) setAuthStatus(res);
       } catch (err) {
-        if (!cancelled) setIsAuthenticated(false);
+        if (!cancelled) setAuthStatus(AuthStatus.Unauthenticated);
       }
     };
 
@@ -31,8 +35,12 @@ export default function RegisterPage() {
     };
   }, [checkAuthenticated]);
 
-  if (isAuthenticated) {
+  if (authStatus == AuthStatus.Authenticated) {
     return <Navigate to="/" replace />;
+  }
+
+  if (authStatus == AuthStatus.Unverified) {
+    return <Navigate to="/verify" replace />;
   }
 
 
@@ -40,6 +48,9 @@ export default function RegisterPage() {
     e.preventDefault();
     try {
       await getAuthApi().registerUser({ username, email, password } as RegisterUserBody);
+
+      await login({ email, password } as LoginCredentials);
+
       navigate('/');
     } catch (err) {
       console.error('Register failed', err);
@@ -88,7 +99,7 @@ export default function RegisterPage() {
 
           <div className="text-center text-sm text-gray-500 pt-2">
             Already have an account?{' '}
-            <a onClick={() => navigate('/login')} className="font-semibold text-black hover:underline">
+            <a onClick={() => navigate('/login')} className="font-semibold text-black hover:underline cursor-pointer">
               Log in here
             </a>
           </div>

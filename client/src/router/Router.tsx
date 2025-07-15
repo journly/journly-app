@@ -6,14 +6,17 @@ import MapPage from '../pages/MapPage';
 import JournalPage from '../pages/JournalPage';
 import NotFoundPage from '../pages/NotFound';
 import DefaultLayout from '../components/DefaultLayout';
-import SettingsPage from '../pages/SettingsPage';
-// import NewTripDialog from '../components/NewTripDialog';
 import StatsPage from '../pages/StatsPage';
 import { TripProvider } from '../providers/TripProvider';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
 import OAuthCallbackPage from '../pages/oauth/CallbackPage';
+import SettingsLayout from '../components/settings/SettingsLayout';
+import MyAccountPage from '../pages/settings/MyAccountPage';
+import NotificationSettingsPage from '../pages/settings/NotificationSettingsPage';
+import PreferencesPage from '../pages/settings/PreferencesPage';
+import { VerifyPage } from '../pages/VerifyPage';
 
 
 export default function Router() {
@@ -28,6 +31,7 @@ export default function Router() {
       <Route path="login" element={<LoginPage />} />
       <Route path="register" element={<RegisterPage />} />
       <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
+      <Route path="verify" element={<VerifyPage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<DefaultLayout />}>
@@ -44,13 +48,16 @@ export default function Router() {
 
           {/* <Route path="/trip/new" element={<NewTripDialog open={open} onClose={onClose}/>} /> */}
         </Route>
-        {/* <Route element={<SettingLayout />}> */}
-        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="settings" element={<SettingsLayout />}>
+          <Route path="account" element={<MyAccountPage />} />
+          <Route path="preferences" element={<PreferencesPage />} />
+          <Route path="notifications" element={<NotificationSettingsPage />} />
+        </ Route>
         {/* </Route> */}
       </Route>
       <Route path="*" element={<Navigate to="/" />} />
       <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+    </Routes >
   )
 
 }

@@ -15,6 +15,7 @@ pub trait Email {
     fn body(&self) -> String;
 }
 
+#[derive(Debug)]
 pub struct Emails {
     backend: EmailBackend,
     pub domain: String,
@@ -25,9 +26,14 @@ const DEFAULT_FROM: &str = "noreply@myjournly.com";
 
 impl Emails {
     pub fn from_config(config: &config::Server) -> Self {
-        let login = config.mailgun_smtp.smtp_login.clone();
-        let password = config.mailgun_smtp.smtp_password.clone();
-        let server = config.mailgun_smtp.smtp_server.clone();
+        let smtp_config = config
+            .mailgun_smtp
+            .clone()
+            .expect("Mailgun SMTP config missing");
+
+        let login = smtp_config.login;
+        let password = smtp_config.password;
+        let server = smtp_config.server;
 
         let from = login.as_deref().unwrap_or(DEFAULT_FROM).parse().unwrap();
 
@@ -39,10 +45,15 @@ impl Emails {
                     .authentication([Mechanism::Plain].to_vec())
                     .build();
 
+                println!("Email backend: AsyncSmtpTransport");
+
                 EmailBackend::Smtp(transport)
             }
             _ => {
                 let transport = AsyncFileTransport::new("/tmp");
+
+                println!("Email backend: AsyncFileTransport");
+
                 EmailBackend::FileSystem(transport)
             }
         };
@@ -118,6 +129,7 @@ pub enum EmailError {
     TransportError(anyhow::Error),
 }
 
+#[derive(Debug)]
 pub enum EmailBackend {
     // for production, will send emails using SMTP
     Smtp(AsyncSmtpTransport<Tokio1Executor>),
@@ -130,7 +142,11 @@ pub enum EmailBackend {
 impl EmailBackend {
     async fn send(&self, message: Message) -> anyhow::Result<()> {
         match self {
-            EmailBackend::Smtp(transport) => transport.send(message).await.map(|_| ())?,
+            EmailBackend::Smtp(transport) => {
+                let fart = transport.send(message).await?;
+
+                println!("email sent: {:?}", fart);
+            }
             EmailBackend::FileSystem(transport) => transport.send(message).await.map(|_| ())?,
             EmailBackend::Memory(transport) => transport.send(message).await.map(|_| ())?,
         }

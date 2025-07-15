@@ -1,9 +1,9 @@
-import PageWrapper from "../components/generic/Page";
+import { Map } from "../components/map/Map";
 
 export default function MapPage() {
 
-    return (
-        <PageWrapper title="Map">
-            <h2>Map</h2>       
-        </PageWrapper>);
+  return (
+    <div className="w-full h-screen overflow-hidden">
+      <Map />
+    </div>)
 }

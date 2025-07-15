@@ -17,6 +17,7 @@ pub mod google_oauth;
 pub mod middleware;
 pub mod models;
 pub mod routes;
+pub mod s3_client;
 pub mod schema;
 pub mod util;
 pub mod views;

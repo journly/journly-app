@@ -26,28 +26,33 @@ pub async fn request_token(
     authorization_code: &str,
     data: &web::Data<AppState>,
 ) -> Result<OAuthResponse, Box<dyn Error>> {
-    let redirect_url = data.config.google_oauth.redirect_url.clone();
-    let client_secret = data.config.google_oauth.client_secret.clone();
-    let client_id = data.config.google_oauth.client_id.clone();
+    match &data.config.google_oauth {
+        Some(config) => {
+            let redirect_url = config.redirect_url.clone();
+            let client_secret = config.client_secret.clone();
+            let client_id = config.client_id.clone();
+            let root_url = "https://oauth2.googleapis.com/token";
 
-    let root_url = "https://oauth2.googleapis.com/token";
-    let client = Client::new();
+            let client = Client::new();
 
-    let params = [
-        ("grant_type", "authorization_code"),
-        ("redirect_uri", redirect_url.as_str()),
-        ("client_id", client_id.as_str()),
-        ("code", authorization_code),
-        ("client_secret", client_secret.as_str()),
-    ];
-    let response = client.post(root_url).form(&params).send().await?;
+            let params = [
+                ("grant_type", "authorization_code"),
+                ("redirect_uri", redirect_url.as_str()),
+                ("client_id", client_id.as_str()),
+                ("code", authorization_code),
+                ("client_secret", client_secret.as_str()),
+            ];
+            let response = client.post(root_url).form(&params).send().await?;
 
-    if response.status().is_success() {
-        let oauth_response = response.json::<OAuthResponse>().await?;
-        Ok(oauth_response)
-    } else {
-        let message = "An error occurred while trying to retrieve access token.";
-        Err(From::from(message))
+            if response.status().is_success() {
+                let oauth_response = response.json::<OAuthResponse>().await?;
+                Ok(oauth_response)
+            } else {
+                let message = "An error occurred while trying to retrieve access token.";
+                Err(From::from(message))
+            }
+        }
+        None => Err("Missing GoogleOAuth config".into()),
     }
 }
 
@@ -62,8 +67,6 @@ pub async fn get_google_user(
         .append_pair("access_token", access_token);
 
     let response = client.get(url).bearer_auth(id_token).send().await?;
-
-    eprintln!("get google user response {:?}", response);
 
     if response.status().is_success() {
         let user_info = response.json::<GoogleUserResult>().await?;

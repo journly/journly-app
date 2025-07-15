@@ -27,16 +27,17 @@ pub struct BaseConfig {
 pub struct Server {
     pub base: BaseConfig,
     pub postgres: PgConfig,
-    pub mailgun_smtp: SmtpConfig,
-    pub google_oauth: GoogleOAuthConfig,
+    pub mailgun_smtp: Option<SmtpConfig>,
+    pub google_oauth: Option<GoogleOAuthConfig>,
     pub jwt_config: JwtConfig,
+    pub s3_config: Option<S3Config>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct SmtpConfig {
-    pub smtp_login: Option<String>,
-    pub smtp_password: Option<String>,
-    pub smtp_server: Option<String>,
+    pub login: Option<String>,
+    pub password: Option<String>,
+    pub server: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -44,6 +45,15 @@ pub struct GoogleOAuthConfig {
     pub client_id: String,
     pub client_secret: String,
     pub redirect_url: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct S3Config {
+    pub bucket_name: String,
+    pub account_id: String,
+    pub access_key_id: String,
+    pub access_key_secret: String,
+    pub base_url: String,
 }
 
 impl Server {
