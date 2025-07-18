@@ -1,10 +1,18 @@
 use std::sync::Arc;
 
+use crate::{
+    broadcast::Broadcaster,
+    config::Server,
+    db::{self, get_connection_pool},
+    email::Emails,
+    s3_client::S3Client,
+    util::errors::AppError,
+};
 use bon::Builder;
 use derive_more::Deref;
 use diesel_async::{AsyncPgConnection, pooled_connection::deadpool::Pool};
-
-use crate::{config::Server, db, email::Emails, s3_client::S3Client, util::errors::AppError};
+use parking_lot::Mutex;
+use redis::Client as RedisClient;
 
 pub type PoolResult =
     Result<diesel_async::pooled_connection::deadpool::Object<AsyncPgConnection>, AppError>;
@@ -12,12 +20,43 @@ pub type PoolResult =
 #[derive(Builder)]
 pub struct App {
     pub database: Pool<AsyncPgConnection>,
+    pub broadcaster: Arc<Mutex<Broadcaster>>,
+    pub redis: RedisClient,
     pub emails: Option<Emails>,
     pub s3: Option<S3Client>,
     pub config: Server,
 }
 
 impl App {
+    pub async fn from_config(config: Server) -> Self {
+        let database = get_connection_pool(&config).await;
+
+        let emails = if config.mailgun_smtp.is_some() {
+            Some(Emails::from_config(&config))
+        } else {
+            None
+        };
+
+        let s3 = if config.s3_config.is_some() {
+            Some(S3Client::from_config(&config).await)
+        } else {
+            None
+        };
+
+        let redis = redis::Client::open(config.redis_addr.clone()).unwrap();
+
+        let broadcaster = Broadcaster::create();
+
+        Self {
+            database,
+            broadcaster,
+            redis,
+            emails,
+            s3,
+            config,
+        }
+    }
+
     pub async fn db_connection(&self) -> PoolResult {
         self.database
             .get()

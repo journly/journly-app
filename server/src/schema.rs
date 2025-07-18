@@ -58,8 +58,8 @@ diesel::table! {
         id -> Uuid,
         trip_id -> Uuid,
         title -> Nullable<Text>,
-        cost -> Nullable<Numeric>,
-        currency -> Nullable<Text>,
+        cost -> Numeric,
+        currency -> Text,
     }
 }
 
@@ -80,7 +80,7 @@ diesel::table! {
     itinerary_items (id) {
         id -> Uuid,
         trip_id -> Uuid,
-        title -> Text,
+        title -> Nullable<Text>,
         activity_type -> Nullable<Text>,
         location_id -> Nullable<Uuid>,
         start_time -> Nullable<Timestamptz>,

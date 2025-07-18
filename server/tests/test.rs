@@ -6,7 +6,6 @@ use journly_server::{
     auth::create_token,
     config::{PgConfig, Server},
     db::get_connection_pool,
-    email::Emails,
     run,
 };
 use std::{net::TcpListener, sync::Arc};
@@ -32,10 +31,13 @@ pub async fn spawn_app() -> TestApp {
 
     let db_pool = get_connection_pool(&config).await;
 
+    let redis = redis::Client::open(config.redis_addr.clone()).unwrap();
+
     let app = Arc::new(App {
         database: db_pool.clone(),
         emails: None,
         s3: None,
+        redis,
         config,
     });
 

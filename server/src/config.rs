@@ -31,6 +31,7 @@ pub struct Server {
     pub google_oauth: Option<GoogleOAuthConfig>,
     pub jwt_config: JwtConfig,
     pub s3_config: Option<S3Config>,
+    pub redis_addr: String,
 }
 
 #[derive(Clone, Debug, Deserialize)]

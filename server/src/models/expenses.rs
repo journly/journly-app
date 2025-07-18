@@ -11,11 +11,19 @@ pub struct Expense {
     pub id: Uuid,
     pub trip_id: Uuid,
     pub title: Option<String>,
-    pub cost: Option<BigDecimal>,
-    pub currency: Option<String>,
+    pub cost: BigDecimal,
+    pub currency: String,
 }
 
 impl Expense {
+    pub async fn find(conn: &mut AsyncPgConnection, id: &Uuid) -> QueryResult<Expense> {
+        expenses::table
+            .find(id)
+            .select(Expense::as_select())
+            .first(conn)
+            .await
+    }
+
     pub async fn get_expenses_with_payers(
         conn: &mut AsyncPgConnection,
         trip_id: &Uuid,
