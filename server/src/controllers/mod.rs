@@ -1,6 +1,5 @@
 pub mod auth;
 pub mod helper;
-pub mod trip;
 pub mod trip_plan;
 pub mod user;
 

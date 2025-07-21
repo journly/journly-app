@@ -10,7 +10,6 @@ use crate::controllers::{
         verify_user_email,
     },
     get_health,
-    trip::{create_trip, get_trip, get_trips},
     user::{
         change_profile_picture, delete_user, get_user, get_users, update_user, update_user_password,
     },
@@ -26,9 +25,6 @@ use crate::controllers::{
         crate::controllers::auth::resend_verification_code,
         crate::controllers::auth::refresh,
         crate::controllers::auth::verify_user_email,
-        crate::controllers::trip::get_trips,
-        crate::controllers::trip::create_trip,
-        crate::controllers::trip::get_trip,
         crate::controllers::user::get_users,
         crate::controllers::user::get_user,
         crate::controllers::user::delete_user,
@@ -71,13 +67,7 @@ pub fn routes(cfg: &mut ServiceConfig ) {
                 .route("/resend-verification", post().to(resend_verification_code))
                 .route("/verify-email", post().to(verify_user_email))
         )
-        .service(
-            scope("/api/v1/trips")
-                .route("", get().to(get_trips))
-                .route("", post().to(create_trip))
-                .route("/{trip_id}", get().to(get_trip))
-        )
-        .service(
+       .service(
             scope("/api/v1/users")
                 .route("", get().to(get_users))
                 .route("/{user_id}", get().to(get_user))

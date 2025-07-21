@@ -54,27 +54,8 @@ pub struct EncodableExpense {
 
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct EncodableBudgetPlan {
-    pub personal_budget: EncodablePersonalBudget,
     pub group_budget: EncodableGroupBudget,
     pub expenses: Vec<EncodableExpense>,
-    pub use_personal_budget: bool,
-}
-
-#[derive(Serialize, Deserialize, ToSchema)]
-pub struct EncodablePersonalBudget {
-    pub currency: Option<String>,
-    #[schema(value_type = String, example = "123.45")]
-    pub total_budget: Option<BigDecimal>,
-    #[schema(value_type = String, example = "123.45")]
-    pub accommodation_budget: Option<BigDecimal>,
-    #[schema(value_type = String, example = "123.45")]
-    pub transportation_budget: Option<BigDecimal>,
-    #[schema(value_type = String, example = "123.45")]
-    pub food_dining_budget: Option<BigDecimal>,
-    #[schema(value_type = String, example = "123.45")]
-    pub activities_budget: Option<BigDecimal>,
-    #[schema(value_type = String, example = "123.45")]
-    pub shopping_budget: Option<BigDecimal>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]

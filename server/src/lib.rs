@@ -9,7 +9,6 @@ use utoipa_swagger_ui::{SwaggerUi, Url};
 
 pub mod app;
 pub mod auth;
-pub mod broadcast;
 pub mod config;
 pub mod controllers;
 pub mod db;

@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use crate::{
-    broadcast::Broadcaster,
     config::Server,
     db::{self, get_connection_pool},
     email::Emails,
@@ -11,7 +10,6 @@ use crate::{
 use bon::Builder;
 use derive_more::Deref;
 use diesel_async::{AsyncPgConnection, pooled_connection::deadpool::Pool};
-use parking_lot::Mutex;
 use redis::Client as RedisClient;
 
 pub type PoolResult =
@@ -20,7 +18,6 @@ pub type PoolResult =
 #[derive(Builder)]
 pub struct App {
     pub database: Pool<AsyncPgConnection>,
-    pub broadcaster: Arc<Mutex<Broadcaster>>,
     pub redis: RedisClient,
     pub emails: Option<Emails>,
     pub s3: Option<S3Client>,
@@ -43,13 +40,10 @@ impl App {
             None
         };
 
-        let redis = redis::Client::open(config.redis_addr.clone()).unwrap();
-
-        let broadcaster = Broadcaster::create();
+        let redis = redis::Client::open(config.redis_config.address.clone()).unwrap();
 
         Self {
             database,
-            broadcaster,
             redis,
             emails,
             s3,

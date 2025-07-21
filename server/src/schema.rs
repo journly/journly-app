@@ -80,13 +80,13 @@ diesel::table! {
     itinerary_items (id) {
         id -> Uuid,
         trip_id -> Uuid,
-        title -> Nullable<Text>,
-        activity_type -> Nullable<Text>,
+        title -> Text,
+        activity_type -> Text,
         location_id -> Nullable<Uuid>,
-        start_time -> Nullable<Timestamptz>,
+        start_time -> Timestamptz,
         end_time -> Nullable<Timestamptz>,
         expense_id -> Nullable<Uuid>,
-        notes -> Nullable<Text>,
+        notes -> Text,
     }
 }
 
@@ -144,22 +144,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    personal_budgets (id) {
-        id -> Uuid,
-        trip_id -> Uuid,
-        user_id -> Uuid,
-        total_budget -> Nullable<Numeric>,
-        accommodation_budget -> Nullable<Numeric>,
-        transportation_budget -> Nullable<Numeric>,
-        food_dining_budget -> Nullable<Numeric>,
-        activities_budget -> Nullable<Numeric>,
-        shopping_budget -> Nullable<Numeric>,
-        currency -> Nullable<Text>,
-        personal_budget_enabled -> Bool,
-    }
-}
-
-diesel::table! {
     refresh_tokens (token) {
         token -> Text,
         user_id -> Nullable<Uuid>,
@@ -167,6 +151,30 @@ diesel::table! {
         created_at -> Timestamp,
         parent_token -> Nullable<Text>,
         revoked -> Bool,
+    }
+}
+
+diesel::table! {
+    replicache_client (id) {
+        id -> Text,
+        client_group_id -> Text,
+        last_mutation_id -> Int4,
+        last_modified_version -> Int4,
+    }
+}
+
+diesel::table! {
+    replicache_client_group (id) {
+        id -> Text,
+        user_id -> Uuid,
+        space_id -> Text,
+    }
+}
+
+diesel::table! {
+    replicache_space (id) {
+        id -> Text,
+        version -> Int4,
     }
 }
 
@@ -271,9 +279,8 @@ diesel::joinable!(occupants -> accommodations (accommodation_id));
 diesel::joinable!(occupants -> users (user_id));
 diesel::joinable!(passengers -> flights (flight_id));
 diesel::joinable!(passengers -> users (user_id));
-diesel::joinable!(personal_budgets -> trips (trip_id));
-diesel::joinable!(personal_budgets -> users (user_id));
 diesel::joinable!(refresh_tokens -> users (user_id));
+diesel::joinable!(replicache_client -> replicache_client_group (client_group_id));
 diesel::joinable!(tasks -> trips (trip_id));
 diesel::joinable!(trip_invites -> trips (trip_id));
 diesel::joinable!(trip_invites -> users (user_id));
@@ -300,8 +307,10 @@ diesel::allow_tables_to_appear_in_same_query!(
     notes,
     occupants,
     passengers,
-    personal_budgets,
     refresh_tokens,
+    replicache_client,
+    replicache_client_group,
+    replicache_space,
     tasks,
     trip_invites,
     trips,
