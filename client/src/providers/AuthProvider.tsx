@@ -18,6 +18,8 @@ export enum AuthStatus {
   NoConnection = 'NoConnection'
 }
 
+type BackendCall<T> = () => Promise<T>;
+
 interface AuthContextType {
   accessToken: string | null;
   userId: string | null;
@@ -28,6 +30,7 @@ interface AuthContextType {
   resendVerificationCode: () => Promise<void>;
   verifyEmail: (code: number) => Promise<boolean>;
   getAuthApi: () => AuthenticationApi;
+  withAuthRetry: <T>(backendCall: BackendCall<T>) => Promise<T>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,7 +39,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const refreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const buildAuthApi = (token: string | null) =>
     new AuthenticationApi(
@@ -53,6 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setUserId(sub);
     setAccessToken(access_token);
+
   }
 
   const login = async (creds: LoginCredentials) => {
@@ -73,29 +76,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       await getAuthApi().logout({ withCredentials: true });
-
       setUserId(null);
       setAccessToken(null);
     } catch {
       console.log("Could not logout")
     }
-  }
-
-
-  const scheduleTokenRefresh = (access_token: string) => {
-    const { exp } = jwtDecode<JwtPayload>(access_token);
-    const expiresInMs = exp * 1000 - Date.now();
-
-    const refreshIn = 2000 //Math.max(expiresInMs - 60000, 10000);
-
-    if (refreshTimeout.current) {
-      clearTimeout(refreshTimeout.current);
-      refreshTimeout.current = null;
-    }
-
-    refreshTimeout.current = setTimeout(() => {
-      refreshAccessToken();
-    }, refreshIn)
   }
 
   const refreshAccessToken = async (): Promise<boolean> => {
@@ -189,6 +174,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
+  const withAuthRetry = async<T,>(backendCall: BackendCall<T>): Promise<T> => {
+    try {
+      return await backendCall();
+    } catch (error: any) {
+      const status = error?.response?.status;
+
+      if (status === 401) {
+        try {
+          await refreshAccessToken();
+          return await backendCall();
+        } catch (refreshError) {
+          throw refreshError;
+        }
+      }
+
+      throw error;
+    }
+  }
+
 
   return (
     <AuthContext.Provider
@@ -202,6 +206,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         resendVerificationCode,
         verifyEmail,
         getAuthApi,
+        withAuthRetry
       }}
     >
       {children}
