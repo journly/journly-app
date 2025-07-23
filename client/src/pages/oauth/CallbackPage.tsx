@@ -9,11 +9,10 @@ export default function OAuthCallbackPage() {
   useEffect(() => {
     const hash = new URLSearchParams(window.location.hash.slice(1));
     const accessToken = hash.get('access_token');
-    const refreshToken = hash.get('refresh_token');
 
 
-    if (accessToken && refreshToken) {
-      oAuthLogin(accessToken, refreshToken);
+    if (accessToken) {
+      oAuthLogin(accessToken);
     }
     navigate("/");
   }, [])

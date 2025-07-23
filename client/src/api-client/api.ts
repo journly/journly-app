@@ -26,412 +26,6 @@ import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError, operationServerM
 /**
  * 
  * @export
- * @interface CreateTripBody
- */
-export interface CreateTripBody {
-    /**
-     * 
-     * @type {string}
-     * @memberof CreateTripBody
-     */
-    'end_date'?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreateTripBody
-     */
-    'start_date'?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreateTripBody
-     */
-    'title'?: string | null;
-}
-/**
- * 
- * @export
- * @interface EncodableBudgetPlan
- */
-export interface EncodableBudgetPlan {
-    /**
-     * 
-     * @type {Array<EncodableExpense>}
-     * @memberof EncodableBudgetPlan
-     */
-    'expenses': Array<EncodableExpense>;
-    /**
-     * 
-     * @type {EncodableGroupBudget}
-     * @memberof EncodableBudgetPlan
-     */
-    'group_budget': EncodableGroupBudget;
-    /**
-     * 
-     * @type {EncodablePersonalBudget}
-     * @memberof EncodableBudgetPlan
-     */
-    'personal_budget': EncodablePersonalBudget;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof EncodableBudgetPlan
-     */
-    'use_personal_budget': boolean;
-}
-/**
- * 
- * @export
- * @interface EncodableCollaborator
- */
-export interface EncodableCollaborator {
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableCollaborator
-     */
-    'avatar'?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableCollaborator
-     */
-    'id': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableCollaborator
-     */
-    'permission'?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableCollaborator
-     */
-    'username': string;
-}
-/**
- * 
- * @export
- * @interface EncodableDocument
- */
-export interface EncodableDocument {
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableDocument
-     */
-    'filename': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableDocument
-     */
-    'id': string;
-    /**
-     * 
-     * @type {number}
-     * @memberof EncodableDocument
-     */
-    'size_bytes': number;
-}
-/**
- * 
- * @export
- * @interface EncodableExpense
- */
-export interface EncodableExpense {
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableExpense
-     */
-    'cost': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableExpense
-     */
-    'currency'?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableExpense
-     */
-    'id': string;
-    /**
-     * 
-     * @type {Array<EncodableUserPreview>}
-     * @memberof EncodableExpense
-     */
-    'payers': Array<EncodableUserPreview>;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableExpense
-     */
-    'title'?: string | null;
-}
-/**
- * 
- * @export
- * @interface EncodableGroupBudget
- */
-export interface EncodableGroupBudget {
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableGroupBudget
-     */
-    'accommodation_budget': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableGroupBudget
-     */
-    'activities_budget': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableGroupBudget
-     */
-    'currency'?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableGroupBudget
-     */
-    'food_dining_budget': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableGroupBudget
-     */
-    'shopping_budget': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableGroupBudget
-     */
-    'total_budget': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableGroupBudget
-     */
-    'transportation_budget': string;
-}
-/**
- * 
- * @export
- * @interface EncodableItineraryItem
- */
-export interface EncodableItineraryItem {
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableItineraryItem
-     */
-    'activity_type'?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableItineraryItem
-     */
-    'cost': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableItineraryItem
-     */
-    'end_time'?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableItineraryItem
-     */
-    'id': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableItineraryItem
-     */
-    'location'?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableItineraryItem
-     */
-    'notes'?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableItineraryItem
-     */
-    'start_time'?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableItineraryItem
-     */
-    'title': string;
-}
-/**
- * 
- * @export
- * @interface EncodablePersonalBudget
- */
-export interface EncodablePersonalBudget {
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodablePersonalBudget
-     */
-    'accommodation_budget': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodablePersonalBudget
-     */
-    'activities_budget': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodablePersonalBudget
-     */
-    'currency'?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodablePersonalBudget
-     */
-    'food_dining_budget': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodablePersonalBudget
-     */
-    'shopping_budget': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodablePersonalBudget
-     */
-    'total_budget': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodablePersonalBudget
-     */
-    'transportation_budget': string;
-}
-/**
- * 
- * @export
- * @interface EncodableTripData
- */
-export interface EncodableTripData {
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableTripData
-     */
-    'banner_image'?: string | null;
-    /**
-     * 
-     * @type {EncodableBudgetPlan}
-     * @memberof EncodableTripData
-     */
-    'budget_plan': EncodableBudgetPlan;
-    /**
-     * 
-     * @type {Array<EncodableCollaborator>}
-     * @memberof EncodableTripData
-     */
-    'collaborators': Array<EncodableCollaborator>;
-    /**
-     * 
-     * @type {Array<EncodableDocument>}
-     * @memberof EncodableTripData
-     */
-    'documents': Array<EncodableDocument>;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableTripData
-     */
-    'end_date'?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableTripData
-     */
-    'id': string;
-    /**
-     * 
-     * @type {Array<EncodableItineraryItem>}
-     * @memberof EncodableTripData
-     */
-    'itinerary': Array<EncodableItineraryItem>;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableTripData
-     */
-    'start_date'?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableTripData
-     */
-    'title'?: string | null;
-}
-/**
- * 
- * @export
- * @interface EncodableTripOverview
- */
-export interface EncodableTripOverview {
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableTripOverview
-     */
-    'banner_image'?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableTripOverview
-     */
-    'end_date'?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableTripOverview
-     */
-    'id': string;
-    /**
-     * 
-     * @type {number}
-     * @memberof EncodableTripOverview
-     */
-    'no_collaborators': number;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableTripOverview
-     */
-    'start_date'?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableTripOverview
-     */
-    'title'?: string | null;
-}
-/**
- * 
- * @export
  * @interface EncodableUser
  */
 export interface EncodableUser {
@@ -457,31 +51,6 @@ export interface EncodableUser {
      * 
      * @type {string}
      * @memberof EncodableUser
-     */
-    'username': string;
-}
-/**
- * 
- * @export
- * @interface EncodableUserPreview
- */
-export interface EncodableUserPreview {
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableUserPreview
-     */
-    'avatar'?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableUserPreview
-     */
-    'id': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EncodableUserPreview
      */
     'username': string;
 }
@@ -516,32 +85,6 @@ export interface GetMeResponse {
      * @memberof GetMeResponse
      */
     'user': EncodableUser;
-}
-/**
- * 
- * @export
- * @interface GetTripResponse
- */
-export interface GetTripResponse {
-    /**
-     * 
-     * @type {EncodableTripData}
-     * @memberof GetTripResponse
-     */
-    'trip': EncodableTripData;
-}
-/**
- * 
- * @export
- * @interface GetTripsResponse
- */
-export interface GetTripsResponse {
-    /**
-     * 
-     * @type {Array<EncodableTripOverview>}
-     * @memberof GetTripsResponse
-     */
-    'trips': Array<EncodableTripOverview>;
 }
 /**
  * 
@@ -600,12 +143,6 @@ export interface LoginResponse {
      * @memberof LoginResponse
      */
     'access_token': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LoginResponse
-     */
-    'refresh_token': string;
 }
 /**
  * 
@@ -651,25 +188,6 @@ export interface RefreshResponse {
      * @memberof RefreshResponse
      */
     'access_token': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof RefreshResponse
-     */
-    'refresh_token': string;
-}
-/**
- * 
- * @export
- * @interface RefreshTokenBody
- */
-export interface RefreshTokenBody {
-    /**
-     * 
-     * @type {string}
-     * @memberof RefreshTokenBody
-     */
-    'refresh_token': string;
 }
 /**
  * 
@@ -837,13 +355,10 @@ export const AuthenticationApiAxiosParamCreator = function (configuration?: Conf
         },
         /**
          * 
-         * @param {RefreshTokenBody} refreshTokenBody 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        logout: async (refreshTokenBody: RefreshTokenBody, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'refreshTokenBody' is not null or undefined
-            assertParamExists('logout', 'refreshTokenBody', refreshTokenBody)
+        logout: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/v1/auth/logout`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -862,12 +377,9 @@ export const AuthenticationApiAxiosParamCreator = function (configuration?: Conf
 
 
     
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(refreshTokenBody, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -876,13 +388,10 @@ export const AuthenticationApiAxiosParamCreator = function (configuration?: Conf
         },
         /**
          * 
-         * @param {RefreshTokenBody} refreshTokenBody 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        refresh: async (refreshTokenBody: RefreshTokenBody, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'refreshTokenBody' is not null or undefined
-            assertParamExists('refresh', 'refreshTokenBody', refreshTokenBody)
+        refresh: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/v1/auth/refresh`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -897,12 +406,9 @@ export const AuthenticationApiAxiosParamCreator = function (configuration?: Conf
 
 
     
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(refreshTokenBody, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -1049,24 +555,22 @@ export const AuthenticationApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @param {RefreshTokenBody} refreshTokenBody 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async logout(refreshTokenBody: RefreshTokenBody, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<OkResponse>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.logout(refreshTokenBody, options);
+        async logout(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<OkResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.logout(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AuthenticationApi.logout']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * 
-         * @param {RefreshTokenBody} refreshTokenBody 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async refresh(refreshTokenBody: RefreshTokenBody, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RefreshResponse>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.refresh(refreshTokenBody, options);
+        async refresh(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RefreshResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.refresh(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AuthenticationApi.refresh']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -1136,21 +640,19 @@ export const AuthenticationApiFactory = function (configuration?: Configuration,
         },
         /**
          * 
-         * @param {RefreshTokenBody} refreshTokenBody 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        logout(refreshTokenBody: RefreshTokenBody, options?: RawAxiosRequestConfig): AxiosPromise<OkResponse> {
-            return localVarFp.logout(refreshTokenBody, options).then((request) => request(axios, basePath));
+        logout(options?: RawAxiosRequestConfig): AxiosPromise<OkResponse> {
+            return localVarFp.logout(options).then((request) => request(axios, basePath));
         },
         /**
          * 
-         * @param {RefreshTokenBody} refreshTokenBody 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        refresh(refreshTokenBody: RefreshTokenBody, options?: RawAxiosRequestConfig): AxiosPromise<RefreshResponse> {
-            return localVarFp.refresh(refreshTokenBody, options).then((request) => request(axios, basePath));
+        refresh(options?: RawAxiosRequestConfig): AxiosPromise<RefreshResponse> {
+            return localVarFp.refresh(options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -1212,24 +714,22 @@ export class AuthenticationApi extends BaseAPI {
 
     /**
      * 
-     * @param {RefreshTokenBody} refreshTokenBody 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof AuthenticationApi
      */
-    public logout(refreshTokenBody: RefreshTokenBody, options?: RawAxiosRequestConfig) {
-        return AuthenticationApiFp(this.configuration).logout(refreshTokenBody, options).then((request) => request(this.axios, this.basePath));
+    public logout(options?: RawAxiosRequestConfig) {
+        return AuthenticationApiFp(this.configuration).logout(options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
      * 
-     * @param {RefreshTokenBody} refreshTokenBody 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof AuthenticationApi
      */
-    public refresh(refreshTokenBody: RefreshTokenBody, options?: RawAxiosRequestConfig) {
-        return AuthenticationApiFp(this.configuration).refresh(refreshTokenBody, options).then((request) => request(this.axios, this.basePath));
+    public refresh(options?: RawAxiosRequestConfig) {
+        return AuthenticationApiFp(this.configuration).refresh(options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -1263,247 +763,6 @@ export class AuthenticationApi extends BaseAPI {
      */
     public verifyUserEmail(verificationBody: VerificationBody, options?: RawAxiosRequestConfig) {
         return AuthenticationApiFp(this.configuration).verifyUserEmail(verificationBody, options).then((request) => request(this.axios, this.basePath));
-    }
-}
-
-
-
-/**
- * TripsApi - axios parameter creator
- * @export
- */
-export const TripsApiAxiosParamCreator = function (configuration?: Configuration) {
-    return {
-        /**
-         * 
-         * @param {CreateTripBody} createTripBody 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        createTrip: async (createTripBody: CreateTripBody, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'createTripBody' is not null or undefined
-            assertParamExists('createTrip', 'createTripBody', createTripBody)
-            const localVarPath = `/api/v1/trips`;
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication jwt required
-            // http bearer authentication required
-            await setBearerAuthToObject(localVarHeaderParameter, configuration)
-
-
-    
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(createTripBody, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @param {string} tripId 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getTrip: async (tripId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'tripId' is not null or undefined
-            assertParamExists('getTrip', 'tripId', tripId)
-            const localVarPath = `/api/v1/trips/{trip_id}`
-                .replace(`{${"trip_id"}}`, encodeURIComponent(String(tripId)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication jwt required
-            // http bearer authentication required
-            await setBearerAuthToObject(localVarHeaderParameter, configuration)
-
-
-    
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getTrips: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            const localVarPath = `/api/v1/trips`;
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication jwt required
-            // http bearer authentication required
-            await setBearerAuthToObject(localVarHeaderParameter, configuration)
-
-
-    
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-    }
-};
-
-/**
- * TripsApi - functional programming interface
- * @export
- */
-export const TripsApiFp = function(configuration?: Configuration) {
-    const localVarAxiosParamCreator = TripsApiAxiosParamCreator(configuration)
-    return {
-        /**
-         * 
-         * @param {CreateTripBody} createTripBody 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async createTrip(createTripBody: CreateTripBody, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<OkResponse>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.createTrip(createTripBody, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['TripsApi.createTrip']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         * 
-         * @param {string} tripId 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async getTrip(tripId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GetTripResponse>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.getTrip(tripId, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['TripsApi.getTrip']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         * 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async getTrips(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GetTripsResponse>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.getTrips(options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['TripsApi.getTrips']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-    }
-};
-
-/**
- * TripsApi - factory interface
- * @export
- */
-export const TripsApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
-    const localVarFp = TripsApiFp(configuration)
-    return {
-        /**
-         * 
-         * @param {CreateTripBody} createTripBody 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        createTrip(createTripBody: CreateTripBody, options?: RawAxiosRequestConfig): AxiosPromise<OkResponse> {
-            return localVarFp.createTrip(createTripBody, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * 
-         * @param {string} tripId 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getTrip(tripId: string, options?: RawAxiosRequestConfig): AxiosPromise<GetTripResponse> {
-            return localVarFp.getTrip(tripId, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getTrips(options?: RawAxiosRequestConfig): AxiosPromise<GetTripsResponse> {
-            return localVarFp.getTrips(options).then((request) => request(axios, basePath));
-        },
-    };
-};
-
-/**
- * TripsApi - object-oriented interface
- * @export
- * @class TripsApi
- * @extends {BaseAPI}
- */
-export class TripsApi extends BaseAPI {
-    /**
-     * 
-     * @param {CreateTripBody} createTripBody 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof TripsApi
-     */
-    public createTrip(createTripBody: CreateTripBody, options?: RawAxiosRequestConfig) {
-        return TripsApiFp(this.configuration).createTrip(createTripBody, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
-     * @param {string} tripId 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof TripsApi
-     */
-    public getTrip(tripId: string, options?: RawAxiosRequestConfig) {
-        return TripsApiFp(this.configuration).getTrip(tripId, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof TripsApi
-     */
-    public getTrips(options?: RawAxiosRequestConfig) {
-        return TripsApiFp(this.configuration).getTrips(options).then((request) => request(this.axios, this.basePath));
     }
 }
 

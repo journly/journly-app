@@ -6,7 +6,6 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **access_token** | **string** |  | [default to undefined]
-**refresh_token** | **string** |  | [default to undefined]
 
 ## Example
 
@@ -15,7 +14,6 @@ import { LoginResponse } from './api';
 
 const instance: LoginResponse = {
     access_token,
-    refresh_token,
 };
 ```
 

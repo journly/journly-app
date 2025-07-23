@@ -1,4 +1,3 @@
-import React from 'react';
 import { CalendarIcon, ClockIcon, UsersIcon, CheckIcon, MapPinIcon } from 'lucide-react';
 
 export function UpcomingTrip() {

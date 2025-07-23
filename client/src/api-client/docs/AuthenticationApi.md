@@ -110,7 +110,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **logout**
-> OkResponse logout(refreshTokenBody)
+> OkResponse logout()
 
 
 ### Example
@@ -118,25 +118,17 @@ No authorization required
 ```typescript
 import {
     AuthenticationApi,
-    Configuration,
-    RefreshTokenBody
+    Configuration
 } from './api';
 
 const configuration = new Configuration();
 const apiInstance = new AuthenticationApi(configuration);
 
-let refreshTokenBody: RefreshTokenBody; //
-
-const { status, data } = await apiInstance.logout(
-    refreshTokenBody
-);
+const { status, data } = await apiInstance.logout();
 ```
 
 ### Parameters
-
-|Name | Type | Description  | Notes|
-|------------- | ------------- | ------------- | -------------|
-| **refreshTokenBody** | **RefreshTokenBody**|  | |
+This endpoint does not have any parameters.
 
 
 ### Return type
@@ -149,7 +141,7 @@ const { status, data } = await apiInstance.logout(
 
 ### HTTP request headers
 
- - **Content-Type**: application/json
+ - **Content-Type**: Not defined
  - **Accept**: application/json
 
 
@@ -163,7 +155,7 @@ const { status, data } = await apiInstance.logout(
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **refresh**
-> RefreshResponse refresh(refreshTokenBody)
+> RefreshResponse refresh()
 
 
 ### Example
@@ -171,25 +163,17 @@ const { status, data } = await apiInstance.logout(
 ```typescript
 import {
     AuthenticationApi,
-    Configuration,
-    RefreshTokenBody
+    Configuration
 } from './api';
 
 const configuration = new Configuration();
 const apiInstance = new AuthenticationApi(configuration);
 
-let refreshTokenBody: RefreshTokenBody; //
-
-const { status, data } = await apiInstance.refresh(
-    refreshTokenBody
-);
+const { status, data } = await apiInstance.refresh();
 ```
 
 ### Parameters
-
-|Name | Type | Description  | Notes|
-|------------- | ------------- | ------------- | -------------|
-| **refreshTokenBody** | **RefreshTokenBody**|  | |
+This endpoint does not have any parameters.
 
 
 ### Return type
@@ -202,7 +186,7 @@ No authorization required
 
 ### HTTP request headers
 
- - **Content-Type**: application/json
+ - **Content-Type**: Not defined
  - **Accept**: application/json
 
 

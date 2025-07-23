@@ -14,7 +14,8 @@ use crate::{
     views::EncodableUser,
 };
 use actix_web::{
-    HttpResponse,
+    HttpRequest, HttpResponse,
+    cookie::{Cookie, SameSite},
     http::header::LOCATION,
     web::{self, Json},
 };
@@ -26,6 +27,7 @@ use base64::{Engine, engine::general_purpose};
 use diesel::{ExpressionMethods, result::Error::NotFound};
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
+use time::Duration;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -287,7 +289,6 @@ pub struct LoginCredentials {
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct LoginResponse {
     pub access_token: String,
-    pub refresh_token: String,
 }
 
 #[utoipa::path(
@@ -303,7 +304,7 @@ pub struct LoginResponse {
 pub async fn login(
     credentials: web::Json<LoginCredentials>,
     state: web::Data<AppState>,
-) -> AppResult<Json<LoginResponse>> {
+) -> AppResult<HttpResponse> {
     let mut conn = state.db_connection().await?;
 
     let email = credentials.email.trim().to_lowercase();
@@ -357,10 +358,19 @@ pub async fn login(
                 )
                 .await
                 {
-                    Ok(_) => Ok(Json(LoginResponse {
-                        access_token,
-                        refresh_token,
-                    })),
+                    Ok(_) => {
+                        let cookie = Cookie::build("refresh_token", refresh_token)
+                            .http_only(true)
+                            .secure(true)
+                            .same_site(SameSite::Strict)
+                            .path("/api/v1/auth/refresh")
+                            .max_age(time::Duration::minutes(refresh_token_expiration))
+                            .finish();
+
+                        Ok(HttpResponse::Ok()
+                            .cookie(cookie)
+                            .json(LoginResponse { access_token }))
+                    }
                     Err(_) => Err(AppError::InternalError),
                 };
             }
@@ -484,23 +494,22 @@ pub async fn google_oauth(
         Ok(_) => {
             let frontend_origin = &state.config.base.frontend_origin;
 
+            let cookie =
+                build_refresh_cookie(&refresh_token, Duration::minutes(refresh_token_expiration));
+
             Ok(HttpResponse::Found()
                 .append_header((
                     LOCATION,
                     format!(
-                        "{}{}#access_token={}&refresh_token={}",
-                        frontend_origin, query_state, access_token, refresh_token
+                        "{}{}#access_token={}",
+                        frontend_origin, query_state, access_token
                     ),
                 ))
+                .cookie(cookie)
                 .finish())
         }
         Err(_) => Err(AppError::InternalError),
     };
-}
-
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
-pub struct RefreshTokenBody {
-    pub refresh_token: String,
 }
 
 #[utoipa::path(
@@ -517,23 +526,42 @@ pub struct RefreshTokenBody {
     )
 )]
 pub async fn logout(
+    req: HttpRequest,
     authenticated: AuthenticatedUser,
-    body: web::Json<RefreshTokenBody>,
     state: web::Data<AppState>,
-) -> AppResult<OkResponse> {
+) -> AppResult<HttpResponse> {
+    println!("has access token");
+    let refresh_token_cookie = match req.cookie("refresh_token") {
+        Some(c) => c,
+        None => return Err(AppError::Unauthorized),
+    };
+
     let mut conn = state.db_connection().await?;
     let user_id = authenticated.user.id;
 
-    let refresh_token = RefreshToken::find(&mut conn, &body.refresh_token)
+    println!("cookie exists");
+
+    let refresh_token = RefreshToken::find(&mut conn, refresh_token_cookie.value())
         .await
         .map_err(|_| AppError::Unauthorized)?;
+
+    println!("refresh token found");
 
     if refresh_token.user_id != Some(user_id) {
         return Err(AppError::Unauthorized);
     }
 
+    println!("incorrect user");
+
     match refresh_token.revoke(&mut conn).await {
-        Ok(_) => Ok(OkResponse::default()),
+        Ok(_) => {
+            // deleting cookie
+            let cookie = build_refresh_cookie("", Duration::seconds(0));
+
+            Ok(HttpResponse::Ok()
+                .cookie(cookie)
+                .json(OkResponse::default()))
+        }
         Err(_) => Err(AppError::InternalError),
     }
 }
@@ -541,7 +569,6 @@ pub async fn logout(
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct RefreshResponse {
     pub access_token: String,
-    pub refresh_token: String,
 }
 
 #[utoipa::path(
@@ -554,13 +581,15 @@ pub struct RefreshResponse {
         (status = 500, description = "Internal error", body = ErrorResponse)
     )
 )]
-pub async fn refresh(
-    body: web::Json<RefreshTokenBody>,
-    state: web::Data<AppState>,
-) -> AppResult<Json<RefreshResponse>> {
+pub async fn refresh(req: HttpRequest, state: web::Data<AppState>) -> AppResult<HttpResponse> {
+    let refresh_token_cookie = match req.cookie("refresh_token") {
+        Some(c) => c,
+        None => return Err(AppError::Unauthorized),
+    };
+
     let mut conn = state.db_connection().await?;
 
-    let refresh_token = RefreshToken::find(&mut conn, &body.refresh_token)
+    let refresh_token = RefreshToken::find(&mut conn, refresh_token_cookie.value())
         .await
         .map_err(|_| AppError::Unauthorized)?;
 
@@ -580,14 +609,29 @@ pub async fn refresh(
             Ok(refresh_token) => {
                 let access_token = create_token(&user_id, secret, access_expiration_time, "user");
 
-                Ok(Json(RefreshResponse {
-                    access_token,
-                    refresh_token,
-                }))
+                let cookie = build_refresh_cookie(
+                    &refresh_token,
+                    Duration::minutes(refresh_expiration_time),
+                );
+
+                Ok(HttpResponse::Ok()
+                    .cookie(cookie)
+                    .json(RefreshResponse { access_token }))
             }
             Err(_) => Err(AppError::InternalError),
         }
     } else {
         Err(AppError::Unauthorized)
     }
+}
+
+fn build_refresh_cookie(token: &str, max_age: Duration) -> Cookie {
+    Cookie::build("refresh_token", token)
+        .http_only(true)
+        .secure(true)
+        .same_site(SameSite::Strict)
+        .path("/api/v1/auth/refresh")
+        .path("/api/v1/auth/logout")
+        .max_age(max_age)
+        .finish()
 }
