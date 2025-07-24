@@ -11,20 +11,21 @@ pub enum AppError {
     InternalError,
     #[display("bad_request")]
     #[error(ignore)]
-    BadRequest(String),
+    BadRequest(&'static str),
     #[display("unauthorized")]
-    Unauthorized,
+    #[error(ignore)]
+    Unauthorized(&'static str),
     NotFound,
     #[display("bad_gateway")]
     BadGateway,
     #[display("forbidden")]
     #[error(ignore)]
-    Forbidden(String),
+    Forbidden(&'static str),
     #[display("conflict")]
     Conflict,
     #[display("unverified_user")]
     #[error(ignore)]
-    UnverifiedUser(String),
+    UnverifiedUser(&'static str),
 }
 
 pub type AppResult<T> = Result<T, AppError>;
@@ -42,7 +43,7 @@ impl ResponseError for AppError {
         match *self {
             Self::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
             Self::BadRequest(_) => StatusCode::BAD_REQUEST,
-            Self::Unauthorized => StatusCode::UNAUTHORIZED,
+            Self::Unauthorized(_) => StatusCode::UNAUTHORIZED,
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::BadGateway => StatusCode::BAD_GATEWAY,
             Self::Forbidden(_) => StatusCode::FORBIDDEN,
@@ -59,12 +60,14 @@ impl ResponseError for AppError {
             }),
             Self::BadRequest(msg) => HttpResponse::build(self.status_code()).json(ErrorResponse {
                 error: self.to_string(),
-                message: msg.clone(),
+                message: msg.to_string(),
             }),
-            Self::Unauthorized => HttpResponse::build(self.status_code()).json(ErrorResponse {
-                error: self.to_string(),
-                message: "Unauthorized access.".to_string(),
-            }),
+            Self::Unauthorized(msg) => {
+                HttpResponse::build(self.status_code()).json(ErrorResponse {
+                    error: self.to_string(),
+                    message: msg.to_string(),
+                })
+            }
             Self::NotFound => HttpResponse::build(self.status_code()).json(ErrorResponse {
                 error: self.to_string(),
                 message: "Resource not found.".to_string(),
@@ -75,7 +78,7 @@ impl ResponseError for AppError {
             }),
             Self::Forbidden(msg) => HttpResponse::build(self.status_code()).json(ErrorResponse {
                 error: self.to_string(),
-                message: msg.clone(),
+                message: msg.to_string(),
             }),
             Self::Conflict => HttpResponse::build(self.status_code()).json(ErrorResponse {
                 error: self.to_string(),
@@ -84,7 +87,7 @@ impl ResponseError for AppError {
             Self::UnverifiedUser(msg) => {
                 HttpResponse::build(self.status_code()).json(ErrorResponse {
                     error: self.to_string(),
-                    message: msg.clone(),
+                    message: msg.to_string(),
                 })
             }
         }

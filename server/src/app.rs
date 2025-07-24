@@ -9,7 +9,7 @@ use crate::{
 };
 use bon::Builder;
 use derive_more::Deref;
-use diesel_async::{pooled_connection::deadpool::Pool, AsyncPgConnection};
+use diesel_async::{AsyncPgConnection, pooled_connection::deadpool::Pool};
 use redis::Client as RedisClient;
 
 pub type PoolResult =

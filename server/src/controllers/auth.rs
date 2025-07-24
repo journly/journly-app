@@ -80,7 +80,7 @@ pub async fn register_user(
     // check username validity
     if !is_valid_username(&body.username) {
         return Err(AppError::BadRequest(
-            "Username cannot contain spaces or non-alphanumeric characters".to_string(),
+            "Username cannot contain spaces or non-alphanumeric characters",
         ));
     }
 
@@ -88,7 +88,7 @@ pub async fn register_user(
 
     // check email validity
     if !is_valid_email(&body.email) {
-        return Err(AppError::BadRequest("Malformed email address".to_string()));
+        return Err(AppError::BadRequest("Malformed email address"));
     }
 
     let new_user = NewUser {
@@ -127,7 +127,7 @@ pub async fn register_user(
                 user: EncodableUser::from(user),
             }))
         }
-        Err(_) => Err(AppError::BadRequest("Email already exists".to_string())),
+        Err(_) => Err(AppError::BadRequest("Email already exists")),
     }
 }
 
@@ -154,7 +154,7 @@ pub async fn resend_verification_code(
     let email = body.email.trim().to_lowercase();
 
     if !is_valid_email(&email) {
-        return Err(AppError::BadRequest("Malformed email address".to_string()));
+        return Err(AppError::BadRequest("Malformed email address"));
     }
 
     let mut conn = state.db_connection().await?;
@@ -213,10 +213,8 @@ pub async fn verify_user_email(
     let email = body.email.trim().to_lowercase();
     let verification_code = body.verification_code;
 
-    let forbidden_err_msg = "Verification code is incorrect or has expired".to_string();
-
     if !is_valid_email(&email) {
-        return Err(AppError::BadRequest("Malformed email address".to_string()));
+        return Err(AppError::BadRequest("Malformed email address"));
     }
 
     let mut conn = state.db_connection().await?;
@@ -234,7 +232,7 @@ pub async fn verify_user_email(
     match UserVerificationCode::find(&mut conn, &email).await {
         Ok(verification_obj) => {
             if verification_obj.verification_code != verification_code {
-                return Err(AppError::Forbidden(forbidden_err_msg));
+                return Err(AppError::Forbidden("Verification code is incorrect"));
             };
 
             use crate::schema::users::dsl::*;
@@ -250,7 +248,7 @@ pub async fn verify_user_email(
                 _ => Err(AppError::InternalError),
             }
         }
-        Err(_) => Err(AppError::Forbidden(forbidden_err_msg)),
+        Err(_) => Err(AppError::Forbidden("No active verification code")),
     }
 }
 
@@ -317,7 +315,7 @@ pub async fn login(
             let user_password_hash = user.password_hash;
 
             if user_password_hash.is_none() || user_password_salt.is_none() {
-                return Err(AppError::Unauthorized);
+                return Err(AppError::Unauthorized("Invalid user"));
             }
 
             let salt = match SaltString::from_b64(
@@ -375,9 +373,9 @@ pub async fn login(
                 };
             }
 
-            Err(AppError::Unauthorized)
+            Err(AppError::Unauthorized("Invalid credentials"))
         }
-        Err(NotFound) => Err(AppError::Unauthorized),
+        Err(NotFound) => Err(AppError::Unauthorized("Invalid credentials")),
         Err(_) => Err(AppError::InternalError),
     }
 }
@@ -407,7 +405,7 @@ pub async fn google_oauth(
     let query_state = &query.state;
 
     if query_code.is_empty() {
-        return Err(AppError::Unauthorized);
+        return Err(AppError::Unauthorized("Unauthorized"));
     }
 
     let token_response = request_token(query_code.as_str(), &state).await;
@@ -530,28 +528,21 @@ pub async fn logout(
     authenticated: AuthenticatedUser,
     state: web::Data<AppState>,
 ) -> AppResult<HttpResponse> {
-    println!("has access token");
     let refresh_token_cookie = match req.cookie("refresh_token") {
         Some(c) => c,
-        None => return Err(AppError::Unauthorized),
+        None => return Err(AppError::Unauthorized("Missing refresh token cookie.")),
     };
 
     let mut conn = state.db_connection().await?;
     let user_id = authenticated.user.id;
 
-    println!("cookie exists");
-
     let refresh_token = RefreshToken::find(&mut conn, refresh_token_cookie.value())
         .await
-        .map_err(|_| AppError::Unauthorized)?;
-
-    println!("refresh token found");
+        .map_err(|_| AppError::Unauthorized("Invalid refresh token"))?;
 
     if refresh_token.user_id != Some(user_id) {
-        return Err(AppError::Unauthorized);
+        return Err(AppError::Unauthorized("Invalid refresh token"));
     }
-
-    println!("incorrect user");
 
     match refresh_token.revoke(&mut conn).await {
         Ok(_) => {
@@ -584,17 +575,17 @@ pub struct RefreshResponse {
 pub async fn refresh(req: HttpRequest, state: web::Data<AppState>) -> AppResult<HttpResponse> {
     let refresh_token_cookie = match req.cookie("refresh_token") {
         Some(c) => c,
-        None => return Err(AppError::Unauthorized),
+        None => return Err(AppError::Unauthorized("Missing refresh token cookie")),
     };
 
     let mut conn = state.db_connection().await?;
 
     let refresh_token = RefreshToken::find(&mut conn, refresh_token_cookie.value())
         .await
-        .map_err(|_| AppError::Unauthorized)?;
+        .map_err(|_| AppError::Unauthorized("Invalid refresh token"))?;
 
     if refresh_token.revoked {
-        return Err(AppError::Unauthorized);
+        return Err(AppError::Unauthorized("Refresh token has expired"));
     }
 
     if let Some(user_id) = refresh_token.user_id {
@@ -621,7 +612,7 @@ pub async fn refresh(req: HttpRequest, state: web::Data<AppState>) -> AppResult<
             Err(_) => Err(AppError::InternalError),
         }
     } else {
-        Err(AppError::Unauthorized)
+        Err(AppError::Unauthorized("Invalid refresh token"))
     }
 }
 
@@ -630,8 +621,7 @@ fn build_refresh_cookie(token: &str, max_age: Duration) -> Cookie {
         .http_only(true)
         .secure(true)
         .same_site(SameSite::Strict)
-        .path("/api/v1/auth/refresh")
-        .path("/api/v1/auth/logout")
+        .path("/api/v1/auth")
         .max_age(max_age)
         .finish()
 }
