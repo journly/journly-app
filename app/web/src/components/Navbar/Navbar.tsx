@@ -27,8 +27,12 @@ import {
   Tooltip,
   UnstyledButton,
 } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
+import { useAllTrips } from '@/providers/AllTripsProvider';
 import { useUser } from '@/providers/UserProvider';
+import { formatTripDatesSimple } from '@/utils/dates';
 import logo from '../../favicon.png';
+import { CreateTripModal } from '../Modals/CreateTripModal';
 import classes from './Navbar.module.css';
 
 const links = [
@@ -39,31 +43,12 @@ const links = [
   { icon: IconTimeline, label: 'Stats', path: '/stats' },
 ];
 
-const collections = [
-  { emoji: '👍', label: 'Sales' },
-  { emoji: '🚚', label: 'Deliveries' },
-  { emoji: '💸', label: 'Discounts' },
-  { emoji: '💰', label: 'Profits' },
-  { emoji: '✨', label: 'Reports' },
-  { emoji: '🛒', label: 'Orders' },
-  { emoji: '📅', label: 'Events' },
-  { emoji: '🙈', label: 'Debts' },
-  { emoji: '💁‍♀️', label: 'Customers' },
-  { emoji: '👍', label: 'Sales' },
-  { emoji: '🚚', label: 'Deliveries' },
-  { emoji: '💸', label: 'Discounts' },
-  { emoji: '💰', label: 'Profits' },
-  { emoji: '✨', label: 'Reports' },
-  { emoji: '🛒', label: 'Orders' },
-  { emoji: '📅', label: 'Events' },
-  { emoji: '🙈', label: 'Debts' },
-  { emoji: '💁‍♀️', label: 'Customers' },
-];
-
 export const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useUser();
+  const [opened, { open, close }] = useDisclosure(false);
+  const { trips } = useAllTrips();
 
   const mainLinks = links.map((link) => {
     const isActive =
@@ -73,11 +58,9 @@ export const Navbar = () => {
       <UnstyledButton
         key={link.label}
         className={`${classes.mainLink} ${isActive ? classes.active : classes.mainLinkHover}`}
+        onClick={() => navigate(link.path)}
       >
-        <div
-          className={`${classes.mainLinkInner} ${isActive ? classes.active : ''}`}
-          onClick={() => navigate(link.path)}
-        >
+        <div className={`${classes.mainLinkInner} ${isActive ? classes.active : ''}`}>
           <link.icon size={22} className={classes.mainLinkIcon} stroke={2} />
           <span>{link.label}</span>
         </div>
@@ -85,19 +68,34 @@ export const Navbar = () => {
     );
   });
 
-  const collectionLinks = collections.map((collection) => (
-    <a
-      href="#"
-      onClick={(event) => event.preventDefault()}
-      key={collection.label}
-      className={classes.collectionLink}
-    >
-      <Box component="span" mr={9} fz={16}>
-        {collection.emoji}
-      </Box>{' '}
-      {collection.label}
-    </a>
-  ));
+  const tripLinks = trips.map((trip) => {
+    const isActive = location.pathname.startsWith(`/trip/${trip.id.split('trip/')[1]}`);
+    return (
+      <UnstyledButton
+        onClick={() => {
+          navigate(`/trip/${trip.id.split('trip/')[1]}`);
+        }}
+        key={trip.id}
+        className={`${classes.tripLink} ${isActive ? classes.active : classes.tripLinkHover}`}
+      >
+        <Flex align="center" gap={9}>
+          <Box component="span" mr={9} fz={16} className={isActive ? classes.active : ''}>
+            {trip.name.charAt(0)}
+          </Box>{' '}
+          <Box>
+            <Text size="sm" fw={500} className={isActive ? classes.active : ''}>
+              {trip.name}
+            </Text>
+            {trip.startDate && trip.endDate && (
+              <Text size="xs" c="dimmed">
+                {formatTripDatesSimple([trip.startDate, trip.endDate])}
+              </Text>
+            )}
+          </Box>
+        </Flex>
+      </UnstyledButton>
+    );
+  });
 
   return (
     <nav className={classes.navbar}>
@@ -124,12 +122,12 @@ export const Navbar = () => {
         pt={10}
       />
       <AppShell.Section className={classes.subSection}>
-        <Group className={classes.collectionsHeader} justify="space-between">
+        <Group className={classes.tripsHeader} justify="space-between">
           <Text size="xs" fw={500} c="dimmed">
             Trips
           </Text>
           <Tooltip label="Create a new trip" withArrow position="right">
-            <ActionIcon variant="default" size={18}>
+            <ActionIcon variant="default" size={18} onClick={open}>
               <IconPlus size={12} stroke={1.5} />
             </ActionIcon>
           </Tooltip>
@@ -142,7 +140,7 @@ export const Navbar = () => {
         scrollbarSize={5}
         className={classes.subSection}
       >
-        <div className={classes.collections}>{collectionLinks}</div>
+        <div className={classes.trips}>{tripLinks}</div>
       </AppShell.Section>
       <AppShell.Section className={classes.userSection}>
         <Flex align="center" justify="flex-start" gap={10} className={classes.user}>
@@ -160,6 +158,7 @@ export const Navbar = () => {
           </Box>
         </Flex>
       </AppShell.Section>
+      <CreateTripModal open={opened} onClose={close} />
     </nav>
   );
 };

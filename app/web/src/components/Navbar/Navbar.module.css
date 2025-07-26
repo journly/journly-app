@@ -89,19 +89,19 @@
   pointer-events: none;
 }
 
-.collections {
+.trips {
   padding-left: calc(var(--mantine-spacing-md) - 6px);
   padding-right: calc(var(--mantine-spacing-md) - 6px);
   padding-bottom: var(--mantine-spacing-md);
 }
 
-.collectionsHeader {
+.tripsHeader {
   padding-left: calc(var(--mantine-spacing-md) + 2px);
   padding-right: var(--mantine-spacing-md);
   margin-bottom: 5px;
 }
 
-.collectionLink {
+.tripLink {
   display: block;
   padding: 8px var(--mantine-spacing-xs);
   text-decoration: none;
@@ -110,7 +110,11 @@
   color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0));
   line-height: 1;
   font-weight: 500;
+  width: 100%;
+  margin-bottom: 3px;
+}
 
+.tripLinkHover {
   &:hover {
     background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
     color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0));

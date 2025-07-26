@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useContext, useMemo } from 'react';
 import { Replicache } from 'replicache';
-import { mutators } from '../mutators';
+import { Mutators, mutators } from '../mutators';
 import { useAuth } from './AuthProvider';
 
 const createReplicacheClient = (userId?: string | null) => {
@@ -19,14 +19,25 @@ const createReplicacheClient = (userId?: string | null) => {
   });
 };
 
-export const ReplicacheContext =
-  createContext<Required<ReturnType<typeof createReplicacheClient>>>(null);
+interface ReplicacheContextType {
+  rep: Replicache<Mutators> | null;
+}
+
+export const ReplicacheContext = createContext<ReplicacheContextType | undefined>(undefined);
 
 export const ReplicacheProvider = ({ children }: { children: ReactNode }) => {
   const { userId } = useAuth();
   const replicache = useMemo(() => createReplicacheClient(userId), [userId]);
 
-  return <ReplicacheContext.Provider value={replicache}>{children}</ReplicacheContext.Provider>;
+  return (
+    <ReplicacheContext.Provider
+      value={{
+        rep: replicache,
+      }}
+    >
+      {children}
+    </ReplicacheContext.Provider>
+  );
 };
 
 export const useReplicache = () => {

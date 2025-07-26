@@ -1,8 +1,10 @@
 import '@mantine/core/styles.css';
+import '@mantine/dates/styles.css';
 
 import { StrictMode } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { MantineProvider } from '@mantine/core';
+import { AllTripsProvider } from './providers/AllTripsProvider';
 import { AuthProvider } from './providers/AuthProvider';
 import { ReplicacheProvider } from './providers/ReplicacheProvider';
 import { UserProvider } from './providers/UserProvider';
@@ -16,9 +18,11 @@ export default function App() {
         <AuthProvider>
           <ReplicacheProvider>
             <UserProvider>
-              <BrowserRouter>
-                <Router />
-              </BrowserRouter>
+              <AllTripsProvider>
+                <BrowserRouter>
+                  <Router />
+                </BrowserRouter>
+              </AllTripsProvider>
             </UserProvider>
           </ReplicacheProvider>
         </AuthProvider>

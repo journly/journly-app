@@ -1,38 +1,27 @@
-import { WriteTransaction } from 'replicache';
-import { ExpenseData, ItineraryItemData, TripData } from './data';
+import { createCollaborator, deleteCollaborator } from './models/collaborators';
+import { createExpensePayer, deleteExpensePayer } from './models/expensePayer';
+import { createExpense, deleteExpense, updateExpense } from './models/expenses';
+import {
+  createItineraryItem,
+  deleteItineraryItem,
+  updateItineraryItem,
+} from './models/itineraryItem';
+import { createTrip, deleteTrip, updateTrip } from './models/trip';
+
+export type Mutators = typeof mutators;
 
 export const mutators = {
-  createTrip: async (tx: WriteTransaction, args: TripData) => {
-    await tx.set(`trip/${args.id}`, args);
-  },
-  updateTrip: async (tx: WriteTransaction, args: { id: string } & Partial<TripData>) => {
-    const trip = await tx.get<TripData>(`trip/${args.id}`);
-    await tx.set(`trip/${args.id}`, { ...trip, ...args });
-  },
-  deleteTrip: async (tx: WriteTransaction, id: string) => {
-    await tx.del(`trip/${id}`);
-  },
-  createItineraryItem: async (tx: WriteTransaction, args: ItineraryItemData) => {
-    await tx.set(`trip/${args.id}`, args);
-  },
-  updateItineraryItem: async (
-    tx: WriteTransaction,
-    args: { id: string } & Partial<ItineraryItemData>
-  ) => {
-    const item = await tx.get<ItineraryItemData>(`itineraryItem/${args.id}`);
-    await tx.set(`itineraryItem/${args.id}`, { ...item, ...args });
-  },
-  deleteItineraryItem: async (tx: WriteTransaction, id: string) => {
-    await tx.del(`itineraryItem/${id}`);
-  },
-  createExpense: async (tx: WriteTransaction, args: ExpenseData) => {
-    await tx.set(`expense/${args.id}`, args);
-  },
-  updateExpense: async (tx: WriteTransaction, args: { id: string } & Partial<ExpenseData>) => {
-    const expense = await tx.get<ExpenseData>(`expense/${args.id}`);
-    await tx.set(`expense/${args.id}`, { ...expense, ...args });
-  },
-  deleteExpense: async (tx: WriteTransaction, id: string) => {
-    await tx.del(`expense/${id}`);
-  },
+  createTrip,
+  updateTrip,
+  deleteTrip,
+  createCollaborator,
+  deleteCollaborator,
+  createItineraryItem,
+  deleteItineraryItem,
+  updateItineraryItem,
+  createExpense,
+  deleteExpense,
+  updateExpense,
+  createExpensePayer,
+  deleteExpensePayer,
 };

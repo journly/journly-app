@@ -7,6 +7,7 @@ interface ImportMetaEnv {
   readonly VITE_MAPBOX_ACCESS_TOKEN: string;
   readonly VITE_REPLICACHE_PUSH_URL: string;
   readonly VITE_REPLICACHE_PULL_URL: string;
+  readonly VITE_REPLICACHE_POKE_URL: string;
   // add any other variables you use:
   // readonly VITE_SOME_KEY: string;
 }
