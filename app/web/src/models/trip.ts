@@ -1,6 +1,8 @@
 import { generate, Update } from '@rocicorp/rails';
-import { ReadTransaction } from 'replicache';
+import { nanoid } from 'nanoid';
+import { ReadTransaction, WriteTransaction } from 'replicache';
 import { z } from 'zod';
+import { createCollaborator } from './collaborators';
 
 export const tripSchema = z.object({
   id: z.string(),
@@ -16,6 +18,7 @@ export const tripSchema = z.object({
 
 export type Trip = z.infer<typeof tripSchema>;
 export type TripUpdate = Update<Trip>;
+export type TripCreate = Omit<Trip, 'id' | 'createdAt' | 'updatedAt' | 'ownerId'>;
 
 export const {
   init: createTrip,

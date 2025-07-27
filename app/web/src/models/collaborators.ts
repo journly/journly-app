@@ -1,4 +1,4 @@
-import { generate, ReadTransaction } from '@rocicorp/rails';
+import { generate, ReadTransaction, WriteTransaction } from '@rocicorp/rails';
 import { z } from 'zod';
 
 export const collaboratorSchema = z.object({
@@ -23,4 +23,11 @@ export async function getCollaboratorsByTrip(tx: ReadTransaction, tripId: string
   const allCollaborators = await listCollaborators(tx);
 
   return allCollaborators.filter((collaborator) => collaborator.tripId === tripId);
+}
+
+export async function removeAllCollaboratorsFromTrip(tx: WriteTransaction, tripId: string) {
+  const collaborators = await getCollaboratorsByTrip(tx, tripId);
+  for (const collaborator of collaborators) {
+    await deleteCollaborator(tx, collaborator.id);
+  }
 }

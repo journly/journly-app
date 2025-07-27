@@ -1,8 +1,16 @@
 import { useEffect, useState } from 'react';
-import { IconCalendar, IconCurrencyDollar, IconHome, IconSofa } from '@tabler/icons-react';
+import {
+  IconCalendar,
+  IconCurrencyDollar,
+  IconHome,
+  IconSofa,
+  IconUsers,
+} from '@tabler/icons-react';
 import { useParams } from 'react-router-dom';
 import { useSubscribe } from 'replicache-react';
 import {
+  Avatar,
+  AvatarGroup,
   BackgroundImage,
   Box,
   Center,
@@ -12,15 +20,18 @@ import {
   Text,
   TextInput,
   Title,
+  Tooltip,
   UnstyledButton,
 } from '@mantine/core';
 import { DatePicker } from '@mantine/dates';
+import { getCollaboratorsByTrip } from '@/models/collaborators';
 import { expensesByTrip } from '@/models/expenses';
 import { itineraryItemsByTrip } from '@/models/itineraryItem';
 import { getTrip, Trip } from '@/models/trip';
 import { useReplicache } from '@/providers/ReplicacheProvider';
 import { formatTripDatesDisplay } from '@/utils/dates';
 import { useEventSourcePoke } from '@/utils/poke';
+import OverviewTab from './tabs/Overview.tab';
 import classes from './Trip.module.css';
 
 export default function TripPage() {
@@ -34,6 +45,11 @@ export default function TripPage() {
 
   const trip = useSubscribe(rep, (tx) => getTrip(tx, currentTripId), {
     default: null,
+    dependencies: [currentTripId],
+  });
+
+  const collaborators = useSubscribe(rep, (tx) => getCollaboratorsByTrip(tx, currentTripId), {
+    default: [],
     dependencies: [currentTripId],
   });
 
@@ -87,8 +103,8 @@ export default function TripPage() {
       <Box className={classes.coverImageContainer} w="100%" h={200}>
         <BackgroundImage src={trip?.coverImage ?? ''} w="100%" h={200}>
           <Flex w="100%" h="100%" justify="center" align="flex-end">
-            <Flex maw={850} w="100%" mb={20} mx={20}>
-              <Box ml={5}>
+            <Flex maw={1150} w="100%" mb={20} mx={20} justify="space-between" align="flex-end">
+              <Box ml={5} className={classes.bannerImageText}>
                 {editingName ? (
                   <TextInput
                     variant="unstyled"
@@ -97,6 +113,7 @@ export default function TripPage() {
                     size="26px"
                     fw={700}
                     mb={12}
+                    pt={7}
                     key={trip?.id}
                     spellCheck={false}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -155,6 +172,23 @@ export default function TripPage() {
                   </Popover>
                 </Flex>
               </Box>
+              <Flex align="center" gap={10} justify="center">
+                <AvatarGroup spacing="sm">
+                  {collaborators && collaborators.length > 0 && (
+                    <>
+                      {collaborators.slice(0, 3).map((collaborator) => (
+                        <Tooltip key={collaborator.id} label={collaborator.username} position="top">
+                          <Avatar src={collaborator.avatarUrl} />
+                        </Tooltip>
+                      ))}
+                      {collaborators.length > 3 && <Avatar>+{collaborators.length - 3}</Avatar>}
+                    </>
+                  )}
+                </AvatarGroup>
+                <UnstyledButton className={classes.addCollaboratorButton}>
+                  <IconUsers size={25} stroke={2.5} />
+                </UnstyledButton>
+              </Flex>
             </Flex>
           </Flex>
         </BackgroundImage>
@@ -166,8 +200,8 @@ export default function TripPage() {
           w="100%"
           className={classes.tabsContainer}
         >
-          <Tabs.List w="100%" className={classes.tabsList}>
-            <Flex maw={850} w="100%">
+          <Tabs.List w="100%" className={classes.tabsList} mb={25}>
+            <Flex maw={1150} w="100%" mx={20}>
               {tabConfig.map((tab) => (
                 <Tabs.Tab
                   key={tab.value}
@@ -180,6 +214,11 @@ export default function TripPage() {
               ))}
             </Flex>
           </Tabs.List>
+          <Tabs.Panel value="overview" w="100%">
+            <Flex justify="center">
+              <OverviewTab trip={trip} updateTrip={updateTrip} />
+            </Flex>
+          </Tabs.Panel>
         </Tabs>
       </Center>
     </>

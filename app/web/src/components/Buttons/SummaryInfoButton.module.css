@@ -1,0 +1,12 @@
+.summaryInfoButton {
+  border-radius: var(--mantine-radius-lg);
+  padding: 2px 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: -5px;
+
+  &:hover {
+    background-color: light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-6));
+  }
+}

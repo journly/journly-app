@@ -1,14 +1,14 @@
 import { createContext, useContext } from 'react';
-import { nanoid } from 'nanoid';
 import { useSubscribe } from 'replicache-react';
-import { listAllTripsSortedByUpdatedAt, Trip } from '@/models/trip';
+import { listAllTripsSortedByUpdatedAt, Trip, TripCreate } from '@/models/trip';
 import { useEventSourcePoke } from '@/utils/poke';
 import { useAuth } from './AuthProvider';
 import { useReplicache } from './ReplicacheProvider';
+import { useUser } from './UserProvider';
 
 interface AllTripsContextType {
   trips: Trip[];
-  createTrip: (trip: Partial<Trip>) => Promise<void>;
+  createTrip: (trip: TripCreate) => Promise<void>;
   deleteAllTrips: () => Promise<void>;
 }
 
@@ -17,6 +17,7 @@ const AllTripsContext = createContext<AllTripsContextType | undefined>(undefined
 export const AllTripsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { userId } = useAuth();
   const { rep } = useReplicache();
+  const { user } = useUser();
 
   // Always call the hook
   const trips: Trip[] = useSubscribe(rep, listAllTripsSortedByUpdatedAt, { default: [] });
@@ -27,22 +28,23 @@ export const AllTripsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     rep
   );
 
-  const createTrip = async (trip: Partial<Trip>) => {
-    if (!userId || !rep) {
-      throw new Error('User ID and Replicache are required');
+  const createTrip = async (trip: TripCreate) => {
+    if (!userId || !rep || !user) {
+      throw new Error('User ID and Replicache and user are required');
     }
     await rep.mutate.createTrip({
-      ...trip,
-      id: `trip/${nanoid()}`,
-      ownerId: userId,
-      name: trip.name || 'Untitled Trip',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      trip,
+      user: {
+        id: user.id,
+        username: user.username,
+        avatar: user.avatar || undefined,
+      },
     });
   };
 
   const deleteAllTrips = async () => {
     if (!rep) return;
+    console.log('trips list', trips);
     for (const trip of trips) {
       await rep.mutate.deleteTrip(trip.id);
     }

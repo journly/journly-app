@@ -1,0 +1,6 @@
+.sectionContainer {
+  background-color: light-dark(var(--mantine-color-white), var(--mantine-color-dark-8));
+  border-radius: var(--mantine-radius-md);
+  box-shadow: var(--mantine-shadow-xs);
+  padding: 15px;
+}

@@ -2,8 +2,15 @@
   background-color: light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-8));
 }
 
+.bannerImageText {
+  background-color: light-dark(rgba(255, 255, 255, 0.5), rgba(0, 0, 0, 0.5));
+  backdrop-filter: blur(10px);
+  padding: 10px;
+  border-radius: 10px;
+}
+
 .dateContainer {
-  color: var(--mantine-color-gray-6);
+  color: light-dark(var(--mantine-color-dark-6), var(--mantine-color-gray-4));
 }
 
 .tabsList {
@@ -16,6 +23,7 @@
 
 .tabsContainer {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
 }
@@ -35,4 +43,11 @@
 .editNameInput input {
   padding-bottom: 6px;
   box-shadow: border-box;
+}
+
+.addCollaboratorButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: light-dark(white, var(--mantine-color-dark-8));
 }

@@ -69,6 +69,7 @@ export const Navbar = () => {
   });
 
   const tripLinks = trips.map((trip) => {
+    console.log(trip);
     const isActive = location.pathname.startsWith(`/trip/${trip.id.split('trip/')[1]}`);
     return (
       <UnstyledButton
