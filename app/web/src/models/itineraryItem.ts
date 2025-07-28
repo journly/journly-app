@@ -25,7 +25,7 @@ export const {
   get: getItineraryItem,
 } = generate('itineraryItem', itineraryItemSchema.parse);
 
-export async function itineraryItemsByTrip(tx: ReadTransaction, tripId: string) {
+export async function getItineraryItemsByTrip(tx: ReadTransaction, tripId: string) {
   const allItineraryItems = await listItineraryItems(tx);
   return allItineraryItems.filter((item) => item.tripId === tripId);
 }

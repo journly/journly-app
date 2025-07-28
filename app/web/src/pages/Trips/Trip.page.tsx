@@ -6,7 +6,7 @@ import {
   IconSofa,
   IconUsers,
 } from '@tabler/icons-react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useSubscribe } from 'replicache-react';
 import {
   Avatar,
@@ -15,6 +15,7 @@ import {
   Box,
   Center,
   Flex,
+  Loader,
   Popover,
   Tabs,
   Text,
@@ -24,9 +25,11 @@ import {
   UnstyledButton,
 } from '@mantine/core';
 import { DatePicker } from '@mantine/dates';
+import { useDisclosure } from '@mantine/hooks';
+import { CollaboratorsModal } from '@/components/Modals/CollaboratorsModal';
 import { getCollaboratorsByTrip } from '@/models/collaborators';
-import { expensesByTrip } from '@/models/expenses';
-import { itineraryItemsByTrip } from '@/models/itineraryItem';
+import { getExpensesByTrip } from '@/models/expenses';
+import { getItineraryItemsByTrip } from '@/models/itineraryItem';
 import { getTrip, Trip } from '@/models/trip';
 import { useReplicache } from '@/providers/ReplicacheProvider';
 import { formatTripDatesDisplay } from '@/utils/dates';
@@ -36,17 +39,32 @@ import classes from './Trip.module.css';
 
 export default function TripPage() {
   const { tripId } = useParams();
+  const navigate = useNavigate();
   const { rep } = useReplicache();
   const [activeTab, setActiveTab] = useState('overview');
   const [editingName, setEditingName] = useState(false);
   const [tripTitle, setTripTitle] = useState('');
   const [tripDates, setTripDates] = useState<[string | null, string | null]>([null, null]);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const currentTripId = tripId ? `trip/${tripId}` : '';
+  const [
+    collaboratorsModalOpened,
+    { open: openCollaboratorsModal, close: closeCollaboratorsModal },
+  ] = useDisclosure(false);
 
   const trip = useSubscribe(rep, (tx) => getTrip(tx, currentTripId), {
     default: null,
     dependencies: [currentTripId],
   });
+
+  // Set loaded state after a timeout
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setHasLoaded(true);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const collaborators = useSubscribe(rep, (tx) => getCollaboratorsByTrip(tx, currentTripId), {
     default: [],
@@ -58,12 +76,12 @@ export default function TripPage() {
     setTripDates([trip?.startDate || null, trip?.endDate || null]);
   }, [trip]);
 
-  const itinerary = useSubscribe(rep, (tx) => itineraryItemsByTrip(tx, currentTripId), {
+  const itinerary = useSubscribe(rep, (tx) => getItineraryItemsByTrip(tx, currentTripId), {
     default: [],
     dependencies: [currentTripId],
   });
 
-  const expenses = useSubscribe(rep, (tx) => expensesByTrip(tx, currentTripId), {
+  const expenses = useSubscribe(rep, (tx) => getExpensesByTrip(tx, currentTripId), {
     default: [],
     dependencies: [currentTripId],
   });
@@ -97,6 +115,25 @@ export default function TripPage() {
       icon: <IconCurrencyDollar size={16} />,
     },
   ];
+
+  if (!hasLoaded) {
+    return (
+      <Center h="100vh">
+        <Loader />
+      </Center>
+    );
+  }
+
+  if (!trip) {
+    return (
+      <Center h="100vh">
+        <Flex justify="center" align="center" direction="column" gap={10}>
+          <Title order={2}>Trip not found</Title>
+          <UnstyledButton onClick={() => navigate('/')}>Go to home</UnstyledButton>
+        </Flex>
+      </Center>
+    );
+  }
 
   return (
     <>
@@ -173,18 +210,27 @@ export default function TripPage() {
                 </Flex>
               </Box>
               <Flex align="center" gap={10} justify="center">
-                <AvatarGroup spacing="sm">
-                  {collaborators && collaborators.length > 0 && (
-                    <>
-                      {collaborators.slice(0, 3).map((collaborator) => (
-                        <Tooltip key={collaborator.id} label={collaborator.username} position="top">
-                          <Avatar src={collaborator.avatarUrl} />
-                        </Tooltip>
-                      ))}
-                      {collaborators.length > 3 && <Avatar>+{collaborators.length - 3}</Avatar>}
-                    </>
-                  )}
-                </AvatarGroup>
+                <UnstyledButton onClick={openCollaboratorsModal} mr={5}>
+                  <AvatarGroup spacing="sm">
+                    {collaborators && collaborators.length > 0 && (
+                      <>
+                        {collaborators.slice(0, 3).map((collaborator) => (
+                          <Tooltip
+                            key={collaborator.id}
+                            label={collaborator.username}
+                            position="top"
+                          >
+                            <Avatar
+                              src={collaborator.avatarUrl}
+                              className={classes.collaboratorAvatar}
+                            />
+                          </Tooltip>
+                        ))}
+                        {collaborators.length > 3 && <Avatar>+{collaborators.length - 3}</Avatar>}
+                      </>
+                    )}
+                  </AvatarGroup>
+                </UnstyledButton>
                 <UnstyledButton className={classes.addCollaboratorButton}>
                   <IconUsers size={25} stroke={2.5} />
                 </UnstyledButton>
@@ -220,6 +266,12 @@ export default function TripPage() {
             </Flex>
           </Tabs.Panel>
         </Tabs>
+        <CollaboratorsModal
+          collaborators={collaborators}
+          ownerId={trip?.ownerId ?? ''}
+          opened={collaboratorsModalOpened}
+          setOpened={closeCollaboratorsModal}
+        />
       </Center>
     </>
   );

@@ -6,6 +6,8 @@ export const collaboratorSchema = z.object({
   tripId: z.string(),
   userId: z.string(),
   username: z.string(),
+  email: z.string(),
+  role: z.enum(['owner', 'editor', 'viewer']),
   avatarUrl: z.string().optional(),
 });
 
@@ -14,6 +16,7 @@ export type Collaborator = z.infer<typeof collaboratorSchema>;
 export const {
   init: createCollaborator,
   list: listCollaborators,
+  update: updateCollaborator,
   get: getCollaborator,
   delete: deleteCollaborator,
 } = generate('collaborator', collaboratorSchema.parse);

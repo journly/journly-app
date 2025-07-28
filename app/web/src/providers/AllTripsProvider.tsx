@@ -37,6 +37,7 @@ export const AllTripsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       user: {
         id: user.id,
         username: user.username,
+        email: user.email,
         avatar: user.avatar || undefined,
       },
     });
@@ -44,7 +45,7 @@ export const AllTripsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const deleteAllTrips = async () => {
     if (!rep) return;
-    console.log('trips list', trips);
+
     for (const trip of trips) {
       await rep.mutate.deleteTrip(trip.id);
     }

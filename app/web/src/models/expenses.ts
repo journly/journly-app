@@ -23,7 +23,7 @@ export const {
 } = generate('expense', expenseSchema.parse);
 
 // returns a list of expenses for a given trip
-export async function expensesByTrip(tx: ReadTransaction, tripId: string) {
+export async function getExpensesByTrip(tx: ReadTransaction, tripId: string) {
   const allExpenses = await listExpenses(tx);
   return allExpenses.filter((expense) => expense.tripId === tripId);
 }

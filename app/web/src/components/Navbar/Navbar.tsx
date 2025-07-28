@@ -1,14 +1,11 @@
 import {
   IconBook,
-  IconBulb,
-  IconCheckbox,
   IconCompass,
   IconHome,
   IconMap,
   IconPlus,
   IconSearch,
   IconTimeline,
-  IconUser,
 } from '@tabler/icons-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -69,7 +66,6 @@ export const Navbar = () => {
   });
 
   const tripLinks = trips.map((trip) => {
-    console.log(trip);
     const isActive = location.pathname.startsWith(`/trip/${trip.id.split('trip/')[1]}`);
     return (
       <UnstyledButton
