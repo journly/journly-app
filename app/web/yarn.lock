@@ -6486,6 +6486,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lodash.debounce@npm:^4.0.8":
+  version: 4.0.8
+  resolution: "lodash.debounce@npm:4.0.8"
+  checksum: 10c0/762998a63e095412b6099b8290903e0a8ddcb353ac6e2e0f2d7e7d03abd4275fe3c689d88960eb90b0dde4f177554d51a690f22a343932ecbc50a5d111849987
+  languageName: node
+  linkType: hard
+
 "lodash.merge@npm:^4.6.2":
   version: 4.6.2
   resolution: "lodash.merge@npm:4.6.2"
@@ -6682,6 +6689,7 @@ __metadata:
     prop-types: "npm:^15.8.1"
     react: "npm:^19.1.0"
     react-dom: "npm:^19.1.0"
+    react-google-autocomplete: "npm:^2.7.5"
     react-router-dom: "npm:^7.6.2"
     replicache: "npm:^15.3.0"
     replicache-react: "npm:^5.0.1"
@@ -7676,7 +7684,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prop-types@npm:^15.8.1":
+"prop-types@npm:^15.5.0, prop-types@npm:^15.8.1":
   version: 15.8.1
   resolution: "prop-types@npm:15.8.1"
   dependencies:
@@ -7759,6 +7767,18 @@ __metadata:
   peerDependencies:
     react: ^19.1.0
   checksum: 10c0/3e26e89bb6c67c9a6aa86cb888c7a7f8258f2e347a6d2a15299c17eb16e04c19194e3452bc3255bd34000a61e45e2cb51e46292392340432f133e5a5d2dfb5fc
+  languageName: node
+  linkType: hard
+
+"react-google-autocomplete@npm:^2.7.5":
+  version: 2.7.5
+  resolution: "react-google-autocomplete@npm:2.7.5"
+  dependencies:
+    lodash.debounce: "npm:^4.0.8"
+    prop-types: "npm:^15.5.0"
+  peerDependencies:
+    react: ">=16.8.0"
+  checksum: 10c0/4386da42f7520e558b137673100feb023cbbbdcbf4e50c2474baceb78c8ff20d5829d8d928490d544c894fa18024e4d35efc5fb95a17b7959554ff1d1e72eb99
   languageName: node
   linkType: hard
 

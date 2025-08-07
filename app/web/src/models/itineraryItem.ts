@@ -9,6 +9,7 @@ export const itineraryItemSchema = z.object({
   description: z.string().optional(),
   startDateTime: z.string(),
   endDateTime: z.string(),
+  allDay: z.boolean().default(false),
   location: z.string().optional(),
   notes: z.string().optional(),
   expenseId: z.string().optional(),

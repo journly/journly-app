@@ -1,8 +1,6 @@
 import { generate, Update } from '@rocicorp/rails';
-import { nanoid } from 'nanoid';
-import { ReadTransaction, WriteTransaction } from 'replicache';
+import { ReadTransaction } from 'replicache';
 import { z } from 'zod';
-import { createCollaborator } from './collaborators';
 
 export const tripSchema = z.object({
   id: z.string(),

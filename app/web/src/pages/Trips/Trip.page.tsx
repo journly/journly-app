@@ -34,6 +34,9 @@ import { getTrip, Trip } from '@/models/trip';
 import { useReplicache } from '@/providers/ReplicacheProvider';
 import { formatTripDatesDisplay } from '@/utils/dates';
 import { useEventSourcePoke } from '@/utils/poke';
+import BookingTab from './tabs/Booking.tab';
+import BudgetTab from './tabs/Budget.tab';
+import ItineraryTab from './tabs/Itinerary.tab';
 import OverviewTab from './tabs/Overview.tab';
 import classes from './Trip.module.css';
 
@@ -46,15 +49,15 @@ export default function TripPage() {
   const [tripTitle, setTripTitle] = useState('');
   const [tripDates, setTripDates] = useState<[string | null, string | null]>([null, null]);
   const [hasLoaded, setHasLoaded] = useState(false);
-  const currentTripId = tripId ? `trip/${tripId}` : '';
+
   const [
     collaboratorsModalOpened,
     { open: openCollaboratorsModal, close: closeCollaboratorsModal },
   ] = useDisclosure(false);
 
-  const trip = useSubscribe(rep, (tx) => getTrip(tx, currentTripId), {
+  const trip = useSubscribe(rep, (tx) => getTrip(tx, tripId ?? ''), {
     default: null,
-    dependencies: [currentTripId],
+    dependencies: [tripId],
   });
 
   // Set loaded state after a timeout
@@ -66,9 +69,9 @@ export default function TripPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  const collaborators = useSubscribe(rep, (tx) => getCollaboratorsByTrip(tx, currentTripId), {
+  const collaborators = useSubscribe(rep, (tx) => getCollaboratorsByTrip(tx, tripId ?? ''), {
     default: [],
-    dependencies: [currentTripId],
+    dependencies: [tripId],
   });
 
   useEffect(() => {
@@ -76,14 +79,14 @@ export default function TripPage() {
     setTripDates([trip?.startDate || null, trip?.endDate || null]);
   }, [trip]);
 
-  const itinerary = useSubscribe(rep, (tx) => getItineraryItemsByTrip(tx, currentTripId), {
+  const itinerary = useSubscribe(rep, (tx) => getItineraryItemsByTrip(tx, tripId ?? ''), {
     default: [],
-    dependencies: [currentTripId],
+    dependencies: [tripId],
   });
 
-  const expenses = useSubscribe(rep, (tx) => getExpensesByTrip(tx, currentTripId), {
+  const expenses = useSubscribe(rep, (tx) => getExpensesByTrip(tx, tripId ?? ''), {
     default: [],
-    dependencies: [currentTripId],
+    dependencies: [tripId],
   });
 
   const updateTrip = async (updates: Partial<Trip>) => {
@@ -91,7 +94,7 @@ export default function TripPage() {
     await rep.mutate.updateTrip({ ...trip, ...updates, updatedAt: new Date().toISOString() });
   };
 
-  useEventSourcePoke(`${import.meta.env.VITE_REPLICACHE_POKE_URL}?channel=${currentTripId}`, rep);
+  useEventSourcePoke(`${import.meta.env.VITE_REPLICACHE_POKE_URL}?channel=${tripId ?? ''}`, rep);
 
   const tabConfig = [
     {
@@ -262,7 +265,27 @@ export default function TripPage() {
           </Tabs.List>
           <Tabs.Panel value="overview" w="100%">
             <Flex justify="center">
-              <OverviewTab trip={trip} updateTrip={updateTrip} />
+              <OverviewTab
+                trip={trip}
+                updateTrip={updateTrip}
+                numberOfContributors={collaborators.length}
+                openCollaboratorsModal={openCollaboratorsModal}
+              />
+            </Flex>
+          </Tabs.Panel>
+          <Tabs.Panel value="itinerary" w="100%">
+            <Flex justify="center">
+              <ItineraryTab trip={trip!} />
+            </Flex>
+          </Tabs.Panel>
+          <Tabs.Panel value="bookings" w="100%">
+            <Flex justify="center">
+              <BookingTab />
+            </Flex>
+          </Tabs.Panel>
+          <Tabs.Panel value="budget" w="100%">
+            <Flex justify="center">
+              <BudgetTab />
             </Flex>
           </Tabs.Panel>
         </Tabs>

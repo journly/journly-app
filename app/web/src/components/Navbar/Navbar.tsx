@@ -66,11 +66,11 @@ export const Navbar = () => {
   });
 
   const tripLinks = trips.map((trip) => {
-    const isActive = location.pathname.startsWith(`/trip/${trip.id.split('trip/')[1]}`);
+    const isActive = location.pathname.startsWith(`/trip/${trip.id}`);
     return (
       <UnstyledButton
         onClick={() => {
-          navigate(`/trip/${trip.id.split('trip/')[1]}`);
+          navigate(`/trip/${trip.id}`);
         }}
         key={trip.id}
         className={`${classes.tripLink} ${isActive ? classes.active : classes.tripLinkHover}`}

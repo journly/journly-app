@@ -8,6 +8,7 @@ interface ImportMetaEnv {
   readonly VITE_REPLICACHE_PUSH_URL: string;
   readonly VITE_REPLICACHE_PULL_URL: string;
   readonly VITE_REPLICACHE_POKE_URL: string;
+  readonly VITE_GOOGLE_MAPS_API_KEY: string;
   // add any other variables you use:
   // readonly VITE_SOME_KEY: string;
 }

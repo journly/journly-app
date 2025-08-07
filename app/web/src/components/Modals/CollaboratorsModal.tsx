@@ -1,5 +1,5 @@
 import { IconChevronDown } from '@tabler/icons-react';
-import { Avatar, Box, Combobox, Flex, Group, InputBase, Modal, Select, Text } from '@mantine/core';
+import { Avatar, Box, Flex, Group, Modal, Select, Text } from '@mantine/core';
 import { Collaborator } from '@/models/collaborators';
 import { useReplicache } from '@/providers/ReplicacheProvider';
 
@@ -71,6 +71,7 @@ export const CollaboratorsModal = ({
               onChange={(value) => value && setCollaboratorRole(collaborator.id, value)}
               rightSection={<IconChevronDown size={16} />}
               w={100}
+              disabled={false}
             />
           </Flex>
         ))}
