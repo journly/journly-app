@@ -1,0 +1,301 @@
+import { useEffect, useState } from 'react';
+import {
+  IconCalendar,
+  IconCurrencyDollar,
+  IconHome,
+  IconSofa,
+  IconUsers,
+} from '@tabler/icons-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useSubscribe } from 'replicache-react';
+import {
+  Avatar,
+  AvatarGroup,
+  BackgroundImage,
+  Box,
+  Center,
+  Flex,
+  Loader,
+  Popover,
+  Tabs,
+  Text,
+  TextInput,
+  Title,
+  Tooltip,
+  UnstyledButton,
+} from '@mantine/core';
+import { DatePicker } from '@mantine/dates';
+import { useDisclosure } from '@mantine/hooks';
+import { CollaboratorsModal } from '@/components/Modals/CollaboratorsModal';
+import { getCollaboratorsByTrip } from '@/models/collaborators';
+import { getExpensesByTrip } from '@/models/expenses';
+import { getItineraryItemsByTrip } from '@/models/itineraryItem';
+import { getTrip, Trip } from '@/models/trip';
+import { useReplicache } from '@/providers/ReplicacheProvider';
+import { formatTripDatesDisplay } from '@/utils/dates';
+import { useEventSourcePoke } from '@/utils/poke';
+import BookingTab from './tabs/Booking.tab';
+import BudgetTab from './tabs/Budget.tab';
+import ItineraryTab from './tabs/Itinerary.tab';
+import OverviewTab from './tabs/Overview.tab';
+import classes from './Trip.module.css';
+
+export default function TripPage() {
+  const { tripId } = useParams();
+  const navigate = useNavigate();
+  const { rep } = useReplicache();
+  const [activeTab, setActiveTab] = useState('overview');
+  const [editingName, setEditingName] = useState(false);
+  const [tripTitle, setTripTitle] = useState('');
+  const [tripDates, setTripDates] = useState<[string | null, string | null]>([null, null]);
+  const [hasLoaded, setHasLoaded] = useState(false);
+
+  const [
+    collaboratorsModalOpened,
+    { open: openCollaboratorsModal, close: closeCollaboratorsModal },
+  ] = useDisclosure(false);
+
+  const trip = useSubscribe(rep, (tx) => getTrip(tx, tripId ?? ''), {
+    default: null,
+    dependencies: [tripId],
+  });
+
+  // Set loaded state after a timeout
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setHasLoaded(true);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  const collaborators = useSubscribe(rep, (tx) => getCollaboratorsByTrip(tx, tripId ?? ''), {
+    default: [],
+    dependencies: [tripId],
+  });
+
+  useEffect(() => {
+    setTripTitle(trip?.name || '');
+    setTripDates([trip?.startDate || null, trip?.endDate || null]);
+  }, [trip]);
+
+  const itinerary = useSubscribe(rep, (tx) => getItineraryItemsByTrip(tx, tripId ?? ''), {
+    default: [],
+    dependencies: [tripId],
+  });
+
+  const expenses = useSubscribe(rep, (tx) => getExpensesByTrip(tx, tripId ?? ''), {
+    default: [],
+    dependencies: [tripId],
+  });
+
+  const updateTrip = async (updates: Partial<Trip>) => {
+    if (!rep || !trip) return;
+    await rep.mutate.updateTrip({ ...trip, ...updates, updatedAt: new Date().toISOString() });
+  };
+
+  useEventSourcePoke(`${import.meta.env.VITE_REPLICACHE_POKE_URL}?channel=${tripId ?? ''}`, rep);
+
+  const tabConfig = [
+    {
+      value: 'overview',
+      label: 'Overview',
+      icon: <IconHome size={16} />,
+    },
+    {
+      value: 'itinerary',
+      label: 'Itinerary',
+      icon: <IconCalendar size={16} />,
+    },
+    {
+      value: 'bookings',
+      label: 'Bookings',
+      icon: <IconSofa size={16} />,
+    },
+    {
+      value: 'budget',
+      label: 'Budget',
+      icon: <IconCurrencyDollar size={16} />,
+    },
+  ];
+
+  if (!hasLoaded) {
+    return (
+      <Center h="100vh">
+        <Loader />
+      </Center>
+    );
+  }
+
+  if (!trip) {
+    return (
+      <Center h="100vh">
+        <Flex justify="center" align="center" direction="column" gap={10}>
+          <Title order={2}>Trip not found</Title>
+          <UnstyledButton onClick={() => navigate('/')}>Go to home</UnstyledButton>
+        </Flex>
+      </Center>
+    );
+  }
+
+  return (
+    <>
+      <Box className={classes.coverImageContainer} w="100%" h={200}>
+        <BackgroundImage src={trip?.coverImage ?? ''} w="100%" h={200}>
+          <Flex w="100%" h="100%" justify="center" align="flex-end">
+            <Flex maw={1150} w="100%" mb={20} mx={20} justify="space-between" align="flex-end">
+              <Box ml={5} className={classes.bannerImageText}>
+                {editingName ? (
+                  <TextInput
+                    variant="unstyled"
+                    value={tripTitle}
+                    autoFocus
+                    size="26px"
+                    fw={700}
+                    mb={12}
+                    pt={7}
+                    key={trip?.id}
+                    spellCheck={false}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setTripTitle(e.target.value)
+                    }
+                    onBlur={() => {
+                      setEditingName(false);
+                      setTripTitle(trip?.name || '');
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        setEditingName(false);
+                        updateTrip({ name: tripTitle.trimEnd() });
+                      }
+                    }}
+                    className={classes.editNameInput}
+                  />
+                ) : (
+                  <Title
+                    order={2}
+                    mb={10}
+                    onClick={() => setEditingName(true)}
+                    style={{ cursor: 'pointer' }}
+                    title="Click to edit"
+                  >
+                    {trip?.name}
+                  </Title>
+                )}
+                <Flex align="center" gap={4} className={classes.dateContainer}>
+                  <IconCalendar size={16} />
+                  <Popover
+                    position="bottom"
+                    withArrow
+                    arrowPosition="center"
+                    arrowOffset={10}
+                    arrowSize={10}
+                  >
+                    <Popover.Target>
+                      <UnstyledButton>
+                        <Text size="xs">{formatTripDatesDisplay(tripDates)}</Text>
+                      </UnstyledButton>
+                    </Popover.Target>
+                    <Popover.Dropdown>
+                      <DatePicker
+                        value={tripDates}
+                        onChange={(dates) => {
+                          updateTrip({
+                            startDate: dates[0] ? new Date(dates[0]).toISOString() : undefined,
+                            endDate: dates[1] ? new Date(dates[1]).toISOString() : undefined,
+                          });
+                        }}
+                        type="range"
+                        allowSingleDateInRange
+                      />
+                    </Popover.Dropdown>
+                  </Popover>
+                </Flex>
+              </Box>
+              <Flex align="center" gap={10} justify="center">
+                <UnstyledButton onClick={openCollaboratorsModal} mr={5}>
+                  <AvatarGroup spacing="sm">
+                    {collaborators && collaborators.length > 0 && (
+                      <>
+                        {collaborators.slice(0, 3).map((collaborator) => (
+                          <Tooltip
+                            key={collaborator.id}
+                            label={collaborator.username}
+                            position="top"
+                          >
+                            <Avatar
+                              src={collaborator.avatarUrl}
+                              className={classes.collaboratorAvatar}
+                            />
+                          </Tooltip>
+                        ))}
+                        {collaborators.length > 3 && <Avatar>+{collaborators.length - 3}</Avatar>}
+                      </>
+                    )}
+                  </AvatarGroup>
+                </UnstyledButton>
+                <UnstyledButton className={classes.addCollaboratorButton}>
+                  <IconUsers size={25} stroke={2.5} />
+                </UnstyledButton>
+              </Flex>
+            </Flex>
+          </Flex>
+        </BackgroundImage>
+      </Box>
+      <Center w="100%">
+        <Tabs
+          value={activeTab}
+          onChange={(value) => setActiveTab(value ?? 'overview')}
+          w="100%"
+          className={classes.tabsContainer}
+        >
+          <Tabs.List w="100%" className={classes.tabsList} mb={25}>
+            <Flex maw={1150} w="100%" mx={20}>
+              {tabConfig.map((tab) => (
+                <Tabs.Tab
+                  key={tab.value}
+                  value={tab.value}
+                  className={classes.tab + ' ' + (activeTab === tab.value ? classes.activeTab : '')}
+                  leftSection={tab.icon}
+                >
+                  {tab.label}
+                </Tabs.Tab>
+              ))}
+            </Flex>
+          </Tabs.List>
+          <Tabs.Panel value="overview" w="100%">
+            <Flex justify="center">
+              <OverviewTab
+                trip={trip}
+                updateTrip={updateTrip}
+                numberOfContributors={collaborators.length}
+                openCollaboratorsModal={openCollaboratorsModal}
+              />
+            </Flex>
+          </Tabs.Panel>
+          <Tabs.Panel value="itinerary" w="100%">
+            <Flex justify="center">
+              <ItineraryTab trip={trip!} />
+            </Flex>
+          </Tabs.Panel>
+          <Tabs.Panel value="bookings" w="100%">
+            <Flex justify="center">
+              <BookingTab />
+            </Flex>
+          </Tabs.Panel>
+          <Tabs.Panel value="budget" w="100%">
+            <Flex justify="center">
+              <BudgetTab />
+            </Flex>
+          </Tabs.Panel>
+        </Tabs>
+        <CollaboratorsModal
+          collaborators={collaborators}
+          ownerId={trip?.ownerId ?? ''}
+          opened={collaboratorsModalOpened}
+          setOpened={closeCollaboratorsModal}
+        />
+      </Center>
+    </>
+  );
+}

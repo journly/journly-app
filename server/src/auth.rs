@@ -84,7 +84,9 @@ impl FromRequest for AuthenticatedUser {
 
         let config = state.config.clone();
 
-        let unauthorized_error = Box::pin(ready(Err(AppError::Unauthorized)));
+        let unauthorized_error = Box::pin(ready(Err(AppError::Unauthorized(
+            "Missing authorization header",
+        ))));
 
         let header = match req.headers().get("Authorization") {
             Some(header) => header.to_str().unwrap(),
@@ -102,11 +104,11 @@ impl FromRequest for AuthenticatedUser {
                 let expiration_time = Utc.timestamp_opt(token_data.claims.exp, 0).unwrap();
 
                 if expiration_time < Utc::now() {
-                    return Err(AppError::Unauthorized);
+                    return Err(AppError::Unauthorized("Access token expired"));
                 }
 
                 if issued_at > Utc::now() {
-                    return Err(AppError::Unauthorized);
+                    return Err(AppError::Unauthorized("Invalid access token"));
                 }
 
                 match state.db_connection().await {
@@ -122,7 +124,7 @@ impl FromRequest for AuthenticatedUser {
                                     })
                                 } else {
                                     Err(AppError::UnverifiedUser(
-                                        "User has not verified their email.".to_string(),
+                                        "User has not verified their email.",
                                     ))
                                 }
                             }

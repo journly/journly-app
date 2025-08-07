@@ -9,18 +9,19 @@ interface JwtPayload {
 
 interface Tokens {
   access_token: string,
-  refresh_token: string
 }
 
 export enum AuthStatus {
   Authenticated = 'Authenticated',
   Unauthenticated = 'Unauthenticated',
-  Unverified = 'Unverified'
+  Unverified = 'Unverified',
+  NoConnection = 'NoConnection'
 }
+
+type BackendCall<T> = () => Promise<T>;
 
 interface AuthContextType {
   accessToken: string | null;
-  refreshToken: string | null;
   userId: string | null;
   checkAuthenticated: () => Promise<AuthStatus>;
   login: (creds: LoginCredentials) => Promise<void>;
@@ -29,18 +30,15 @@ interface AuthContextType {
   resendVerificationCode: () => Promise<void>;
   verifyEmail: (code: number) => Promise<boolean>;
   getAuthApi: () => AuthenticationApi;
+  withAuthRetry: <T>(backendCall: BackendCall<T>) => Promise<T>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [refreshToken, setRefreshToken] = useState<string | null>(() =>
-    localStorage.getItem('refresh_token') ?? null
-  );
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const refreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const buildAuthApi = (token: string | null) =>
     new AuthenticationApi(
@@ -52,83 +50,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const getAuthApi = () => buildAuthApi(accessToken)
 
-  const oAuthLogin = (access_token: string, refresh_token: string) => {
+  const oAuthLogin = (access_token: string) => {
     const { sub } = jwtDecode<JwtPayload>(access_token);
 
     setUserId(sub);
     setAccessToken(access_token);
-    setRefreshToken(refresh_token);
-    localStorage.setItem('refresh_token', refresh_token);
+
   }
 
   const login = async (creds: LoginCredentials) => {
-    const response = await getAuthApi().login(creds);
-    const { access_token, refresh_token }: Tokens = response.data;
-    const { sub } = jwtDecode<JwtPayload>(access_token);
+    try {
+      const response = await getAuthApi().login(creds);
 
-    setUserId(sub);
-    setUserEmail(creds.email);
-    setAccessToken(access_token);
-    setRefreshToken(refresh_token);
-    localStorage.setItem('refresh_token', refresh_token);
+      const { access_token }: Tokens = response.data;
+      const { sub } = jwtDecode<JwtPayload>(access_token);
+
+      setUserId(sub);
+      setUserEmail(creds.email);
+      setAccessToken(access_token);
+    } catch (e) {
+      console.log(e)
+    }
   };
 
   const logout = async () => {
-    if (refreshToken) {
-      try {
-        await getAuthApi().logout({ refresh_token: refreshToken });
-      } catch {
-        console.log("account does not exist.")
-      }
-
+    try {
+      await getAuthApi().logout({ withCredentials: true });
       setUserId(null);
       setAccessToken(null);
-      setRefreshToken(null);
-      localStorage.removeItem('refresh_token');
+    } catch {
+      console.log("Could not logout")
     }
-  };
-
-
-  const scheduleTokenRefresh = (access_token: string, refresh_token: string) => {
-    const { exp } = jwtDecode<JwtPayload>(access_token);
-    const expiresInMs = exp * 1000 - Date.now();
-
-    const refreshIn = Math.max(expiresInMs - 60000, 10000);
-
-    if (refreshTimeout.current) {
-      clearTimeout(refreshTimeout.current);
-      refreshTimeout.current = null;
-    }
-
-    refreshTimeout.current = setTimeout(() => {
-      refreshAccessToken(refresh_token);
-    }, refreshIn)
   }
 
-  const refreshAccessToken = async (refresh: string | null = null): Promise<boolean> => {
-    if (!refreshToken) return false;
-
+  const refreshAccessToken = async (): Promise<boolean> => {
     try {
-      const response = await getAuthApi().refresh({ refresh_token: refresh ?? refreshToken });
-      const { access_token, refresh_token }: Tokens = response.data;
+      const response = await getAuthApi().refresh({ withCredentials: true });
+      const { access_token }: Tokens = response.data;
       const { sub } = jwtDecode<JwtPayload>(access_token);
 
       setAccessToken(access_token);
-      setRefreshToken(refresh_token);
       setUserId(sub);
-
-      localStorage.setItem('refresh_token', refresh_token);
 
       return true;
     } catch {
+      console.log("Could not refresh")
       return false;
     }
   };
 
   const checkAuthenticated = async (): Promise<AuthStatus> => {
-    if (!refreshToken) return AuthStatus.Unauthenticated;
-
-    if (!accessToken && refreshToken) {
+    if (!accessToken) {
       const refreshed = await refreshAccessToken();
       if (!refreshed) {
         await logout();
@@ -143,7 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return AuthStatus.Authenticated;
     } catch (err: any) {
-      if (err.response?.status === 401 && refreshToken) {
+      if (err.response?.status === 401) {
         const refreshed = await refreshAccessToken();
         if (refreshed) {
           try {
@@ -164,6 +136,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } else if (err.response?.status === 403 && (err.response?.data as ErrorResponse).error == 'unverified_user') {
         return AuthStatus.Unverified
+      } else if (err.code === 'ERR_NETWORK') {
+        return AuthStatus.NoConnection
       } else {
         await logout();
         return AuthStatus.Unauthenticated;
@@ -200,19 +174,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
-  useEffect(() => {
-    if (accessToken && refreshToken) {
-      scheduleTokenRefresh(accessToken, refreshToken);
-    }
+  const withAuthRetry = async<T,>(backendCall: BackendCall<T>): Promise<T> => {
+    try {
+      return await backendCall();
+    } catch (error: any) {
+      const status = error?.response?.status;
 
-  }, [accessToken, refreshToken])
+      if (status === 401) {
+        try {
+          await refreshAccessToken();
+          return await backendCall();
+        } catch (refreshError) {
+          throw refreshError;
+        }
+      }
+
+      throw error;
+    }
+  }
 
 
   return (
     <AuthContext.Provider
       value={{
         accessToken,
-        refreshToken,
         checkAuthenticated,
         oAuthLogin,
         userId,
@@ -221,6 +206,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         resendVerificationCode,
         verifyEmail,
         getAuthApi,
+        withAuthRetry
       }}
     >
       {children}

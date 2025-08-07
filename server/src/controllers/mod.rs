@@ -1,9 +1,7 @@
-pub mod user;
-
-pub mod trip;
-
 pub mod auth;
 pub mod helper;
+pub mod trip_plan;
+pub mod user;
 
 use actix_web::{HttpResponse, Responder};
 

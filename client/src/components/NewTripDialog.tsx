@@ -26,7 +26,6 @@ interface CreateTripFormProps {
   onClose: () => void;
 }
 
-const tripsApi = new TripsApi();
 
 const CreateTripForm = ({ open, onClose }: CreateTripFormProps) => {
   const { getUser } = useAuth();
@@ -39,14 +38,6 @@ const CreateTripForm = ({ open, onClose }: CreateTripFormProps) => {
 
   const handleSubmit = async (values: TripFormValues) => {
     console.log("Trip created successfully");
-    await tripsApi.createTrip({
-      createTrip: {
-        title: values.title,
-        startDate: values.startDate,
-        endDate: values.endDate,
-        userId: getUser()?.id ?? ""
-      } as CreateTrip
-    });
   };
 
   return (

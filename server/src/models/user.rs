@@ -1,7 +1,6 @@
-use super::trip::Trip;
 use crate::{
     email::Email,
-    schema::{trips, user_trip, user_verification_codes, users},
+    schema::{user_verification_codes, users},
 };
 use chrono::{DateTime, Duration, Utc};
 use diesel::prelude::*;
@@ -68,15 +67,6 @@ impl User {
     pub async fn delete(conn: &mut AsyncPgConnection, id: &Uuid) -> QueryResult<usize> {
         diesel::delete(users::table.filter(users::id.eq(id)))
             .execute(conn)
-            .await
-    }
-
-    pub async fn get_trips(conn: &mut AsyncPgConnection, user_id: &Uuid) -> QueryResult<Vec<Trip>> {
-        user_trip::table
-            .inner_join(trips::table)
-            .filter(user_trip::user_id.eq(user_id))
-            .select(Trip::as_select())
-            .load(conn)
             .await
     }
 }

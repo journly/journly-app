@@ -1,7 +1,13 @@
-use std::{net::TcpListener, sync::Arc};
+use std::{net::TcpListener, str::FromStr, sync::Arc};
 
 use actix_cors::Cors;
-use actix_web::{App as ActixApp, HttpServer, dev::Server, http, middleware::Logger, web};
+use actix_web::{
+    App as ActixApp, HttpServer,
+    dev::Server,
+    http::{self, header::HeaderName},
+    middleware::Logger,
+    web,
+};
 use app::{App, AppState};
 use routes::ApiDoc;
 use utoipa::OpenApi;
@@ -28,6 +34,7 @@ fn cors_with_allowed_origins(config: config::Server) -> Cors {
         .allowed_headers(vec![
             http::header::AUTHORIZATION,
             http::header::CONTENT_TYPE,
+            HeaderName::from_str("X-Replicache-RequestID").unwrap(),
         ])
         .supports_credentials()
         .max_age(3600);

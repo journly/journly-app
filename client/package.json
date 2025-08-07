@@ -25,6 +25,8 @@
     "react-dropzone": "^14.3.8",
     "react-router": "5.3.4",
     "react-router-dom": "^7.6.0",
+    "replicache": "^15.3.0",
+    "replicache-react": "^5.0.1",
     "yup": "^1.6.1"
   },
   "devDependencies": {

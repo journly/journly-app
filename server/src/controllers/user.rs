@@ -42,7 +42,7 @@ pub async fn get_users(
     state: web::Data<AppState>,
 ) -> AppResult<Json<GetUsersResponse>> {
     if !authenticated.is_admin() {
-        return Err(AppError::Forbidden("Insufficient permissions.".to_string()));
+        return Err(AppError::Forbidden("Insufficient permissions."));
     }
 
     let mut conn = state.db_connection().await?;
@@ -93,7 +93,7 @@ pub async fn get_user(
     state: web::Data<AppState>,
 ) -> AppResult<Json<GetUserResponse>> {
     if !authenticated.is_admin() {
-        return Err(AppError::Forbidden("Insufficient permissions".to_string()));
+        return Err(AppError::Forbidden("Insufficient permissions"));
     }
 
     let user_id = path.into_inner();
@@ -139,7 +139,7 @@ pub async fn delete_user(
     let user_id = path.into_inner();
 
     if !authenticated.is_admin() && authenticated.user.id != user_id {
-        return Err(AppError::Forbidden("Insufficient permissions".to_string()));
+        return Err(AppError::Forbidden("Insufficient permissions"));
     }
 
     let mut conn = state.db_connection().await?;
@@ -186,7 +186,7 @@ pub async fn update_user(
     let user_id = path.into_inner();
 
     if !authenticated.is_admin() && authenticated.user.id != user_id {
-        return Err(AppError::Forbidden("Insufficient permissions".to_string()));
+        return Err(AppError::Forbidden("Insufficient permissions"));
     }
 
     let mut conn = state.db_connection().await?;
@@ -252,7 +252,7 @@ pub async fn update_user_password(
     let user = authenticated.user;
 
     if user.id != user_id {
-        return Err(AppError::Forbidden("Insufficient permissions".to_string()));
+        return Err(AppError::Forbidden("Insufficient permissions"));
     }
 
     let PasswordUpdateRequest {
@@ -359,7 +359,7 @@ pub async fn change_profile_picture(
     let user = authenticated.user;
 
     if user.id != user_id {
-        return Err(AppError::Forbidden("Insufficient permissions".to_string()));
+        return Err(AppError::Forbidden("Insufficient permissions"));
     }
 
     let s3_client = match &state.s3 {
@@ -374,7 +374,7 @@ pub async fn change_profile_picture(
     let content_type = file.content_type.clone();
 
     if content_type.is_none() {
-        return Err(AppError::BadRequest("Invalid file type.".to_string()));
+        return Err(AppError::BadRequest("Invalid file type."));
     };
 
     match content_type.unwrap().type_() {
@@ -393,7 +393,7 @@ pub async fn change_profile_picture(
             println!("extension now {file_ext}");
 
             if file_ext != "png" && file_ext != "jpeg" && file_ext != "webp" {
-                return Err(AppError::BadRequest("Invalid file type.".to_string()));
+                return Err(AppError::BadRequest("Invalid file type."));
             }
 
             let profile_picture_url = s3_client
@@ -426,7 +426,7 @@ pub async fn change_profile_picture(
         shit => {
             println!("here {shit}");
 
-            Err(AppError::BadRequest("Invalid file type.".to_string()))
+            Err(AppError::BadRequest("Invalid file type."))
         }
     }
 }

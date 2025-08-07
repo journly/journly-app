@@ -14,7 +14,6 @@ export const ProtectedRoute = () => {
         const res = await checkAuthenticated();
 
         console.log(res)
-        console.log(cancelled)
 
         if (!cancelled) setAuthStatus(res);
       } catch (err) {
@@ -34,7 +33,6 @@ export const ProtectedRoute = () => {
   }
 
   if (authStatus == AuthStatus.Unauthenticated) {
-    console.log("here")
     return <Navigate to="login" />;
   }
 
