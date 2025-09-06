@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import {
   IconBook,
   IconCompass,
   IconHome,
+  IconLogout,
   IconMap,
   IconPlus,
   IconSearch,
+  IconSettings,
   IconTimeline,
 } from '@tabler/icons-react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -17,6 +20,7 @@ import {
   Flex,
   Group,
   Image,
+  Menu,
   ScrollArea,
   Text,
   TextInput,
@@ -30,6 +34,8 @@ import { useUser } from '@/providers/UserProvider';
 import { formatTripDatesSimple } from '@/utils/dates';
 import logo from '../../favicon.png';
 import { CreateTripModal } from '../Modals/CreateTripModal';
+import { LogoutModal } from '../Modals/LogoutModal';
+import { SettingsModal } from '../Settings/SettingsModal';
 import classes from './Navbar.module.css';
 
 const links = [
@@ -46,11 +52,16 @@ export const Navbar = () => {
   const { user } = useUser();
   const [opened, { open, close }] = useDisclosure(false);
   const { trips } = useAllTrips();
+  const [logoutModalOpened, { open: openLogoutModal, close: closeLogoutModal }] =
+    useDisclosure(false);
+  const [settingsModalOpened, { open: openSettingsModal, close: closeSettingsModal }] =
+    useDisclosure(false);
 
   const mainLinks = links.map((link) => {
     const isActive =
       location.pathname === link.path ||
       (location.pathname.startsWith(link.path) && link.path !== '/');
+
     return (
       <UnstyledButton
         key={link.label}
@@ -140,22 +151,48 @@ export const Navbar = () => {
         <div className={classes.trips}>{tripLinks}</div>
       </AppShell.Section>
       <AppShell.Section className={classes.userSection}>
-        <Flex align="center" justify="flex-start" gap={10} className={classes.user}>
-          <Avatar
-            src={user?.avatar ?? null}
-            name={user?.username ?? 'Guest'}
-            alt="User avatar"
-            size="md"
-          />
-          <Box>
-            <Text size="sm">{user?.username ?? 'Guest'}</Text>
-            <Text size="xs" c="dimmed">
-              {user?.email ?? 'No email'}
-            </Text>
-          </Box>
-        </Flex>
+        <Menu width={220}>
+          <Menu.Target>
+            <UnstyledButton py={10} w="100%" className={classes.userButton}>
+              <Group>
+                <Avatar
+                  src={user?.avatar ?? null}
+                  name={user?.username ?? 'Guest'}
+                  alt="User avatar"
+                  size="md"
+                  ml="md"
+                  className={classes.userButtonContent}
+                />
+                <Box>
+                  <Text size="sm">{user?.username ?? 'Guest'}</Text>
+                  <Text size="xs" c="dimmed">
+                    {user?.email ?? 'No email'}
+                  </Text>
+                </Box>
+              </Group>
+            </UnstyledButton>
+          </Menu.Target>
+          <Menu.Dropdown>
+            <Menu.Item
+              leftSection={<IconSettings size={12} stroke={1.5} />}
+              onClick={openSettingsModal}
+            >
+              Settings
+            </Menu.Item>
+            <Menu.Item
+              leftSection={<IconLogout size={12} stroke={1.5} />}
+              onClick={openLogoutModal}
+              color="red"
+            >
+              Logout
+            </Menu.Item>
+          </Menu.Dropdown>
+        </Menu>
       </AppShell.Section>
+
       <CreateTripModal open={opened} onClose={close} />
+      <LogoutModal opened={logoutModalOpened} setOpened={closeLogoutModal} />
+      <SettingsModal opened={settingsModalOpened} setOpened={closeSettingsModal} />
     </nav>
   );
 };

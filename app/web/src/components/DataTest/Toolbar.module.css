@@ -1,0 +1,8 @@
+.toolbarOverlay {
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.toolbarButton {
+  pointer-events: auto;
+}

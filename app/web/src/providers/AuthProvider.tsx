@@ -80,13 +80,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    try {
+    await withAuthRetry(async () => {
       await getAuthApi().logout({ withCredentials: true });
       setUserId(null);
       setAccessToken(null);
-    } catch {
-      console.log('Could not logout');
-    }
+    });
   };
 
   const refreshAccessToken = async (): Promise<boolean> => {

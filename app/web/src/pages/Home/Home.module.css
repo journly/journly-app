@@ -1,0 +1,19 @@
+.section {
+  background-color: light-dark(var(--mantine-color-white), var(--mantine-color-dark-6));
+  border-radius: var(--mantine-radius-md);
+  padding: var(--mantine-spacing-md);
+  box-shadow: var(--mantine-shadow-xs);
+}
+
+.coverImage {
+  background-color: light-dark(var(--mantine-color-white), var(--mantine-color-dark-7));
+  border-top-left-radius: var(--mantine-radius-md);
+  border-top-right-radius: var(--mantine-radius-md);
+  display: flex;
+  align-items: flex-end;
+}
+
+.tripViewSection {
+  background-color: light-dark(var(--mantine-color-white), var(--mantine-color-dark-6));
+  border-radius: var(--mantine-radius-md);
+}
